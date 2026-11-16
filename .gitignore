@@ -1,42 +1,147 @@
-# Environments / secrets
+# ==============================================================================
+# AI Mathematics Tutor — Git Ignore
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Environments & Secrets
+# ------------------------------------------------------------------------------
 .env
 .env.*
 !.env.example
-*.pdf
+!.env*.example
+*.local
 
-# Python
+# ------------------------------------------------------------------------------
+# Documents & Raw MAXI Maths Corpus (Copyright & Privacy Governance)
+# - Raw MAXI Maths PDFs, scans, and extractions remain local and gitignored
+# - Allow repository documentation PDFs (e.g. execution plans, architecture guides)
+# ------------------------------------------------------------------------------
+*.pdf
+!PFE_Detailed_Execution_Plan.pdf
+!docs/**/*.pdf
+
+# Raw data, downloads, scans & media artifacts
+/data/downloads/*
+!/data/downloads/.gitkeep
+/data/sources/*
+!/data/sources/.gitkeep
+/data/raw/*
+!/data/raw/.gitkeep
+/data/scans/*
+!/data/scans/.gitkeep
+/data/extracted/*
+!/data/extracted/.gitkeep
+/data/**/*.pdf
+/data/**/*.png
+/data/**/*.jpg
+/data/**/*.jpeg
+/data/**/*.webp
+/data/**/*.tiff
+*.parquet
+
+# Audio & local media recordings (never persist raw audio)
+*.wav
+*.mp3
+*.ogg
+*.webm
+*.m4a
+/storage/
+/uploads/
+/media/
+
+# ------------------------------------------------------------------------------
+# Python & Backend (Python 3.12+, uv, FastAPI, Alembic, Pytest)
+# ------------------------------------------------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
 .venv/
 venv/
+ENV/
+env/
+
+# Testing, coverage & linting
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
-dist/
-build/
-*.egg-info/
+.hypothesis/
+.coverage
+.coverage.*
+coverage.xml
+nosetests.xml
+htmlcov/
+.tox/
+.nox/
 
-# Node / Next.js
+# ------------------------------------------------------------------------------
+# Frontend & Toolchain (Vite, React, TypeScript, pnpm)
+# ------------------------------------------------------------------------------
 node_modules/
+.pnpm-store/
+dist/
+dist-ssr/
 .turbo/
 *.tsbuildinfo
+.eslintcache
+.oxlintcache
+
+# Package manager logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
 
-# Data / artifacts (downloaded corpus files are large, never check in)
-/data/downloads/*
-!/data/downloads/.gitkeep
-*.parquet
+# ------------------------------------------------------------------------------
+# Agent & AI Tooling State / Scratch
+# ------------------------------------------------------------------------------
+.fast-agent/
+.claude/sessions/
 
-# IDE / OS
-.vscode/
+# ------------------------------------------------------------------------------
+# IDEs & Operating System
+# ------------------------------------------------------------------------------
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
 .idea/
+*.sublime-project
+*.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 .DS_Store
+.DS_Store?
+._*
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
+# ------------------------------------------------------------------------------
 # Logs
+# ------------------------------------------------------------------------------
 *.log
 logs/
