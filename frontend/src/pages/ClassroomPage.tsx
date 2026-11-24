@@ -26,8 +26,8 @@ const CHAPTERS = [
 ]
 
 const GUARANTEES = [
-  'Trois chapitres MAXI Maths, revus par le professeur de mathématiques.',
-  'Quatre contrôles serveur : source, périmètre, ancrage, sécurité.',
+  'Trois chapitres MAXI Maths, en cours de revue par le professeur de mathématiques.',
+  'Quatre contrôles serveur prévus : source, périmètre, ancrage, sécurité.',
   'Aucune réponse générée quand la preuve manque.',
 ]
 
@@ -110,8 +110,8 @@ export function ClassroomPage() {
             Le socle est prêt. Le corpus arrive.
           </h2>
           <p className="mt-3 text-sm leading-6 text-muted">
-            L’authentification, le transport des réponses et les contrôles de sécurité sont en place.
-            Les chapitres seront publiés après revue mathématique.
+            Le socle technique est en place. L’authentification, le transport des réponses et les
+            contrôles de sécurité seront branchés avec le corpus, après revue mathématique.
           </p>
           <p aria-hidden="true" className="mt-6 font-serif text-2xl tracking-wide text-accent">
             ℕ ⊂ ℤ ⊂ ℚ ⊂ ℝ

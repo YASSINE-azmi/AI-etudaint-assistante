@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: ['master', 'grunt']
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (ruff, mypy, pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: uv sync --frozen
+        working-directory: backend
+
+      - name: Lint
+        run: uv run ruff check app tests alembic
+        working-directory: backend
+
+      - name: Format check
+        run: uv run ruff format --check app tests alembic
+        working-directory: backend
+
+      - name: Type check
+        run: uv run mypy app
+        working-directory: backend
+
+      - name: Test
+        run: uv run python -m pytest
+        working-directory: backend
+
+  frontend:
+    name: Frontend (typecheck, lint, build, Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.18.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: frontend
+
+      - name: Type check
+        run: pnpm typecheck
+        working-directory: frontend
+
+      - name: Lint
+        run: pnpm lint
+        working-directory: frontend
+
+      - name: Build
+        run: pnpm build
+        working-directory: frontend
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+        working-directory: frontend
+
+      - name: E2E smoke
+        run: pnpm test:e2e
+        working-directory: frontend

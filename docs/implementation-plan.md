@@ -6,13 +6,14 @@
 | --- | --- |
 | Product | AI Mathematics Tutor — Moroccan Tronc Commun Scientifique (TCS), Option Française |
 | Release | `v0.1.0` academic demo |
-| Status | Approved for implementation |
-| Version | 1.0 |
+| Status | Conditionally approved — pending Week-2 go/no-go and the written pilot waiver |
+| Version | 1.1 |
 | Date | 24 November 2026 |
 | Team | 3 developers, 25–30 hours/week each, 16-week horizon |
 | Source of truth | `docs/implementation-plan.md` |
 | Supersedes | `backend_implementation_plan.md` (desktop draft); the deleted `docs/architecture.md`; any 2BAC or two-track interpretation of `PFE_Detailed_Execution_Plan.pdf` |
 | Reviewers | Academic supervisor; Mathematics reviewer (2–3 hours/week, confirmed) |
+| Pilot | Out of scope for `v0.1.0`; written supervisor waiver for the client-brief pilot criterion |
 
 > This plan is the single authoritative plan for the project. If another document conflicts with it, this document wins. The old SEC-filing architecture and download script are stale and must be removed or replaced during Week 1.
 
@@ -91,7 +92,7 @@ Chapter IDs, objective IDs, page ranges, and the coverage matrix must be confirm
 - Custom model training, microservices, multi-agent orchestration.
 - Arbitrary mathematical proof verification.
 - Production-scale availability, uptime SLAs, or zero-hallucination claims.
-- Real student pilot, guardian consent, CNDP filing, or institutional data collection.
+- Real student pilot, guardian consent, CNDP filing, or institutional data collection. Deferred by D-21; the client-brief pilot criterion is waived in writing for `v0.1.0`.
 - Public distribution of MAXI Maths source files or full chunk text.
 
 ### 2.5 Reduction ladder
@@ -145,6 +146,15 @@ If the 16-week schedule slips, reduce in this order. Never weaken authorization,
 | D-18 | `frontend/AGENTS.md` amended for Playwright | Plan and repo policy must not conflict |
 | D-19 | Local demo + optional free-tier deployment; recorded fallback | No paid hosting budget; p95 is best-effort |
 | D-20 | Use PDF scope-reduction order after voice | Simplify diagrams, planning, exercise breadth, photo conditions |
+| D-21 | Academic demo only; client-brief pilot deferred | Written supervisor waiver; synthetic profiles; no consent/CNDP work in `v0.1.0` |
+| D-22 | Direct SQLAlchemy runtime + per-request JWT claims GUC; PostgREST denies internal tables | Makes `FORCE RLS` real; no service-role in API; explicit grants |
+| D-23 | Dedicated media, speech, and board endpoints + tables | Photo/voice/board are in scope; signed uploads, STT/TTS, snapshots |
+| D-24 | `teaching_claims` is first-class; citations reference stored claims | Auditable claim-level provenance and Gate 2 objective mapping |
+| D-25 | Structured math contract + SymPy; refuse when unverifiable | Variables, domain, assumptions, expected form; no bare `math_expression` |
+| D-26 | 20 in-scope + 20 boundary evaluation tasks | Fits reviewer capacity; directional evidence, not statistical proof |
+| D-27 | Hosted app DB with private chunks; no public distribution | Private Supabase, PostgREST deny rules, supervisor rights note |
+| D-28 | API never holds the service-role key; split admin/ingest settings | Service role only in CLI/ingest; API starts without it |
+| D-29 | Role source is JWT `app_metadata.role` | No self-escalation; `profiles.role` is display-only or removed |
 
 ---
 
@@ -281,9 +291,9 @@ backend/
 | `document_chunks` | Retrieval units | `id`; `revision_id`; `chapter_id`; `chunk_index`; `section_path`; `page_start`; `page_end`; `char_start`; `char_end`; `content_type`; `chunk_text`; `search_text`; `content_hash`; `token_count`; `embedding` `vector(1536)`; `status` |
 | `chunk_objectives` | Chunk ↔ objective | `chunk_id`; `objective_id`; both FKs |
 | `tutoring_sessions` | Conversation scope | `id`; `student_id`; `chapter_id`; `objective_id` (nullable current focus); `curriculum_revision_id`; `title`; `status` (`active`/`archived`/`deleted`); `turn_count` |
-| `session_turns` | One student turn | `id`; `session_id`; `turn_index`; `idempotency_key`; `request_hash`; `student_prompt`; `response_status` (`pending`/`processing`/`completed`/`failed`/`cancelled`); `educational_status`; `model_name`; `prompt_version`; `retrieval_config`; `token_counts`; `latency_ms`; `validation_metadata` (`JSONB`) |
+| `session_turns` | One student turn | `id`; `session_id`; `turn_index`; `student_prompt`; `response_status` (`pending`/`processing`/`completed`/`failed`/`cancelled`); `educational_status`; `refusal_code`; `message_fr`; `final_payload` (`JSONB`); `model_name`; `prompt_version`; `retrieval_config`; `token_counts`; `latency_ms`; `validation_metadata` (`JSONB`); `created_at`; `processing_started_at`; `expires_at`; `locked_by` |
 | `teaching_steps` | Validated output units | `id`; `turn_id`; `step_index`; `display_text_fr`; `spoken_text_fr`; `board_actions` (`JSONB`); `next_action`; `validation_status` |
-| `turn_citations` | Claim ↔ source | `id`; `turn_id`; `step_id`; `claim_id`; `chunk_id`; `revision_id`; `content_hash`; `page_number`; `section_reference`; `quote_excerpt`; `quote_start`; `quote_end` |
+| `turn_citations` | Claim ↔ source | `id`; `turn_id`; `step_id`; `teaching_claim_id` (FK); `chunk_id`; `revision_id`; `content_hash`; `page_number`; `section_reference`; `quote_excerpt`; `quote_start`; `quote_end` |
 | `exercises` | Reviewed exercise bank | `id`; `chapter_id`; `objective_id`; `code`; `source_reference`; `exercise_type` (`mcq`/`numeric_tolerance`/`algebraic_expression`/`guided_multistep`); `answer_schema` (`JSONB`); `hints_fr` (`JSONB`); `difficulty_level`; `status` |
 | `exercise_revisions` | Immutable exercise versions | `id`; `exercise_id`; `revision_number`; `problem_statement_fr`; `answer_schema`; `reviewer_id`; `review_status`; `change_summary` |
 | `exercise_attempts` | Student attempts | `id`; `student_id`; `exercise_id`; `exercise_revision_id`; `session_id`; `submitted_answer` (`JSONB`); `evaluation_result` (`correct`/`incorrect`/`inconclusive`); `error_category`; `evaluation_details` (`JSONB`); `feedback_fr`; `hints_requested` |
@@ -292,13 +302,23 @@ backend/
 | `availability_windows` | Study windows | `id`; `plan_id`; `day_of_week` (1–7); `start_time`; `end_time`; check `start < end` |
 | `study_tasks` | Scheduled tasks | `id`; `plan_id`; `objective_id`; `title_fr`; `scheduled_date`; `allocated_minutes`; `status` (`pending`/`completed`/`skipped`); `completed_at`; `order_index` |
 | `budget_reservations` | Pre-turn credit holds | `id`; `turn_id`; `student_id`; `reserved_usd`; `actual_usd`; `status` (`reserved`/`reconciled`/`released`); `expires_at`; unique active reservation per turn |
-| `usage_events` | Actual provider usage | `id`; `turn_id`; `student_id`; `model_name`; `input_tokens`; `output_tokens`; `cached_tokens`; `embedding_tokens`; `price_version`; `total_cost_usd`; `provider_request_id`; `created_at` |
+| `usage_events` | Actual provider usage | `id`; `source` (`turn`/`ingestion`); `turn_id` (nullable); `student_id` (nullable); `model_name`; `input_tokens`; `output_tokens`; `cached_tokens`; `embedding_tokens`; `price_version`; `total_cost_usd`; `provider_request_id`; `created_at` |
 | `jobs` | Background work | `id`; `job_type`; `payload`; `status`; `run_after`; `attempts`; `locked_at`; `locked_by` |
 | `audit_events` | Administrative/security trail | `id`; `actor_id`; `action`; `entity_type`; `entity_id`; `payload` (`JSONB`); `created_at` |
+| `teaching_claims` | Persisted claim-level provenance | `id`; `turn_id`; `step_id`; `claim_id`; `claim_text_fr`; `claim_span_start`; `claim_span_end`; `objective_id`; `math_claim` (`JSONB`); `validation_status` |
+| `media_assets` | Photo/audio upload metadata | `id`; `student_id`; `session_id`; `turn_id` (nullable); `kind`; `storage_path`; `mime_type`; `byte_size`; `content_hash`; `status`; `created_at`; `expires_at` |
+| `board_snapshots` | Persisted board revisions | `id`; `session_id`; `turn_id`; `revision`; `state` (`JSONB`); `created_at`; unique `(session_id, revision)` |
+| `turn_idempotency` | TTL idempotency keys | `id`; `session_id`; `idempotency_key`; `request_hash`; `turn_id`; `expires_at`; unique `(session_id, idempotency_key)` |
+| `budget_ledger` | Single global credit row | `id` (singleton); `budget_usd`; `reserved_usd`; `spent_usd`; `version`; `updated_at` |
+| `rate_limit_counters` | Postgres-backed rate limiting | `id`; `scope` (`user`/`ip`); `subject_id`; `window_start`; `count`; `expires_at` |
+
+`usage_events` carries `source` (`turn`/`ingestion`) and nullable `turn_id`/`student_id`; `turn_citations` references `teaching_claim_id`. See §22.2 for the normative schema and constraints.
 
 ### 5.2 Invariants
 
-- `session_turns` has unique `(session_id, turn_index)` and unique `(session_id, idempotency_key)`.
+- `session_turns` has unique `(session_id, turn_index)`; `turn_idempotency` has unique `(session_id, idempotency_key)` and expires without deleting turn history.
+- `teaching_claims` has unique `(turn_id, claim_id)`; every `turn_citations.teaching_claim_id` references a claim on the same turn.
+- Refusals are `completed` turns and persist `refusal_code`, `message_fr`, and `final_payload`; they are reloadable.
 - A turn's `educational_status` is independent of `response_status`. A refusal is a completed turn, not a failure.
 - `teaching_steps` and `turn_citations` are immutable after `completed`; corrections create a new turn.
 - `source_revisions` content is immutable after publication. Status transitions are append-only.
@@ -306,7 +326,8 @@ backend/
 - `document_chunks.status` is derived from its revision; only `published` revisions participate in retrieval.
 - Exercise attempts pin `exercise_revision_id`.
 - One active `study_plan` per student; completed tasks survive plan regeneration.
-- One active `budget_reservation` per turn; reservation totals must be atomic with the cap check.
+- One active `budget_reservation` per turn. Reservation and reconciliation lock the singleton `budget_ledger` row with `FOR UPDATE` so totals are atomic with the cap check.
+- `usage_events.source` distinguishes turn usage from ingestion embeddings; ingestion rows have null `turn_id`/`student_id`.
 - `jobs` are claimed with `FOR UPDATE SKIP LOCKED`; handlers are idempotent.
 
 ### 5.3 Indexes and RLS
@@ -315,10 +336,12 @@ backend/
 - HNSW index on `document_chunks.embedding` with `vector_cosine_ops`.
 - GIN index on `document_chunks.search_vector`.
 - GIN/JSONB indexes on `concept_tags`, `board_actions`, and validation metadata where queried.
-- Enable RLS on all student-owned tables.
-- `FORCE ROW LEVEL SECURITY` and a non-owner `app_runtime` role for the runtime connection.
-- Policies use `auth.uid()` and explicit role checks.
-- The service role is used only by CLI/admin/ingest modules and is excluded from the student request graph.
+- Enable and `FORCE ROW LEVEL SECURITY` on every table in the `public` schema; deny by default.
+- `app_runtime` is a non-owner runtime role. Per transaction, the API sets `request.jwt.claims` from the verified JWT and `SET LOCAL ROLE authenticated` before queries; `auth.uid()` is otherwise null.
+- Grant `app_runtime` usage on the `auth` schema and execute on `auth.uid()`, or use `current_setting('request.jwt.claims', true)` policies.
+- Revoke direct `anon`/`authenticated` access to internal tables; `document_chunks.chunk_text`, `exercises.answer_schema`, and `profiles.role` are not directly readable by students. FastAPI is the only student data path.
+- Policies use `auth.uid()`/JWT claims and explicit role checks; `profiles.role` is not an authorization input.
+- The service role is loaded only by `AdminSettings` in CLI/ingest and is excluded from the API process.
 
 ---
 
@@ -334,7 +357,7 @@ backend/
   - audience: `authenticated`
   - signature, expiry, `kid` rotation, clock skew
   - cached keys with refresh
-- Derive `user_id`, email, and role from verified claims + `profiles`.
+- Derive `user_id` and role from verified JWT claims (`sub`, `app_metadata.role`). `profiles.role` is a display mirror only and never an authorization input.
 
 ### 6.2 Roles
 
@@ -349,11 +372,11 @@ backend/
 
 | Resource | Student | Reviewer | Admin | System |
 | --- | --- | --- | --- | --- |
-| Own profile | Read/update | — | Read | Read |
+| Own profile | Read/update (role immutable) | — | Read | Read |
 | Other profiles | Deny | Deny | Read | Read |
 | Published curriculum | Read | Read | Read | Read |
 | Draft sources/chunks | Deny | Read (local CLI) | Read | Read |
-| Own sessions/turns | CRUD | Deny | Deny | Read/recover |
+| Own sessions/turns | Read; create via API only | Deny | Deny | Read/recover |
 | Other sessions/turns | Deny | Deny | Deny | Read/recover |
 | Exercises | Read published | Review/publish | Read | Read |
 | Own attempts | Create/read | Deny | Deny | Read |
@@ -363,9 +386,9 @@ backend/
 
 ### 6.4 Service-role isolation
 
-- `SUPABASE_SERVICE_ROLE_KEY` is loaded only by `app/config.py` and consumed by `app/database/admin.py` and `ingest/`.
+- `SUPABASE_SERVICE_ROLE_KEY` is loaded only by `AdminSettings` in `app/database/admin.py` and `ingest/`; it is not part of the API settings and the API process must start without it.
 - Student request handlers import only the runtime engine.
-- A CI import test or grep fails if a student-facing module imports the admin client.
+- A CI import test fails if `app.main`, `app/api`, or any request-path module imports `AdminSettings` or the admin client.
 - Admin HTTP routes are not exposed in `v0.1.0`; publication is CLI-only.
 
 ### 6.5 Rate limits and abuse controls
@@ -405,6 +428,15 @@ backend/
 | `GET` | `/api/v1/study-plan` | Active plan |
 | `PUT` | `/api/v1/study-plan` | Create/replace plan |
 | `PATCH` | `/api/v1/study-tasks/{id}` | Complete/skip task |
+| `POST` | `/api/v1/sessions/{id}/media` | Create a signed photo upload / register media asset |
+| `POST` | `/api/v1/media/{id}/interpret` | OCR/symbol extraction; return ambiguity candidates |
+| `POST` | `/api/v1/media/{id}/confirm` | Store the confirmed expression or reject the asset |
+| `POST` | `/api/v1/speech/transcribe` | Push-to-talk French audio → editable transcript |
+| `POST` | `/api/v1/speech/synthesize` | Validated French text → TTS audio URL/stream |
+| `GET` | `/api/v1/sessions/{id}/board` | Current board revision + snapshot |
+| `GET` | `/api/v1/sessions/{id}/board/revisions/{revision}` | Historical board snapshot |
+| `GET` | `/api/v1/exercises/{id}` | Exercise detail without answer schema |
+| `POST` | `/api/v1/exercises/{id}/hints` | Next approved hint |
 
 ### 7.2 SSE contract
 
@@ -420,8 +452,10 @@ turn.started
 retrieval.completed       { chunkIds, scores }
 validation.started
 validation.completed      { gates, educationalStatus }
-message.final             { text, citations, boardActions, spokenText }
+board.updated             { revision, actions }
+message.final             { text, citations, boardActions, boardRevision, spokenText }
 turn.completed
+speech.ready              { audioUrl, expiresAt }
 ```
 
 - On failure:
@@ -454,6 +488,7 @@ turn.failed { code, educationalStatus, messageFr, retryable }
     }
   ],
   "boardActions": [],
+  "boardRevision": 3,
   "spokenTextFr": "...",
   "nextActions": [],
   "usage": { "inputTokens": 0, "outputTokens": 0, "costUsd": 0.0 }
@@ -476,13 +511,13 @@ turn.failed { code, educationalStatus, messageFr, retryable }
 ### 7.5 Idempotency
 
 - `Idempotency-Key` is required and must be a UUID.
-- Unique `(session_id, idempotency_key)`.
-- `request_hash` covers prompt, chapter, objective, and options.
+- Unique `(session_id, idempotency_key)` in `turn_idempotency`, not `session_turns`.
+- `request_hash` covers prompt, chapter, objective, options, `mediaAssetId`, and `confirmedExpression`.
 - Same key + same hash + `completed` → replay stored response.
 - Same key + different hash → `409 Conflict`.
 - Same key + `processing` → `409 Conflict` (or `202` with status endpoint, if added).
 - Same key + `failed` → allow retry only for retryable errors; otherwise return the failure.
-- Keys expire after 24 hours; cleanup job removes expired rows.
+- Keys expire after 24 hours; cleanup removes only `turn_idempotency` rows, never turn history.
 
 ### 7.6 Errors and pagination
 
@@ -516,18 +551,40 @@ Authenticate
 ### 8.2 Draft output contract
 
 ```python
+class MathClaim(BaseModel):
+    expression_latex: str
+    variables: dict[str, str] = {}
+    assumptions: list[str] = []
+    expected_form: str | None = None
+    check: Literal["simplify", "solve", "interval", "vector", "property"]
+
+class BoardAction(BaseModel):
+    action_id: str
+    object_id: str
+    author: Literal["tutor", "student"]
+    op: Literal[
+        "add_text", "add_equation", "add_line", "add_arrow",
+        "add_shape", "highlight", "update", "remove",
+    ]
+    payload: dict[str, Any]
+    revision: int
+
 class CitationDraft(BaseModel):
     claim_id: str
     chunk_id: UUID
     revision_id: UUID
     quote: str
     page_number: int
+    section: str | None = None
 
 class ClaimDraft(BaseModel):
     claim_id: str
+    objective_id: str
     text_fr: str
-    citation: CitationDraft
-    math_expression: str | None = None
+    claim_span_start: int
+    claim_span_end: int
+    citations: list[CitationDraft] = []
+    math: MathClaim | None = None
 
 class TeachingStepDraft(BaseModel):
     step_id: str
@@ -535,7 +592,7 @@ class TeachingStepDraft(BaseModel):
     spoken_text_fr: str
     claims: list[ClaimDraft]
     board_actions: list[BoardAction] = []
-    next_action: str | None = None
+    next_actions: list[str] = []
 
 class AgentDraftOutput(BaseModel):
     steps: list[TeachingStepDraft]
@@ -545,6 +602,10 @@ class AgentDraftOutput(BaseModel):
 - The server ignores `suggested_status` for release decisions.
 - A turn is all-or-nothing in `v0.1.0`: if any step fails a gate, the turn is refused or clarified.
 - Parallel `cited_chunk_ids` / `quoted_excerpts` lists are prohibited.
+- Every claim carries `objective_id`; connective text outside claim spans is allowed and does not require a citation.
+- `citations` is a list; one or more per claim. Each citation is resolved server-side to a `teaching_claim_id` on the same turn.
+- `math` is required for computation claims and absent for pure prose; Gate 4 uses its variables, assumptions, expected form, and check type.
+- `BoardAction.revision` is monotonic per session; stale revisions are rejected. See §22.5.
 
 ### 8.3 Gate 1 — Source validity
 
@@ -563,7 +624,7 @@ Failure → `validation_failed` or `insufficient_evidence`; never a silent citat
 ### 8.4 Gate 2 — Scope validity
 
 - The session's chapter and objective are approved and published.
-- Every claim maps to an objective in the coverage matrix.
+- Every claim carries `objective_id`; each `objective_id` must be an approved objective in the coverage matrix, and every cited chunk must be mapped to that objective (or an approved prerequisite) in `chunk_objectives`.
 - Concept tags are allowed for the active objective.
 - Prerequisite concepts are allowed only through the reviewed prerequisite graph.
 - Cross-chapter citations are allowed only for approved prerequisites.
@@ -599,6 +660,7 @@ Failure → `outside_scope` with a specific refusal code.
 - SymPy checks:
   - arithmetic, simplification, equation solving, interval/set operations, vector calculations, function properties.
   - Use `sympy.simplify(expr1 - expr2) == 0` with explicit assumptions; reject when assumptions are missing.
+  - Parse from the structured `MathClaim` (expression, variables, assumptions, expected form), never from free text; run in a sandbox with a short timeout and a banned-function allowlist.
 - Rubric verifier:
   - Fixed prompt, fixed model/version, temperature 0.
   - Scores correctness, scope, notation, and age-appropriateness.
@@ -613,8 +675,9 @@ Failure → `outside_scope` with a specific refusal code.
 - Max display text length and max math expression length.
 - Board actions:
   - allowlist: add text, add equation, line/arrow, supported shapes, highlight, update/remove by ID;
-  - coordinate bounds, object count, text lengths;
-  - student objects vs tutor objects;
+  - coordinate bounds (`[-10000, 10000]`), object count (≤ 200), text lengths (≤ 2000 chars);
+  - student objects vs tutor objects (via `BoardAction.author`);
+  - `revision` must be strictly increasing per session; stale actions are rejected;
   - no arbitrary scripts or URLs.
 - If the board cannot apply an action, do not narrate it as if visible.
 
@@ -629,6 +692,7 @@ Failure → `outside_scope` with a specific refusal code.
 | `MATH_UNVERIFIABLE` | Cannot verify the computation | Ask for clarification or refuse |
 | `MATH_INCORRECT` | Draft contradicts CAS/rubric | Refuse; log for review |
 | `RENDERING_UNSAFE` | Invalid/unsafe math or board action | Refuse; log |
+| `SOURCE_WITHDRAWN` | Pinned source revision was withdrawn | Keep history read-only; suggest a new session or a replacement revision |
 | `PROVIDER_UNAVAILABLE` | Provider failure | Explain temporary unavailability; preserve session |
 | `CREDIT_EXHAUSTED` | Trial credits exhausted | Explain demo limitation; show fallback |
 | `RATE_LIMITED` | Too many requests | Ask the student to wait |
@@ -662,8 +726,9 @@ Recorded assumption:
 - No public distribution of the source PDFs or full extracted text.
 - Raw PDFs, scans, and extracts remain local and gitignored under `data/`.
 - The demo UI shows only short citations/excerpts (≤ 25 words or ≤ 300 characters per citation).
-- No API returns full `chunk_text` to student clients.
-- The corpus is local-only until the team lead records the academic-use note and the supervisor acknowledges it by Week 2.
+- No API returns full `chunk_text` to student clients; direct `anon`/`authenticated` (PostgREST) reads of `document_chunks.chunk_text` and `exercises.answer_schema` are revoked.
+- The corpus is private-hosted, not local-only: reviewed `document_chunks` live in a private Supabase Postgres project, while raw files stay local. The team lead records the academic-use note and the supervisor acknowledges it by Week 2 before publication.
+- Generated `display_text_fr` must not reproduce long verbatim textbook passages; a quote-length check applies to model output as well as citations.
 - This is an assumption, not a legal conclusion. If the project later becomes public or commercial, rights review is required before publication.
 
 ### 9.2 Input contract
@@ -736,7 +801,7 @@ Withdrawal:
 - Immediately exclude the revision from future retrieval.
 - Preserve historical citations for audit.
 - Flag dependent exercises and evaluation cases.
-- Define safe resume behavior for sessions pinned to the withdrawn revision.
+- Safe resume: history stays read-only; new turns return `SOURCE_WITHDRAWN` and suggest a new session or a replacement revision; no further retrieval from the withdrawn revision.
 - Record reason and actor in `audit_events`.
 
 ### 9.7 Seed corpus
@@ -837,9 +902,10 @@ This is an academic demo with trial credits only.
 - `UsageEvent` records actual tokens and cost after completion.
 - Alert at 80% of credits; hard stop at 100%.
 - At hard stop, return `CREDIT_EXHAUSTED`; never fall back to an ungrounded answer.
-- Ingestion embeddings count against the same budget.
+- Ingestion embeddings count against the same budget and are recorded with `usage_events.source = 'ingestion'` and null `turn_id`/`student_id`.
+- A singleton `budget_ledger` row is locked `FOR UPDATE` for every reservation and reconciliation so the cap check is atomic across requests.
 - No per-student billing cap; usage is tracked for demo reporting.
-- Demo-day fallback: cached validated answers for scripted scenarios and a recorded video, clearly labeled.
+- Demo-day fallback: cached validated answers for scripted scenarios and a recorded video, clearly labeled; cached answers are re-validated against the current published revision before replay.
 
 ### 11.4 Timeouts, retries, and cancellation
 
@@ -848,7 +914,7 @@ This is an academic demo with trial credits only.
 - Provider retries: max 2, exponential backoff, only for retryable errors.
 - Cancellation checks between stages; best-effort provider cancellation.
 - Client abort marks the turn `cancelled` when detected; release the reservation.
-- Stuck turns are recovered by a worker after `expires_at`.
+- Stuck turns are recovered by a worker after `session_turns.expires_at`; workers fence with `processing_started_at`/`locked_by` and never overwrite a completed turn.
 
 ### 11.5 Context and history
 
@@ -875,6 +941,7 @@ This is an academic demo with trial credits only.
 - Unsupported forms return `inconclusive`, not `incorrect`.
 - Attempts pin `exercise_revision_id`.
 - Record hints individually and error categories.
+- Feedback and hints are reviewer-approved templates or pass the same four gates; no free-form LLM feedback reaches the student. The `answer_schema` is never returned by `GET /exercises` or `GET /exercises/{id}`.
 
 ### 12.2 Progress
 
@@ -935,9 +1002,11 @@ Edge cases:
 
 ### 13.3 Classroom contracts
 
-- Board-before-speech: apply validated `board_actions`, confirm `board_revision`, then play TTS.
+- Board-before-speech: apply validated `board_actions`, confirm the returned `boardRevision`, then call `/speech/synthesize` and play TTS. Reject actions whose `revision` is older than the current board revision.
+- Board resume: load the latest `board_snapshot` (`GET /sessions/{id}/board`) and replay only later actions; never reconstruct the board from raw events.
 - Interruption: stop local audio < 500 ms, abort the stream, call `/interrupt`, reject stale `turnId` events.
-- Photo: upload → preview → interpret → confirm ambiguous symbols → submit confirmed expression.
+- Photo: request a signed upload (`POST /sessions/{id}/media`) → preview → `POST /media/{id}/interpret` → confirm ambiguous symbols (`POST /media/{id}/confirm`) → submit `mediaAssetId` + confirmed expression with the turn.
+- Speech: push-to-talk posts to `POST /speech/transcribe`; the transcript is editable before submission; raw audio is never stored.
 - Citations: display chapter, section, page, short excerpt; no full chunk.
 - Refusals: render the French message, code, and next actions.
 
@@ -963,15 +1032,15 @@ Edge cases:
 
 - Synthetic profiles only.
 - No real student records, photos, audio, or transcripts.
-- No pilot, guardian consent, or CNDP filing in this release.
+- No pilot, guardian consent, or CNDP filing in this release. The client-brief 5-student pilot criterion (`docs/client-brief.md:78`) is waived in writing by the supervisor; record the waiver in `audit_events` and the final report.
 - If an informal walkthrough with real people happens, it requires supervisor approval, no recording, no data retention, and a written note.
 
 ### 14.2 Rights
 
 - Academic-use assumption recorded; supervisor acknowledgment by Week 2.
 - No public distribution of PDFs or full text.
-- Short quotes only; no full-chunk API.
-- Source files local and gitignored.
+- Short quotes only; no full-chunk API. `document_chunks.chunk_text` is private-hosted and denied to `anon`/`authenticated`; only FastAPI returns excerpts.
+- Raw source files stay local and gitignored; private Supabase may hold reviewed chunks, not raw PDFs.
 
 ### 14.3 Prompt injection and untrusted content
 
@@ -1079,12 +1148,14 @@ Controls:
 - Reviewer grades correctness and scope with a written rubric.
 - Record application, model, prompt, corpus, and gate versions for every run.
 
-Datasets:
+Datasets (D-26):
 
-- 60 in-scope tasks (fallback: 30 if reviewer capacity is tight).
-- 60 boundary tasks: out-of-scope, missing evidence, prompt injection (fallback: 30).
+- 20 in-scope tasks (expand to 30 only if the reviewer confirms extra hours).
+- 20 boundary tasks: out-of-scope, missing evidence, prompt injection (expand to 30 only with reviewer confirmation).
 - Wrong-answer set: deliberately corrupted solutions to measure the math gate.
 - Retrieval set: labeled chunks for Recall@5/MRR.
+
+20+20 is directional evidence, not a statistical estimate; the report states the sample size and confidence limits and does not claim population-level accuracy.
 
 Metrics:
 
@@ -1099,9 +1170,11 @@ Metrics:
 
 Release gates:
 
-- ≥ 90% in-scope correct and scoped.
-- 0 unsupported releases on boundary set.
+- ≥ 90% in-scope correct and scoped (18/20).
+- 0 unsupported releases on the 20 boundary tasks.
 - 100% citation validity.
+- Math-gate catch rate ≥ 90% on the wrong-answer set.
+- False refusals ≤ 10% on in-scope tasks.
 - 10/10 journeys.
 - 20/20 interruption cases.
 - 100% cross-user access denial.
@@ -1138,7 +1211,7 @@ Release gates:
 | 10 | Progress + planning | Editable schedule and revision indicators work |
 | 11 | Admin CLI + summaries + reconnect | Complete journey works in the demo environment |
 | 12 | Feature freeze | Three-chapter coverage and integrated features reviewed |
-| 13 | Demo evaluation | 60+60 (or 30+30) cases run; failures triaged |
+| 13 | Demo evaluation | 20+20 cases run; failures triaged; reviewer capacity confirmed |
 | 14 | Regression + release candidate | No known release blockers |
 | 15 | Restore, report, rehearsal | Backup restore, rollback, and demo rehearsal |
 | 16 | Submission and demo | Tagged release, report, live demo, fallback recording |
@@ -1177,7 +1250,7 @@ If not, reduce scope and record the decision.
 | Risk | Mitigation | Owner |
 | --- | --- | --- |
 | Rights concern | Local-only corpus, short quotes, academic-use note, no public distribution | Team lead |
-| Reviewer capacity | Corpus first; 30+30 fallback; freeze unreviewed coverage | Developer B |
+| Reviewer capacity | Corpus first; 20+20 acceptance; freeze unreviewed coverage; expand only if hours confirmed | Developer B |
 | Trial credits exhausted | Global ledger, per-turn cap, hard stop, cached/recorded fallback | Developer C |
 | Free-tier hosting limits | Local demo first; recorded fallback | Developer C |
 | Model quality | Week-1 benchmark; model switch; narrow scope | Developer B |
@@ -1205,7 +1278,7 @@ After Week 12, only release blockers and explicitly approved substitutions are a
 ### 18.1 Environments
 
 - **Local dev:** Docker Compose for Postgres + pgvector; local FastAPI and Vite.
-- **Demo:** local machine or optional free-tier Railway/Supabase.
+- **Demo:** local machine or optional free-tier Railway/Supabase; the app DB and private chunks are hosted privately with PostgREST denies. No production environment in this release.
 - **Test:** isolated Postgres for integration tests.
 - No production environment in this release.
 
@@ -1218,8 +1291,8 @@ No `os.getenv`, `load_dotenv`, or direct `import.meta.env` reads outside those m
 ### 18.3 Database connections
 
 - `DATABASE_URL` (direct/session) for Alembic and DDL.
-- `DATABASE_RUNTIME_URL` for the API, using the non-owner `app_runtime` role; use the pooler or a bounded direct pool.
-- Service-role admin client only in CLI/ingest.
+- `DATABASE_RUNTIME_URL` for the API, using the non-owner `app_runtime` role; use the pooler or a bounded direct pool. Per transaction, set `request.jwt.claims` from the verified JWT and `SET LOCAL ROLE authenticated` so `auth.uid()` is valid.
+- `AdminSettings` / service-role admin client only in CLI/ingest; the API process must start without `SUPABASE_SERVICE_ROLE_KEY`.
 - Health check verifies DB connectivity and pgvector availability.
 
 ### 18.4 Deployment and migrations
@@ -1267,11 +1340,12 @@ These are recorded assumptions, not blockers. The plan proceeds with the default
 
 | Assumption | Default |
 | --- | --- |
-| Trial credit amount/provider | Use available credits; record provider and expiry; hard stop at 80%/100% |
-| Demo hosting | Local first; optional free-tier Railway/Supabase |
-| Evaluation size | 60+60; fallback 30+30 if reviewer capacity is tight |
+| Trial credit amount/provider | Use available credits; record provider and expiry; alert at 80%, hard stop at 100% |
+| Demo hosting | Local first; optional free-tier Railway/Supabase; app DB is private-hosted with PostgREST denies |
+| Evaluation size | 20 in-scope + 20 boundary; expand only if reviewer hours are confirmed |
 | Academic-use acknowledgment | Team lead drafts; supervisor acknowledges by Week 2 |
-| Demo-day fallback | Cached validated answers + recorded video, clearly labeled |
+| Pilot | Academic demo only; written supervisor waiver for the client-brief 5-student pilot |
+| Demo-day fallback | Cached validated answers + recorded video, clearly labeled; re-validated against the current revision |
 | Real-student walkthrough | Not part of this release; requires supervisor approval and no data retention |
 | Frontend test policy | Playwright allowed after `frontend/AGENTS.md` amendment |
 | Math dependency | SymPy added to backend dependencies with a written justification |
@@ -1306,6 +1380,12 @@ These are recorded assumptions, not blockers. The plan proceeds with the default
 | `RETRIEVAL_TOP_K` | Candidate count |
 | `RRF_K` | RRF constant (`60`) |
 | `PROMPT_VERSION` | Active prompt version |
+| `JUDGE_MODEL_NAME` | Optional entailment/rubric judge model |
+| `MAX_PROMPT_CHARS` | Max prompt length (`4000`) |
+| `MAX_PHOTO_BYTES` | Max photo size (`10 MB`) |
+| `MAX_AUDIO_SECONDS` | Max push-to-talk audio duration |
+| `MAX_TURNS_PER_MINUTE` | Per-user turn rate limit (`6`) |
+| `MAX_CONCURRENT_TURNS` | Per-user concurrency limit (`1`) |
 | `LOG_LEVEL` | Logging level |
 | `ENVIRONMENT` | `development`, `test`, `demo` |
 
@@ -1346,6 +1426,7 @@ AMBIGUOUS_QUESTION
 MATH_UNVERIFIABLE
 MATH_INCORRECT
 RENDERING_UNSAFE
+SOURCE_WITHDRAWN
 PROVIDER_UNAVAILABLE
 CREDIT_EXHAUSTED
 RATE_LIMITED
@@ -1367,14 +1448,20 @@ data: {"gates":["source","scope","grounding","math_render"]}
 event: data-validation-completed
 data: {"educationalStatus":"accepted"}
 
+event: data-board-updated
+data: {"revision":3,"actions":[...]}
+
 event: text-delta
-data: {"text":"Voici la définition..."}
+data: {"delta":"Voici la définition..."}
 
 event: data-message-final
-data: {"citations":[...],"boardActions":[],"spokenTextFr":"..."}
+data: {"citations":[...],"boardActions":[],"boardRevision":3,"spokenTextFr":"..."}
 
 event: data-turn-completed
 data: {"turnId":"...","usage":{"inputTokens":0,"outputTokens":0,"costUsd":0.0}}
+
+event: data-speech-ready
+data: {"audioUrl":"...","expiresAt":"..."}
 ```
 
 Verify exact event names against the installed AI SDK version during the Week-1 spike.
@@ -1410,8 +1497,7 @@ Before adding any dependency, record the answers to the dependency-policy questi
 
 ## 21. Immediate Week-1 checklist
 
-Status on 24 November 2026: the repository foundation and classroom shell are complete;
-corpus, provider benchmark, and the full turn path remain.
+Status on 24 November 2026: the backend foundation is in place. The earlier shell-build blocker (`.gitignore` ignoring `frontend/src/lib/`, missing `env.ts`) is fixed and a CI workflow was added, but the checks have not been run here; do not mark the foundation complete until CI is green.
 
 - [x] Replace stale SEC content and the SEC download script.
 - [x] Update `README.md`, `Stack.md`, setup guides, and the Windows setup guide.
@@ -1420,12 +1506,97 @@ corpus, provider benchmark, and the full turn path remain.
 - [x] Add SymPy, `pytest-asyncio`, `mypy`, and PyJWT; sync `uv.lock`.
 - [x] Reconcile `backend/.env.example` with `config.py`.
 - [x] Add the `app_runtime` bootstrap script and the service-role import-boundary test.
+- [x] Fix `.gitignore` (`lib/` matched `frontend/src/lib/`), commit `frontend/src/lib/env.ts`, and add a CI workflow running backend and frontend gates.
+- [ ] Split `AdminSettings` from `app/config.py`; remove `SUPABASE_SERVICE_ROLE_KEY` from the API settings.
+- [ ] Implement per-transaction `request.jwt.claims` + `SET LOCAL ROLE authenticated`, grant `auth.uid()`, and add a cross-user RLS isolation test.
 - [ ] Enable `FORCE ROW LEVEL SECURITY` in the first table migration.
+- [ ] Add the `teaching_claims`, `media_assets`, `board_snapshots`, `turn_idempotency`, `budget_ledger`, and `rate_limit_counters` migrations.
 - [ ] Benchmark 20 French math prompts for correctness, latency, cost, and JSON reliability.
 - [ ] Prototype the SSE transport against the installed AI SDK version.
 - [ ] Extract one chapter sample and run the retrieval/RRF spike.
 - [ ] Draft the academic-use note and send it to the supervisor.
 - [ ] Confirm the three chapters and objective coverage with the reviewer.
-- [x] Amend `frontend/AGENTS.md` for Playwright, replace the Vite starter, and scaffold the classroom shell.
+- [x] Amend `frontend/AGENTS.md` for Playwright and replace the Vite starter.
+- [x] Finish the classroom shell: add `frontend/src/lib/env.ts` and the env gate.
 - [x] Add the Windows 11 agent onboarding guide, pin Python 3.12, and pin pnpm 12.18.0.
 - [ ] Create the remaining walking-skeleton path: session → validated turn → SSE → classroom UI.
+- [ ] Get a written supervisor waiver for the client-brief 5-student pilot (D-21).
+
+---
+
+## 22. v0.1.0 decision closure (24 November 2026)
+
+This section records the decisions taken after the plan review and is the implementation contract for Weeks 1–4. Where it conflicts with earlier text, this section wins.
+
+### 22.1 Scope and evaluation
+
+- **Pilot:** academic demo only. The client-brief 5-student pilot is waived in writing by the supervisor; record the waiver in `audit_events` and the final report.
+- **Evaluation:** 20 in-scope + 20 boundary tasks. Expand only if reviewer hours are confirmed. 20+20 is directional evidence; the report states the sample size and confidence limits.
+- **Release gates:** ≥ 90% (18/20) in-scope correct and scoped; 0 unsupported releases on the 20 boundary tasks; 100% citation validity; math-gate catch rate ≥ 90% on the wrong-answer set; false refusals ≤ 10% on in-scope; 10/10 journeys; 20/20 interruptions; 100% cross-user denial; within trial credits with fallback.
+- **Reviewer time:** reserve 4–5 hours for 20+20; do not schedule 60+60 unless extra hours are confirmed.
+
+### 22.2 Schema (normative additions)
+
+New tables (also listed in §5.1):
+
+| Table | Key fields / constraints |
+| --- | --- |
+| `teaching_claims` | `id`; `turn_id`; `step_id`; `claim_id`; `claim_text_fr`; `claim_span_start`; `claim_span_end`; `objective_id`; `math_claim` (`JSONB`); `validation_status`; unique `(turn_id, claim_id)` |
+| `media_assets` | `id`; `student_id`; `session_id`; `turn_id` (nullable); `kind` (`exercise_photo`); `storage_path`; `mime_type`; `byte_size`; `content_hash`; `status` (`uploaded`/`interpreted`/`confirmed`/`deleted`); `created_at`; `expires_at` |
+| `board_snapshots` | `id`; `session_id`; `turn_id`; `revision`; `state` (`JSONB`); `created_at`; unique `(session_id, revision)` |
+| `turn_idempotency` | `id`; `session_id`; `idempotency_key`; `request_hash`; `turn_id`; `expires_at`; unique `(session_id, idempotency_key)` |
+| `budget_ledger` | singleton `id`; `budget_usd`; `reserved_usd`; `spent_usd`; `version`; `updated_at` |
+| `rate_limit_counters` | `id`; `scope` (`user`/`ip`); `subject_id`; `window_start`; `count`; `expires_at`; unique `(scope, subject_id, window_start)` |
+
+Column additions:
+
+- `session_turns`: add `refusal_code`, `message_fr`, `final_payload` (`JSONB`), `created_at`, `processing_started_at`, `expires_at`, `locked_by`. Remove `idempotency_key`/`request_hash` from this table (moved to `turn_idempotency`).
+- `usage_events`: add `source` (`turn`/`ingestion`); make `turn_id` and `student_id` nullable for ingestion rows.
+- `turn_citations`: replace `claim_id` string with `teaching_claim_id` (FK to `teaching_claims`); keep `page_number`, `quote_excerpt`, `quote_start`, `quote_end`.
+
+### 22.3 API (normative additions)
+
+Added endpoints (also in §7.1): `POST /sessions/{id}/media`, `POST /media/{id}/interpret`, `POST /media/{id}/confirm`, `POST /speech/transcribe`, `POST /speech/synthesize`, `GET /sessions/{id}/board`, `GET /sessions/{id}/board/revisions/{revision}`, `GET /exercises/{id}`, `POST /exercises/{id}/hints`.
+
+- Turn request carries `mediaAssetId` and `confirmedExpression` alongside `prompt`, `chapterId`, `objectiveId`, and `options`; all are covered by `request_hash`.
+- Turn response and `message.final` carry `boardRevision`; the SSE sequence adds `board.updated` and `speech.ready`.
+- `GET /exercises` and `GET /exercises/{id}` never return `answer_schema`.
+
+### 22.4 Auth, RLS, and service-role isolation
+
+- Direct SQLAlchemy runtime with the non-owner `app_runtime` role. Per transaction, the API sets `request.jwt.claims` from the verified JWT and `SET LOCAL ROLE authenticated` before queries.
+- Grant `app_runtime` usage on the `auth` schema and execute on `auth.uid()`; otherwise use `current_setting('request.jwt.claims', true)` policies.
+- Enable and `FORCE ROW LEVEL SECURITY` on every `public` table; revoke direct `anon`/`authenticated` table grants so PostgREST cannot read `document_chunks.chunk_text`, `exercises.answer_schema`, or `profiles.role`.
+- Role source is JWT `app_metadata.role`; `profiles.role` is display-only and not an authorization input.
+- `AdminSettings` (with `SUPABASE_SERVICE_ROLE_KEY`) is separate from the API settings; the API process starts without the service key.
+- Tests: cross-user denial through the real DB role and a direct PostgREST attempt; role self-escalation denial; service-role import boundary for the whole request graph.
+
+### 22.5 Claims and math contracts
+
+- `ClaimDraft` carries `objective_id`, `claim_span_start/end`, a `citations` list, and an optional `MathClaim`; connective text outside claim spans is allowed without a citation.
+- `MathClaim` carries `expression_latex`, `variables`, `assumptions`, `expected_form`, and `check` (`simplify`/`solve`/`interval`/`vector`/`property`). SymPy parses from this structure, not free text, in a sandbox with a short timeout and a banned-function allowlist.
+- `BoardAction` carries `action_id`, `object_id`, `author` (`tutor`/`student`), `op`, `payload`, and a session-monotonic `revision`; stale revisions are rejected. Bounds: coordinates `[-10000, 10000]`, ≤ 200 objects, text ≤ 2000 chars.
+- `next_actions` is a list (replaces the earlier `next_action` string).
+
+### 22.6 Hosting, corpus, and copyright
+
+- The app DB and reviewed `document_chunks` are hosted in a private Supabase project; raw PDFs/scans stay local. This is private-hosted, not local-only.
+- Direct reads of `chunk_text` and `answer_schema` are revoked; only FastAPI returns short excerpts (≤ 25 words / ≤ 300 chars).
+- A quote-length check applies to generated `display_text_fr` as well as citations.
+
+### 22.7 Budget, idempotency, and withdrawal
+
+- A singleton `budget_ledger` row is locked `FOR UPDATE` for every reservation/reconciliation; `usage_events.source` records turn vs ingestion.
+- Idempotency keys live in `turn_idempotency` and expire without deleting turn history.
+- Stuck turns use `session_turns.expires_at` + `processing_started_at`/`locked_by` fencing.
+- Withdrawn revisions return `SOURCE_WITHDRAWN`; history stays read-only; cached demo answers are re-validated against the current revision before replay.
+
+### 22.8 Repo and CI fixes
+
+- Fix `.gitignore` so `lib/` no longer matches `frontend/src/lib/`; commit `frontend/src/lib/env.ts`.
+- Add a CI workflow running backend (`ruff`, `mypy`, `pytest`) and frontend (`typecheck`, `lint`, `build`, Playwright smoke) gates.
+- Correct `frontend/src/pages/ClassroomPage.tsx` copy that currently claims the chapters are reviewed and the security controls are live; align with the honest-limitations rule.
+
+### 22.9 Remaining open items
+
+- Actual reviewer hours for 20+20; supervisor pilot waiver; trial-credit amount/expiry; final chapter/objective IDs; Week-1 model benchmark; the AI SDK event-name verification.
