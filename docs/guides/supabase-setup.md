@@ -12,7 +12,7 @@ You need one hosted Supabase project before wiring up `backend/` and `frontend/`
 
 1. Go to [supabase.com](https://supabase.com) and sign up (GitHub or email).
 2. Confirm your email if prompted.
-3. You land in the [dashboard](https://supabase.com/dashboard). The free tier is sufficient for local development and the consented PFE pilot.
+3. You land in the [dashboard](https://supabase.com/dashboard). The free tier is sufficient for the synthetic academic demo (no real-student pilot in `v0.1.0`).
 
 ## 2. Create a project
 
@@ -50,7 +50,7 @@ This app uses email auth only — no Google/SSO.
 
 1. Dashboard → **Authentication** → **Providers**.
 2. Leave **Email** enabled.
-3. For local dev, you may disable **Confirm email** under **Authentication** → **Email** so sign-up works without inbox access (re-enable for the consented student pilot and production).
+3. For local dev, you may disable **Confirm email** under **Authentication** → **Email** so synthetic sign-up works without inbox access (re-enable for any future real-student use, which is out of scope for `v0.1.0`).
 
 ## 5. Private Storage buckets
 
@@ -84,11 +84,11 @@ uv run alembic upgrade head
 
 See [Backend setup](backend-setup.md) for the full Alembic workflow.
 
-## 7. Pilot & data governance reminders
+## 7. Data governance reminders (synthetic demo)
 
 - Raw microphone audio is never persisted in Supabase Storage or Postgres.
-- Student records, exercise photos, and session logs are strictly access-controlled via Supabase Auth + RLS, in line with institutional pilot consent and Moroccan Law 09-08 (CNDP) guidelines.
-- Document and verify your backup/restore procedure (`pg_dump` / Supabase backups) before running the consented student pilot.
+- Synthetic records, exercise photos, and session logs are strictly access-controlled via Supabase Auth + RLS. No real-student pilot, consent collection, or CNDP filing happens in `v0.1.0`.
+- Document and verify your backup/restore procedure (`pg_dump` / Supabase backups) before the demo.
 
 ## Next steps
 

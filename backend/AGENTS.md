@@ -7,7 +7,7 @@ This is the FastAPI service for the **AI Mathematics Tutor** (**MAXI Maths — T
 - Python 3.12+
 - FastAPI + uvicorn
 - Pydantic v2 + `pydantic-settings`
-- **PydanticAI** (`pydantic-ai`) for typed tutor agent orchestration (`TutorAgentDeps`, `TutorStepOutput`)
+- **PydanticAI** (`pydantic-ai`) for typed tutor agent orchestration (`TutorAgentDeps`, `AgentDraftOutput`)
 - OpenAI-compatible SDK (`openai`) behind `providers/` adapters (LLM, Vision/OCR symbol extraction, STT, TTS, embeddings)
 - SymPy for deterministic math checks in the Mathematical & Rendering Safety gate
 - PyJWT + Supabase JWKS for access-token verification
@@ -82,7 +82,8 @@ backend/
 │   ├── planning/
 │   │   └── generator.py        # Deterministic weekly planner
 │   ├── providers/
-│   │   ├── llm.py              # OpenAI-compatible LLM & Vision adapter
+│   │   ├── llm.py              # OpenAI-compatible LLM adapter
+│   │   ├── vision.py           # Vision/OCR symbol extraction
 │   │   ├── embeddings.py       # Embedding adapter
 │   │   └── speech.py           # STT and TTS adapters
 │   ├── budget/

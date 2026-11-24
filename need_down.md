@@ -51,7 +51,7 @@ You need credentials for the following external services before running the full
 | :--- | :--- | :--- |
 | **Supabase** | Auth (email only), Postgres (`pgvector` + French full-text search), Private Storage (`exercise-photos`, `maxi-sources`) | [Supabase Dashboard](https://supabase.com/dashboard) & [docs/guides/supabase-setup.md](docs/guides/supabase-setup.md) |
 | **OpenAI / OpenAI-compatible** | LLM tutoring, Vision/OCR extraction, STT (speech-to-text), TTS (text-to-speech), Embeddings (`vector(1536)`) | [OpenAI API Keys](https://platform.openai.com/api-keys) |
-| **Railway** | Production deployment (FastAPI backend + Vite SPA services) | [Railway Dashboard](https://railway.com) |
+| **Railway / Supabase (optional)** | Demo hosting only; not a production environment in `v0.1.0` | [Railway Dashboard](https://railway.com) |
 
 > [!IMPORTANT]
 > - Use the **direct/session** database connection (`db.<project-ref>.supabase.co:5432`) for `DATABASE_URL` so Alembic can apply migrations, vector extensions, and RLS policies. Do not use the transaction pooler.

@@ -1,6 +1,6 @@
 # Stack
 
-Browser tutor for Moroccan Tronc Commun Scientifique (MAXI Maths). French-first. Backend and frontend are separate Railway services.
+Browser tutor for Moroccan Tronc Commun Scientifique (MAXI Maths). French-first. Local demo first; no production environment in `v0.1.0`.
 
 ## Runtime
 
@@ -67,4 +67,5 @@ Browser tutor for Moroccan Tronc Commun Scientifique (MAXI Maths). French-first.
 
 | Piece | For |
 | --- | --- |
-| Railway | Backend service and frontend service |
+| Local machine | Demo runtime (FastAPI + Vite) |
+| Railway / Supabase (optional free tier) | Demo hosting only; not a production environment |
