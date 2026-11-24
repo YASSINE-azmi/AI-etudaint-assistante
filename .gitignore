@@ -14,10 +14,9 @@
 # ------------------------------------------------------------------------------
 # Documents & Raw MAXI Maths Corpus (Copyright & Privacy Governance)
 # - Raw MAXI Maths PDFs, scans, and extractions remain local and gitignored
-# - Allow repository documentation PDFs (e.g. execution plans, architecture guides)
+# - Allow repository documentation PDFs
 # ------------------------------------------------------------------------------
 *.pdf
-!PFE_Detailed_Execution_Plan.pdf
 !docs/**/*.pdf
 
 # Raw data, downloads, scans & media artifacts
@@ -105,6 +104,12 @@ dist-ssr/
 *.tsbuildinfo
 .eslintcache
 .oxlintcache
+
+# Playwright
+playwright-report/
+blob-report/
+test-results/
+.playwright/
 
 # Package manager logs
 npm-debug.log*

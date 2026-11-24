@@ -12,6 +12,7 @@ This is the React classroom SPA for the **AI Mathematics Tutor** (**MAXI Maths �
 - **Vercel AI SDK UI** (`ai`, `@ai-sdk/react`) for turn state and streaming client behavior (`useChat`).
 - **Excalidraw** (`@excalidraw/excalidraw`) + **KaTeX** (`katex`) for the synchronized shared whiteboard and French mathematical notation rendering.
 - **Web Audio API / `MediaRecorder`** for push-to-talk French audio capture and immediate (`< 500 ms`) local audio interruption.
+- **Playwright** (`@playwright/test`) for end-to-end acceptance tests.
 
 ## Package manager
 
@@ -57,6 +58,8 @@ frontend/
 │   ├── main.tsx
 │   └── index.css          # Tailwind directives + global theme tokens
 ├── index.html
+├── e2e/                    # Playwright journeys and interruption cases
+├── playwright.config.ts
 ├── vite.config.ts
 ├── tsconfig.json
 └── package.json
@@ -88,7 +91,10 @@ Keep imports consistent with the `@/*` alias (e.g. `@/lib/api`, `@/components/ui
 
 ## Testing
 
-**No frontend unit test runner.** Do not write `*.test.ts` / `*.test.tsx` files or introduce vitest, Playwright, or Cypress. Verify the frontend via `pnpm tsc --noEmit`, `pnpm lint`, and manual end-to-end browser verification of the classroom, interruption, photo confirmation, practice, and session-resumption flows.
+- **Playwright** (`@playwright/test`) owns end-to-end acceptance: the 10 scripted journeys, 20 interruption cases, photo confirmation, practice attempts, session save/resume, refusal rendering, and the credit-exhausted fallback. Put specs in `e2e/`; run `pnpm test:e2e`.
+- **No unit test runner by default.** Do not add vitest, Jest, or Cypress unless a component grows logic that Playwright cannot reasonably cover; record the justification in the commit.
+- Type and lint gates: `pnpm typecheck`, `pnpm lint`, `pnpm build`.
+- Capture Playwright traces on failure and attach them to the CI run.
 
 ## Anti-patterns (rejected)
 
@@ -100,3 +106,4 @@ Keep imports consistent with the `@/*` alias (e.g. `@/lib/api`, `@/components/ui
 - Re-implementing a shadcn primitive by hand.
 - Reaching for Next.js, SSR, or any framework that requires a Node server in front of the SPA.
 - Calling AI providers or Supabase Storage service-role endpoints directly from the browser.
+- Adding a unit test runner without a written justification.

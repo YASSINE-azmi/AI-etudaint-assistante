@@ -1,0 +1,64 @@
+from functools import lru_cache
+from typing import Literal
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    """Single source of truth for backend configuration."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
+    environment: Literal["development", "test", "demo"] = "development"
+    log_level: str = "INFO"
+
+    supabase_url: str
+    supabase_anon_key: str
+    supabase_service_role_key: str
+
+    database_url: str
+    database_runtime_url: str
+
+    ai_provider_base_url: str
+    ai_provider_api_key: str
+    llm_model_name: str = "gpt-4.1-mini"
+    embedding_model_name: str = "text-embedding-3-small"
+    embedding_dimensions: int = 1536
+    vision_model_name: str = "gpt-4.1-mini"
+    stt_model_name: str = "gpt-4o-mini-transcribe"
+    tts_model_name: str = "gpt-4o-mini-tts"
+
+    allowed_origins: str = "http://localhost:5173"
+
+    trial_credit_budget_usd: float = Field(default=5.0, ge=0)
+    max_turn_input_tokens: int = Field(default=8000, gt=0)
+    max_turn_output_tokens: int = Field(default=1500, gt=0)
+    turn_timeout_seconds: int = Field(default=20, gt=0)
+    max_turns_per_session: int = Field(default=30, gt=0)
+
+    retrieval_top_k: int = Field(default=12, gt=0)
+    rrf_k: int = Field(default=60, gt=0)
+    prompt_version: str = "v0.1.0"
+
+    @property
+    def cors_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
+
+    @property
+    def supabase_issuer(self) -> str:
+        return f"{self.supabase_url.rstrip('/')}/auth/v1"
+
+    @property
+    def supabase_jwks_url(self) -> str:
+        return f"{self.supabase_issuer}/.well-known/jwks.json"
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()

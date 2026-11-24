@@ -1,13 +1,17 @@
 {
-  "name": "frontend",
+  "name": "ai-math-tutor-frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "packageManager": "pnpm@12.18.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "typecheck": "tsc -b",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.176",
@@ -20,6 +24,7 @@
     "react-router-dom": "^7.18.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@tailwindcss/vite": "^4.3.5",
     "@types/katex": "^0.16.8",
     "@types/node": "^24.19.2",
