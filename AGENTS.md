@@ -2,6 +2,8 @@
 
 This file is the source of truth for any coding agent (Claude Code, Cursor, Codex, etc.) working in this repo. Read it before touching code.
 
+New machine setup on Windows 11: follow [docs/guides/agent-onboarding.md](docs/guides/agent-onboarding.md) before making changes.
+
 ## Product & Scope
 
 This repository implements the **AI Mathematics Tutor** — a browser-based, French-first (Option Française) educational assistant for Moroccan **Tronc Commun Scientifique (TCS)** students, grounded strictly in three reviewed chapters of **MAXI Maths — Tronc Commun Scientifique**.

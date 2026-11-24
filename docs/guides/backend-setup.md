@@ -2,6 +2,8 @@
 
 The **AI Mathematics Tutor** uses a dedicated Python + FastAPI backend to own authentication checks, Tronc Commun Scientifique (TCS) curriculum scoping, hybrid retrieval over published **MAXI Maths** chapters, PydanticAI orchestration, deterministic four-gate validation, whiteboard action sanitization, and speech/vision provider adapters. Keeping this logic behind FastAPI keeps the React classroom SPA thin and prevents AI keys, service-role credentials, or unvalidated math outputs from reaching the browser.
 
+New to the project on Windows 11? Start with [Agent onboarding](agent-onboarding.md), then return here for the backend details.
+
 ## Prerequisites
 
 - Python `3.12+`
@@ -11,11 +13,11 @@ The **AI Mathematics Tutor** uses a dedicated Python + FastAPI backend to own au
 
 ## Init (from `backend/`)
 
+All runtime and dev dependencies are declared in `backend/pyproject.toml`. Sync the lockfile; do not add them ad hoc.
+
 ```bash
 cd backend
 uv sync
-uv add fastapi uvicorn pydantic pydantic-settings httpx structlog openai supabase pydantic-ai sqlalchemy alembic "psycopg[binary]" pgvector
-uv add --dev pytest ruff
 ```
 
 ## Environment configuration
@@ -28,27 +30,32 @@ Copy `backend/.env.example` to `backend/.env` and set:
 | -------- | ------- |
 | `SUPABASE_URL` | Hosted Supabase project URL |
 | `SUPABASE_ANON_KEY` | Supabase anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-only key for privileged writes and private Storage (never expose to frontend) |
-| `DATABASE_URL` | Direct/session Postgres connection string (required for Alembic and SQLAlchemy) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only key for the reviewer CLI and ingestion (never expose to frontend) |
+| `DATABASE_URL` | Direct/session Postgres connection string for Alembic |
+| `DATABASE_RUNTIME_URL` | API connection using the non-owner `app_runtime` role |
 | `AI_PROVIDER_BASE_URL` | OpenAI-compatible base URL |
 | `AI_PROVIDER_API_KEY` | Server-side API key for LLM, Vision/OCR, STT, TTS, and embeddings |
 | `LLM_MODEL_NAME` | Chat/reasoning model identifier |
 | `EMBEDDING_MODEL_NAME` | Embedding model identifier (`vector(1536)`) |
+| `EMBEDDING_DIMENSIONS` | Must match the pgvector column (`1536`) |
 | `ALLOWED_ORIGINS` | Comma-separated CORS origins (e.g. `http://localhost:5173`) |
-| `MONTHLY_BUDGET_CAP_USD` | Server-enforced monthly AI spend cap |
+| `TRIAL_CREDIT_BUDGET_USD` | Global trial-credit budget; hard stop when exhausted |
+| `MAX_TURN_INPUT_TOKENS` / `MAX_TURN_OUTPUT_TOKENS` | Per-turn token limits |
+| `TURN_TIMEOUT_SECONDS` | Hard timeout for a turn |
 | `MAX_TURNS_PER_SESSION` | Per-session turn limit |
+| `RETRIEVAL_TOP_K` / `RRF_K` | Hybrid retrieval parameters |
+| `PROMPT_VERSION` | Active prompt version |
+
+`backend/.env.example` is the canonical list. Keep it in sync with `app/config.py`.
 
 ## Database migrations
 
-Alembic owns database schema changes. SQLAlchemy models live in `backend/app/database/models.py`, and Alembic migrations apply them to Supabase Postgres.
+Alembic owns database schema changes. SQLAlchemy models live in `backend/app/database/models/`, and Alembic migrations apply them to Supabase Postgres.
 
-Initialize Alembic once from `backend/` (if not already initialized):
+Alembic is already initialized in `backend/alembic/`. Import every new model module in
+`app/database/models/__init__.py` so autogenerate sees its metadata.
 
-```bash
-uv run alembic init alembic
-```
-
-Configure `alembic/env.py` to import the app's SQLAlchemy metadata and read `DATABASE_URL` from `app.config.settings`. Always use the **direct/session** Supabase database connection string—not the transaction pooler URL—for migrations.
+`alembic/env.py` reads `DATABASE_URL` from `app.config.get_settings()`. Always use the **direct/session** Supabase database connection string—not the transaction pooler URL—for migrations.
 
 Create a migration after changing SQLAlchemy models:
 
@@ -62,7 +69,8 @@ Always review the generated migration in `backend/alembic/versions/` and add exp
 - `vector(1536)` embedding columns on `document_chunks`
 - Generated French full-text search `tsvector` columns (`to_tsvector('french', chunk_text)`)
 - HNSW and GIN indexes for hybrid retrieval
-- Row-Level Security (RLS) enablement and ownership policies on `tutoring_sessions`, `session_turns`, `board_snapshots`, `media_assets`, `exercise_attempts`, and `study_plans`
+- Row-Level Security (RLS) enablement, `FORCE ROW LEVEL SECURITY`, and ownership policies on `tutoring_sessions`, `session_turns`, `teaching_steps`, `turn_citations`, `exercise_attempts`, `hint_events`, `study_plans`, and `study_tasks`
+- The non-owner `app_runtime` role used by `DATABASE_RUNTIME_URL`
 
 Apply migrations:
 
@@ -109,16 +117,22 @@ uv run python -m ipykernel install --user --name ai-math-tutor-backend --display
 Then notebooks can import backend modules directly:
 
 ```python
-from app.config import settings
+from app.config import get_settings
+
+settings = get_settings()
 ```
 
 ## Checks & tests
 
 ```bash
 cd backend
-uv run ruff check .
-uv run pytest
+uv run ruff check app tests
+uv run mypy app
+uv run python -m pytest
 ```
+
+Use `python -m pytest` on Windows: some Application Control policies block the
+`pytest.exe` console script even when the package imports correctly.
 
 ## Certified MAXI Maths ingestion
 

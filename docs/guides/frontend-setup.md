@@ -2,6 +2,8 @@
 
 The **AI Mathematics Tutor** uses a Vite + React + TypeScript SPA for the interactive Tronc Commun Scientifique (TCS) classroom: French chat transcript, synchronized **Excalidraw + KaTeX** shared whiteboard, push-to-talk audio recording with `< 500 ms` local interruption, exercise photo upload with ambiguous-symbol confirmation, reviewed **MAXI Maths** practice, and weekly study planning.
 
+New to the project on Windows 11? Start with [Agent onboarding](agent-onboarding.md), then return here for the frontend details.
+
 We use a plain Vite SPA rather than Next.js because the app is an authenticated, interactive classroom client that communicates directly with the FastAPI backend—no SSR, server components, or frontend API routes are needed.
 
 ## Prerequisites
@@ -11,15 +13,13 @@ We use a plain Vite SPA rather than Next.js because the app is an authenticated,
 - A configured Supabase project (see [Supabase setup](supabase-setup.md))
 - Running FastAPI backend (see [Backend setup](backend-setup.md))
 
-## Init (from empty `frontend/`)
+## Init
+
+The Vite + React + TypeScript scaffold, Tailwind, routing, and Playwright are already committed. Install the locked dependencies; do not re-run the Vite generator.
 
 ```bash
 cd frontend
-pnpm create vite . --template react-ts
 pnpm install
-pnpm add react-router-dom @supabase/supabase-js ai @ai-sdk/react @excalidraw/excalidraw katex
-pnpm add -D @types/katex tailwindcss @tailwindcss/vite
-pnpm dlx shadcn@latest init
 ```
 
 > **Note:** Check `frontend/AGENTS.md` and the project dependency policy before adding any extra runtime packages.
@@ -48,12 +48,21 @@ pnpm dev
 
 ```bash
 cd frontend
-pnpm tsc --noEmit
+pnpm typecheck
 pnpm lint
+pnpm build
+pnpm test:e2e
 ```
+
+Playwright uses bundled Chromium by default. Install it once with
+`pnpm exec playwright install chromium`, or run against an installed Chrome with
+`PLAYWRIGHT_CHANNEL=chrome pnpm test:e2e` (PowerShell:
+`$env:PLAYWRIGHT_CHANNEL='chrome'; pnpm test:e2e`).
 
 ## Key frontend boundaries
 
-- **Auth & HTTP (`src/lib/supabase.ts`, `src/lib/http.ts`):** All requests to FastAPI (`POST /sessions/{id}/chat/stream`, `POST /sessions/{id}/interrupt`, `POST /sessions/{id}/transcribe`, photo uploads, practice, and study plans) automatically inject `Authorization: Bearer <supabase_access_token>` and support `AbortController` cancellation.
-- **Whiteboard & Voice Sync (`src/components/board/`, `src/components/media/`):** Apply validated tutor `board_actions` to Excalidraw/KaTeX and confirm the updated `board_revision` before playing French TTS audio. Clicking **Stop / Interrupt** must cancel local audio in `< 500 ms` and call `POST /sessions/{id}/interrupt`.
+- **Auth & HTTP (`src/lib/supabase.ts`, `src/lib/http.ts`):** All requests to FastAPI (`POST /api/v1/sessions/{id}/turns`, `POST /api/v1/sessions/{id}/interrupt`, practice, and study plans) inject `Authorization: Bearer <supabase_access_token>` and support `AbortController` cancellation.
+- **Environment gate (`src/lib/env.ts`):** The app renders a setup screen when `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, or `VITE_SUPABASE_ANON_KEY` is missing. No other module reads `import.meta.env`.
+- **Whiteboard & Voice Sync (`src/components/board/`, `src/components/media/`):** Apply validated tutor `board_actions` to Excalidraw/KaTeX and confirm the updated `board_revision` before playing French TTS audio. Clicking **Stop / Interrupt** must cancel local audio in `< 500 ms` and call `POST /api/v1/sessions/{id}/interrupt`.
 - **Photo Symbol Confirmation:** Uploaded exercise photos must go through the symbol-confirmation modal before the confirmed expression is submitted to a tutoring turn.
+- **Acceptance tests (`e2e/`):** Playwright owns the scripted journeys, interruption cases, photo confirmation, practice, session resume, refusal rendering, and credit-exhausted fallback.

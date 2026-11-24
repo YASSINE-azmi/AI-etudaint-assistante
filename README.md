@@ -1,56 +1,93 @@
-# AI etudaint assistante
+# AI Mathematics Tutor
 
-An internal AI chatbot that assiste student of TC scientifique in math from the bock "MAXI tronc commun scientifique" in plain Frensh and get sourced, citable answers.
+A browser-based, French-first mathematics tutor for Moroccan **Tronc Commun Scientifique (TCS)** students, grounded in three reviewed chapters of **MAXI Maths — Tronc Commun Scientifique**.
 
-## The client
+**Current release target:** `v0.1.0` academic demo — synthetic data, trial AI credits, no real student pilot.
 
-**Driftwood Capital** — first year high school in morocco "tronc commun scientifique". Their students spend hours flipping through dense textbook chapters and exercises before they can grasp core concepts or solve problems on their own. AI etudaint assistante handles that heavy lifting so they can skip straight to understanding and practice.
+## Source of truth
 
-Full brief: [docs/client-brief.md](docs/client-brief.md)
+- **Implementation plan:** [docs/implementation-plan.md](docs/implementation-plan.md)
+- **Agent onboarding (Windows 11):** [docs/guides/agent-onboarding.md](docs/guides/agent-onboarding.md)
+- **Client brief:** [docs/client-brief.md](docs/client-brief.md)
+- **Stack:** [Stack.md](Stack.md)
+- **Setup guide:** [need_down.md](need_down.md)
+- **Service guides:** [docs/guides/](docs/guides/)
 
-## Stack
+If any document conflicts with `docs/implementation-plan.md`, the implementation plan wins.
 
-| Layer              | Choice                                               |
-| ------------------ | ---------------------------------------------------- |
-| Backend            | Python + FastAPI                                     |
-| Frontend           | Vite + React SPA + TypeScript                        |
-| Database           | Supabase Postgres (users, chats, documents, chunks)  |
-| Migrations         | SQLAlchemy models + Alembic                          |
-| Retrieval          | Supabase `pgvector` + Postgres full-text search      |
-| Auth               | Supabase Auth (email only)                           |
-| Hosting            | Railway                                              |
-| LLM + embeddings   | OpenAI                                               |
+## Scope in one paragraph
+
+The tutor answers strictly from three approved TCS chapters — *Les ensembles de nombres*, *Calcul vectoriel*, and *Généralités sur les fonctions*. Every teaching step is checked server-side for source validity, scope validity, grounding, and mathematical/rendering safety before it reaches the student. Missing evidence or failed validation produces a refusal or clarification, never an ungrounded answer.
 
 ## Repo layout
 
 ```text
-ai-etudaint-assistante/
-├── AGENTS.md           # agent instructions (read first)
-├── README.md           # this file
-├── data/               # local corpus + download script (payloads gitignored)
+ai-math-tutor/
+├── AGENTS.md                  # agent instructions — read first
+├── README.md                  # this file
+├── Stack.md                   # locked stack
+├── need_down.md               # Windows setup guide
+├── data/                      # local MAXI corpus workspace (payloads gitignored)
 ├── docs/
-│   └── client-brief.md # the client one-pager
-├── backend/            # FastAPI service
-└── frontend/           # React SPA (Vite)
+│   ├── implementation-plan.md # authoritative plan
+│   ├── client-brief.md        # client one-pager
+│   └── guides/                # agent onboarding, backend, frontend, Supabase
+├── backend/                   # FastAPI + PydanticAI service
+└── frontend/                  # React classroom SPA
 ```
 
-## Prerequisites
+## Technology
 
-Install these before setting up `backend/` or `frontend/`:
+| Layer | Choice |
+| --- | --- |
+| Backend | Python 3.12+, FastAPI, PydanticAI, SQLAlchemy, Alembic, SymPy |
+| Frontend | Vite + React 19 + TypeScript + Tailwind + shadcn/ui + Playwright |
+| Database | Supabase Postgres + `pgvector` + French full-text search |
+| Auth | Supabase Auth (email only) |
+| AI | One OpenAI-compatible provider behind server-side adapters |
+| Hosting | Local demo; optional free-tier Railway/Supabase |
 
-| Tool | Version | Used for | Install |
-| ---- | ------- | -------- | ------- |
-| [Python](https://www.python.org/downloads/) | 3.12+ | Backend runtime | OS package manager or python.org |
-| [uv](https://docs.astral.sh/uv/getting-started/installation/) | latest | Backend deps + `data/download.py` | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
-| [Node.js](https://nodejs.org/) | 20+ (LTS) | Frontend toolchain | nodejs.org or `nvm install --lts` |
-| [pnpm](https://pnpm.io/installation) | latest | Frontend package manager | `corepack enable && corepack prepare pnpm@latest --activate` |
+## Local development
 
-You also need accounts/keys for external services once the app is wired up. Start with [docs/guides/supabase-setup.md](docs/guides/supabase-setup.md) (account + project), then create an [OpenAI API key](https://platform.openai.com/api-keys) when the LLM layer is wired up.
+First time on a Windows 11 machine? Follow
+[docs/guides/agent-onboarding.md](docs/guides/agent-onboarding.md) — it covers tool
+installation, credentials, the delivery branch, and the exact verification commands.
 
-## Running locally
+The backend foundation and classroom shell are in place. The corpus, tutoring pipeline,
+persistence, and practice flow land in the following weeks.
 
-To be added during the build. Setup guides:
+```powershell
+# Backend
+cd backend
+Copy-Item .env.example .env
+uv sync
+uv run uvicorn app.main:app --reload
 
-- [Supabase](docs/guides/supabase-setup.md) — account, hosted project (dashboard or CLI)
-- [Backend](docs/guides/backend-setup.md)
-- [Frontend](docs/guides/frontend-setup.md)
+# Frontend (second terminal)
+cd frontend
+Copy-Item .env.example .env
+pnpm install
+pnpm dev
+```
+
+Verification:
+
+```powershell
+cd backend
+uv run ruff check app tests
+uv run mypy app
+uv run python -m pytest
+
+cd ../frontend
+pnpm typecheck
+pnpm lint
+pnpm test:e2e
+```
+
+## Important boundaries
+
+- No 1BAC/2BAC/university content.
+- No continuous listening; push-to-talk is the voice baseline.
+- Raw MAXI Maths PDFs and extracts stay local and gitignored.
+- `SUPABASE_SERVICE_ROLE_KEY` and AI provider keys never reach the frontend.
+- The academic demo does not claim zero hallucinations or validated mastery.

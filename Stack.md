@@ -21,6 +21,8 @@ Browser tutor for Moroccan Tronc Commun Scientifique (MAXI Maths). French-first.
 | pydantic-settings | Env config (`app/config.py`) |
 | PydanticAI | Tutor agent (typed steps, tools, outputs) |
 | OpenAI SDK | LLM, vision/OCR, speech-to-text, text-to-speech, embeddings (behind server adapters) |
+| SymPy | Deterministic math checks in the safety gate |
+| PyJWT | Supabase JWKS access-token verification |
 | httpx | Outbound HTTP |
 | Supabase Python client | Server DB, auth, private storage |
 | SQLAlchemy | Table models |
@@ -28,7 +30,8 @@ Browser tutor for Moroccan Tronc Commun Scientifique (MAXI Maths). French-first.
 | psycopg | Postgres driver |
 | pgvector | Vector columns and similarity search |
 | structlog | Structured logs (PII redacted) |
-| pytest | Tests |
+| pytest + pytest-asyncio | Sync and async tests |
+| mypy | Static type checking |
 | ruff | Lint and format |
 
 ## Frontend
@@ -46,6 +49,7 @@ Browser tutor for Moroccan Tronc Commun Scientifique (MAXI Maths). French-first.
 | Excalidraw | Shared whiteboard |
 | KaTeX | Math notation |
 | oxlint | Lint |
+| Playwright | End-to-end acceptance tests |
 | Web Audio / MediaRecorder | Push-to-talk and instant audio stop (browser APIs) |
 
 ## Data and auth
