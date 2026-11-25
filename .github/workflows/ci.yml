@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   backend:
-    name: Backend — lint, format, type, test
+    name: Backend checks
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -54,7 +54,7 @@ jobs:
         run: uvx pip-audit -r requirements.txt
 
   frontend:
-    name: Frontend — typecheck, lint, build, Playwright
+    name: Frontend checks
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
@@ -109,7 +109,7 @@ jobs:
           retention-days: 7
 
   security:
-    name: Security — secrets scan
+    name: Security scan
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
