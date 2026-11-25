@@ -10,7 +10,7 @@ This is the React classroom SPA for the **AI Mathematics Tutor** (**MAXI Maths �
 - **React Router** for routing (Classroom, Practice, Study Plan, Session History).
 - **`@supabase/supabase-js`** for auth (email only — no Google sign-in, no SSO providers).
 - **Vercel AI SDK UI** (`ai`, `@ai-sdk/react`) for turn state and streaming client behavior (`useChat`).
-- **Excalidraw** (`@excalidraw/excalidraw`) + **KaTeX** (`katex`) for the synchronized shared whiteboard and French mathematical notation rendering.
+- **KaTeX** (`katex`) for French mathematical notation rendering in the classroom transcript.
 - **Web Audio API / `MediaRecorder`** for push-to-talk French audio capture and immediate (`< 500 ms`) local audio interruption.
 - **Playwright** (`@playwright/test`) for end-to-end acceptance tests.
 
@@ -50,7 +50,6 @@ frontend/
 │   ├── components/
 │   │   ├── ui/            # shadcn primitives
 │   │   ├── chat/          # Transcript, MAXI Maths citations, excerpts & refusal banners
-│   │   ├── board/         # Excalidraw + KaTeX wrapper, board_actions & board_revision sync
 │   │   └── media/         # Push-to-talk recorder, <500ms audio stop & photo symbol modal
 │   ├── lib/               # Framework-agnostic helpers (env, supabase, http, api, auth)
 │   ├── pages/             # Route-level components (classroom/, practice, study plan, history)
@@ -85,7 +84,7 @@ Keep imports consistent with the `@/*` alias (e.g. `@/lib/api`, `@/components/ui
 - Talks to the FastAPI backend over JSON/streaming. URL comes from `VITE_API_BASE_URL`.
 - Always use `api.get/post/put/patch/delete` from `@/lib/api` — it handles base URL, JSON, Supabase bearer token, `AbortController` timeouts/cancellation, and typed `ApiError`s (including `isNetworkError`).
 - Auth is Supabase email. The bearer token is injected automatically via `src/lib/http.ts` and the AI SDK `DefaultChatTransport`; never thread tokens through component props.
-- **Board-before-speech sync:** Apply validated `board_actions` to Excalidraw/KaTeX and confirm the updated `board_revision` before playing French TTS audio.
+- **Validated-content-before-speech:** Render the validated message and KaTeX math before playing French TTS audio. Never narrate content that is not visible.
 - **Immediate interruption:** Clicking **Stop / Interrupt** must cancel local audio in `< 500 ms`, abort the active stream, and call `POST /sessions/{id}/interrupt` so stale `turnId` events are rejected.
 - **Photo symbol confirmation:** Uploaded exercise photos must pass through the ambiguous-symbol confirmation dialog before tutoring begins.
 

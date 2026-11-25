@@ -1,6 +1,6 @@
 # Backend setup
 
-The **AI Mathematics Tutor** uses a dedicated Python + FastAPI backend to own authentication checks, Tronc Commun Scientifique (TCS) curriculum scoping, hybrid retrieval over published **MAXI Maths** chapters, PydanticAI orchestration, deterministic four-gate validation, whiteboard action sanitization, and speech/vision provider adapters. Keeping this logic behind FastAPI keeps the React classroom SPA thin and prevents AI keys, service-role credentials, or unvalidated math outputs from reaching the browser.
+The **AI Mathematics Tutor** uses a dedicated Python + FastAPI backend to own authentication checks, Tronc Commun Scientifique (TCS) curriculum scoping, hybrid retrieval over published **MAXI Maths** chapters, PydanticAI orchestration, deterministic four-gate validation, math/rendering safety checks, and speech/vision provider adapters. Keeping this logic behind FastAPI keeps the React classroom SPA thin and prevents AI keys, service-role credentials, or unvalidated math outputs from reaching the browser.
 
 New to the project on Windows 11? Start with [Agent onboarding](agent-onboarding.md), then return here for the backend details.
 

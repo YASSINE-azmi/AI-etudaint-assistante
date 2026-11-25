@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.176",
-    "@excalidraw/excalidraw": "^0.18.1",
     "@supabase/supabase-js": "^2.119.0",
     "ai": "^7.0.172",
     "katex": "^0.19.1",

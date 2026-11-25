@@ -10,14 +10,14 @@ This repository implements the **AI Mathematics Tutor** — a browser-based, Fre
 
 - **Zero ungrounded fallback:** Missing corpus evidence or failed validation must trigger a clear refusal or clarification request, never an ungrounded generative answer.
 - **Strict TCS scope:** Only approved **MAXI Maths (TCS)** chapters and objectives are in scope. Never use 1BAC, 2BAC, or university theorems.
-- **Four-Gate Validation:** Every teaching step is validated server-side for Source Validity, Scope Validity, Grounding Sufficiency, and Mathematical & Board Safety before reaching the student.
+- **Four-Gate Validation:** Every teaching step is validated server-side for Source Validity, Scope Validity, Grounding Sufficiency, and Mathematical & Rendering Safety before reaching the student.
 - **Copyright & Privacy:** Raw **MAXI Maths** PDFs/scans remain local and gitignored (`data/`). Raw microphone audio is never persisted. Student records and exercise photos are access-controlled via Supabase Auth, RLS, and private Storage.
 
 ## Stack
 
 - **Backend:** Python 3.12+ + FastAPI + PydanticAI
-- **Frontend:** Vite + React SPA + TypeScript + Tailwind CSS + `shadcn/ui` + Excalidraw + KaTeX + Vercel AI SDK UI
-- **Database & Storage:** Supabase Postgres (profiles, TCS curriculum/revisions, chunks, tutoring sessions, board snapshots, media assets, practice, study plans) + Supabase Private Storage
+- **Frontend:** Vite + React SPA + TypeScript + Tailwind CSS + `shadcn/ui` + KaTeX + Vercel AI SDK UI
+- **Database & Storage:** Supabase Postgres (profiles, TCS curriculum/revisions, chunks, tutoring sessions, media assets, practice, study plans) + Supabase Private Storage
 - **Migrations:** SQLAlchemy models + Alembic from the backend
 - **Retrieval:** Supabase `pgvector` + Postgres French full-text search (`to_tsvector('french', ...)`) + RRF fusion
 - **Auth:** Supabase Auth (email only)
@@ -44,8 +44,8 @@ ai-math-tutor/
 
 OK to depend on:
 
-- Things that are genuinely hard to get right (HTTP clients, ASGI servers, SQL drivers, parsers, LLM/agent SDKs, ORM, migrations, auth SDKs, math/whiteboard renderers).
-- The declared stack (FastAPI, PydanticAI, React, Vite, Supabase clients, OpenAI SDK, Excalidraw, KaTeX, Vercel AI SDK UI, etc.).
+- Things that are genuinely hard to get right (HTTP clients, ASGI servers, SQL drivers, parsers, LLM/agent SDKs, ORM, migrations, auth SDKs, math renderers).
+- The declared stack (FastAPI, PydanticAI, React, Vite, Supabase clients, OpenAI SDK, KaTeX, Vercel AI SDK UI, etc.).
 
 Not OK:
 
