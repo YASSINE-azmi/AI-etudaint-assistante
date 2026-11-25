@@ -46,7 +46,6 @@ Browser tutor for Moroccan Tronc Commun Scientifique (MAXI Maths). French-first.
 | shadcn/ui | UI primitives |
 | `@supabase/supabase-js` | Email login and session token |
 | Vercel AI SDK (`ai`, `@ai-sdk/react`) | Chat turns and streaming (`useChat`) |
-| Excalidraw | Shared whiteboard |
 | KaTeX | Math notation |
 | oxlint | Lint |
 | Playwright | End-to-end acceptance tests |
@@ -56,7 +55,7 @@ Browser tutor for Moroccan Tronc Commun Scientifique (MAXI Maths). French-first.
 
 | Piece | For |
 | --- | --- |
-| Supabase Postgres | Profiles, curriculum, chunks, sessions, board snapshots, practice, study plans |
+| Supabase Postgres | Profiles, curriculum, chunks, sessions, practice, study plans |
 | pgvector | Semantic search over published MAXI Maths chunks |
 | Postgres French full-text (`to_tsvector('french', …)`) | Keyword search; fused with vectors by Reciprocal Rank Fusion |
 | Supabase Auth | Email-only login |

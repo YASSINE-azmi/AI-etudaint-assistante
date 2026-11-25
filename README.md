@@ -7,11 +7,13 @@ A browser-based, French-first mathematics tutor for Moroccan **Tronc Commun Scie
 ## Source of truth
 
 - **Implementation plan:** [docs/implementation-plan.md](docs/implementation-plan.md)
+- **Team execution plans:** [Imran](docs/team/member-a.md) · [Yassine](docs/team/member-b.md) · [Mohamed](docs/team/member-c.md)
 - **Agent onboarding (Windows 11):** [docs/guides/agent-onboarding.md](docs/guides/agent-onboarding.md)
 - **Client brief:** [docs/client-brief.md](docs/client-brief.md)
 - **Stack:** [Stack.md](Stack.md)
 - **Setup guide:** [need_down.md](need_down.md)
 - **Service guides:** [docs/guides/](docs/guides/)
+- **CI/CD & deployment:** [docs/guides/deployment.md](docs/guides/deployment.md)
 
 If any document conflicts with `docs/implementation-plan.md`, the implementation plan wins.
 
@@ -31,6 +33,7 @@ ai-math-tutor/
 ├── docs/
 │   ├── implementation-plan.md # authoritative plan
 │   ├── client-brief.md        # client one-pager
+│   ├── team/                  # Imran / Yassine / Mohamed execution plans
 │   └── guides/                # agent onboarding, backend, frontend, Supabase
 ├── backend/                   # FastAPI + PydanticAI service
 └── frontend/                  # React classroom SPA

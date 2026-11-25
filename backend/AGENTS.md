@@ -54,14 +54,13 @@ backend/
 │   │   ├── errors.py           # Stable error envelopes
 │   │   └── middleware.py       # Request IDs and request-scoped logging
 │   ├── classroom/
-│   │   ├── engine.py           # Turn lifecycle, cancellation, board revisioning
+│   │   ├── engine.py           # Turn lifecycle and cancellation
 │   │   ├── streaming.py        # AI SDK-compatible SSE parts
-│   │   ├── idempotency.py      # Idempotency keys and request hashes
-│   │   └── board_validator.py  # Board action allowlist and bounds
+│   │   └── idempotency.py      # Idempotency keys and request hashes
 │   ├── assistant/
 │   │   ├── agent.py            # PydanticAI tutor agent definition
 │   │   ├── deps.py             # TutorAgentDeps (student, session, scope, retriever, validator)
-│   │   ├── contracts.py        # Draft claims, steps, citations, board actions
+│   │   ├── contracts.py        # Draft claims, steps, and citations
 │   │   ├── prompts.py          # Versioned prompt constants
 │   │   └── instructions.md     # French-first TCS pedagogical rules & refusal contract
 │   ├── retrieval/
@@ -73,7 +72,7 @@ backend/
 │   │   ├── scope_gate.py       # Gate 2: chapter/objective coverage
 │   │   ├── grounding_gate.py   # Gate 3: quote match and claim coverage
 │   │   ├── math_gate.py        # Gate 4a: SymPy and rubric verification
-│   │   ├── render_gate.py      # Gate 4b: KaTeX and board safety
+│   │   ├── render_gate.py      # Gate 4b: KaTeX and rendering safety
 │   │   ├── refusal.py          # Stable French refusal templates
 │   │   └── pipeline.py         # Ordered gate execution
 │   ├── practice/
@@ -132,7 +131,7 @@ backend/
 - Integration tests go behind `@pytest.mark.integration` and may require live AI provider / Supabase credentials.
 - Tests live next to what they test (`retrieval/retriever.py` → `tests/retrieval/test_retriever.py`).
 - Run `uv run ruff check app tests`, `uv run mypy app`, and `uv run python -m pytest`. The `python -m` form avoids Windows Application Control policies that block the console script.
-- Required test coverage: certified ingestion logic, scoped hybrid retrieval, citation extraction, Four-Gate validation (`validation/pipeline.py`), board-action sanitization (`classroom/board_validator.py`), turn interruption (`CANCELLED` state), and the service-role import boundary.
+- Required test coverage: certified ingestion logic, scoped hybrid retrieval, citation extraction, Four-Gate validation (`validation/pipeline.py`), math/rendering safety (`validation/render_gate.py`), turn interruption (`CANCELLED` state), and the service-role import boundary.
 
 ## Anti-patterns (rejected)
 

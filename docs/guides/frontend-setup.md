@@ -1,6 +1,6 @@
 # Frontend setup
 
-The **AI Mathematics Tutor** uses a Vite + React + TypeScript SPA for the interactive Tronc Commun Scientifique (TCS) classroom: French chat transcript, synchronized **Excalidraw + KaTeX** shared whiteboard, push-to-talk audio recording with `< 500 ms` local interruption, exercise photo upload with ambiguous-symbol confirmation, reviewed **MAXI Maths** practice, and weekly study planning.
+The **AI Mathematics Tutor** uses a Vite + React + TypeScript SPA for the interactive Tronc Commun Scientifique (TCS) classroom: French chat transcript with KaTeX math rendering, push-to-talk audio recording with `< 500 ms` local interruption, exercise photo upload with ambiguous-symbol confirmation, reviewed **MAXI Maths** practice, and weekly study planning.
 
 New to the project on Windows 11? Start with [Agent onboarding](agent-onboarding.md), then return here for the frontend details.
 
@@ -63,6 +63,6 @@ Playwright uses bundled Chromium by default. Install it once with
 
 - **Auth & HTTP (`src/lib/supabase.ts`, `src/lib/http.ts`):** All requests to FastAPI (`POST /api/v1/sessions/{id}/turns`, `POST /api/v1/sessions/{id}/interrupt`, practice, and study plans) inject `Authorization: Bearer <supabase_access_token>` and support `AbortController` cancellation.
 - **Environment gate (`src/lib/env.ts`):** The app renders a setup screen when `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, or `VITE_SUPABASE_ANON_KEY` is missing. No other module reads `import.meta.env`.
-- **Whiteboard & Voice Sync (`src/components/board/`, `src/components/media/`):** Apply validated tutor `board_actions` to Excalidraw/KaTeX and confirm the updated `board_revision` before playing French TTS audio. Clicking **Stop / Interrupt** must cancel local audio in `< 500 ms` and call `POST /api/v1/sessions/{id}/interrupt`.
+- **Validated Math & Voice Sync (`src/components/media/`, KaTeX in the transcript):** Render the validated text and math before playing French TTS audio. Clicking **Stop / Interrupt** must cancel local audio in `< 500 ms` and call `POST /api/v1/sessions/{id}/interrupt`.
 - **Photo Symbol Confirmation:** Uploaded exercise photos must go through the symbol-confirmation modal before the confirmed expression is submitted to a tutoring turn.
 - **Acceptance tests (`e2e/`):** Playwright owns the scripted journeys, interruption cases, photo confirmation, practice, session resume, refusal rendering, and credit-exhausted fallback.

@@ -3,7 +3,7 @@
 The **AI Mathematics Tutor** uses Supabase for:
 
 - **Auth:** Email sign-in only (students, mathematics reviewers, and admins).
-- **Postgres (`pgvector` + French full-text search):** Student profiles, TCS curriculum chapters/objectives, immutable **MAXI Maths** `source_revisions`, `document_chunks` (`vector(1536)` + `tsvector`), `tutoring_sessions`, `session_turns`, `turn_citations`, `board_snapshots`, `media_assets`, `exercises`, `exercise_attempts`, and `study_plans`.
+- **Postgres (`pgvector` + French full-text search):** Student profiles, TCS curriculum chapters/objectives, immutable **MAXI Maths** `source_revisions`, `document_chunks` (`vector(1536)` + `tsvector`), `tutoring_sessions`, `session_turns`, `turn_citations`, `media_assets`, `exercises`, `exercise_attempts`, and `study_plans`.
 - **Private Storage:** Student-uploaded exercise photos and restricted **MAXI Maths** source materials (accessed exclusively via short-lived signed URLs).
 
 You need one hosted Supabase project before wiring up `backend/` and `frontend/`.
@@ -70,7 +70,7 @@ Alembic migrations create and update:
 - `profiles`, `curriculum_chapters`, and `curriculum_objectives` (TCS scope)
 - `source_documents`, `source_revisions`, and `document_chunks` (`vector(1536)` + generated `to_tsvector('french', chunk_text)`)
 - HNSW and GIN indexes for scoped hybrid retrieval
-- `tutoring_sessions`, `session_turns`, `turn_citations`, and `board_snapshots`
+- `tutoring_sessions`, `session_turns`, and `turn_citations`
 - `media_assets`, `exercises`, `exercise_attempts`, and `study_plans`
 - Row-Level Security (RLS) policies enforcing student ownership and cross-user isolation
 
@@ -93,4 +93,4 @@ See [Backend setup](backend-setup.md) for the full Alembic workflow.
 ## Next steps
 
 - [Backend setup](backend-setup.md) — Python/FastAPI service, PydanticAI, and Alembic migrations
-- [Frontend setup](frontend-setup.md) — React + Excalidraw/KaTeX classroom SPA
+- [Frontend setup](frontend-setup.md) — React + KaTeX classroom SPA

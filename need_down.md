@@ -116,7 +116,7 @@ Use `python -m pytest` on Windows when Application Control blocks the `pytest.ex
 
 ## 4. Frontend Setup (`frontend/`)
 
-**Declared Stack:** Plain React 19 SPA (Vite + TypeScript), React Router, Tailwind CSS, `shadcn/ui`, `@supabase/supabase-js`, Vercel AI SDK UI (`ai`, `@ai-sdk/react`), **Excalidraw** (`@excalidraw/excalidraw`), **KaTeX** (`katex`), **Playwright** (`@playwright/test`), Web Audio API / `MediaRecorder`.
+**Declared Stack:** Plain React 19 SPA (Vite + TypeScript), React Router, Tailwind CSS, `shadcn/ui`, `@supabase/supabase-js`, Vercel AI SDK UI (`ai`, `@ai-sdk/react`), **KaTeX** (`katex`) for math notation, **Playwright** (`@playwright/test`), Web Audio API / `MediaRecorder`.
 
 > [!NOTE]
 > - This project enforces **`pnpm` only** (do not use `npm` or `yarn`).

@@ -5,18 +5,28 @@ on:
     branches: ['master', 'grunt']
   pull_request:
 
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   backend:
-    name: Backend (ruff, mypy, pytest)
+    name: Backend checks
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
 
       - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
 
       - uses: actions/setup-python@v5
         with:
@@ -24,27 +34,32 @@ jobs:
 
       - name: Install dependencies
         run: uv sync --frozen
-        working-directory: backend
 
       - name: Lint
         run: uv run ruff check app tests alembic
-        working-directory: backend
 
       - name: Format check
         run: uv run ruff format --check app tests alembic
-        working-directory: backend
 
       - name: Type check
         run: uv run mypy app
-        working-directory: backend
 
-      - name: Test
-        run: uv run python -m pytest
-        working-directory: backend
+      - name: Unit tests (no network / no DB)
+        run: uv run python -m pytest -m "not integration"
+
+      - name: Export locked requirements for audit
+        run: uv export --frozen --no-dev --no-hashes --no-emit-project -o requirements.txt
+
+      - name: Audit Python dependencies
+        run: uvx pip-audit -r requirements.txt
 
   frontend:
-    name: Frontend (typecheck, lint, build, Playwright)
+    name: Frontend checks
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
 
@@ -60,24 +75,49 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        working-directory: frontend
+
+      - name: Audit JS dependencies
+        run: pnpm audit --audit-level high
 
       - name: Type check
         run: pnpm typecheck
-        working-directory: frontend
 
       - name: Lint
         run: pnpm lint
-        working-directory: frontend
 
       - name: Build
         run: pnpm build
-        working-directory: frontend
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml') }}
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
-        working-directory: frontend
 
       - name: E2E smoke
         run: pnpm test:e2e
-        working-directory: frontend
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          retention-days: 7
+
+  security:
+    name: Security scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for leaked secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

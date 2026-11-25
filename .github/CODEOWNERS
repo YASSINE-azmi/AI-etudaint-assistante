@@ -1,0 +1,6 @@
+# Code owners
+#
+# The team leader owns all files and must approve every change to `master`.
+# This pairs with the "Protect master" ruleset (require code owner review),
+# so a teammate's PR cannot merge without the leader's approval.
+* @YASSINE-azmi
