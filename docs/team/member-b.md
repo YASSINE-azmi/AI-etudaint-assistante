@@ -1,6 +1,6 @@
-# Member B — Teaching, Retrieval, Validation, Evaluation
+# Yassine — Teaching, Retrieval, Validation, Evaluation
 
-> Replace “Member B” with the actual name when distributing this file.
+> **Member:** Yassine.
 >
 > **Role source:** `docs/implementation-plan.md` §17.2 RACI.
 > **Read first:** `AGENTS.md`, `backend/AGENTS.md`, and the implementation plan.
@@ -14,7 +14,7 @@
 | --- | --- |
 | Accountable for | Teaching/retrieval/validation/evaluation |
 | Responsible for | Corpus mapping, hybrid retrieval, RRF, sufficiency, PydanticAI tutor, prompts, four gates, SymPy/rubric math checks, exercise evaluator, planner rules, evaluation harness |
-| Supports | Member A on citations, refusals, practice, and planning; Member C on retrieval schema, ingestion, and turn-engine integration |
+| Supports | Imran on citations, refusals, practice, and planning; Mohamed on retrieval schema, ingestion, and turn-engine integration |
 | Not responsible for | React UI, database migrations, auth/RLS, deployment, jobs, Playwright infrastructure |
 | Main paths | `backend/app/retrieval/`, `assistant/`, `validation/`, `practice/`, `planning/`, `backend/ingest/`, `backend/tests/` |
 | Main interfaces | Published chunks, retrieval results, validated steps, citations, refusal codes, evaluator results, planner inputs |
@@ -37,17 +37,17 @@
 
 | When | From | To | Artifact |
 | --- | --- | --- | --- |
-| Week 2 | B | A + C | Draft output, citation, refusal, and SSE message shapes |
-| Week 2 | B + reviewer | Team | Coverage matrix and academic-use input |
-| Week 3 | B | C | Retrieval schema requirements: chunks, objectives, indexes, search text |
-| Week 5 | B + reviewer | C | Publish/withdraw CLI requirements and sample published content |
-| Week 6 | B | C + A | Validated-step payload and gate status contract |
-| Week 7 | B | A + C | Photo symbol-confirmation contract and math-gate behavior |
-| Week 8 | B | C + A | Math/rendering gate results and stale-turn behavior |
-| Week 9 | B | C + A | Exercise evaluator contract and error categories |
-| Week 10 | B | C + A | Planner inputs, constraints, and tie-break rules |
-| Week 13 | B | All | Evaluation results and triage list |
-| Week 15 | B | All | Teaching/validation/evaluation report sections and demo evidence |
+| Week 2 | Yassine | Imran + Mohamed | Draft output, citation, refusal, and SSE message shapes |
+| Week 2 | Yassine + reviewer | Team | Coverage matrix and academic-use input |
+| Week 3 | Yassine | Mohamed | Retrieval schema requirements: chunks, objectives, indexes, search text |
+| Week 5 | Yassine + reviewer | Mohamed | Publish/withdraw CLI requirements and sample published content |
+| Week 6 | Yassine | Mohamed + Imran | Validated-step payload and gate status contract |
+| Week 7 | Yassine | Imran + Mohamed | Photo symbol-confirmation contract and math-gate behavior |
+| Week 8 | Yassine | Mohamed + Imran | Math/rendering gate results and stale-turn behavior |
+| Week 9 | Yassine | Mohamed + Imran | Exercise evaluator contract and error categories |
+| Week 10 | Yassine | Mohamed + Imran | Planner inputs, constraints, and tie-break rules |
+| Week 13 | Yassine | All | Evaluation results and triage list |
+| Week 15 | Yassine | All | Teaching/validation/evaluation report sections and demo evidence |
 
 If a contract is missing, fail closed and mark the gap. Do not let the UI or provider fill it with invented behavior.
 
@@ -58,7 +58,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 **Week 1**
 - [ ] Benchmark 20 French math prompts for correctness, latency, cost, and JSON reliability.
 - [ ] Record the candidate model, provider, prompt version, and failure modes.
-- [ ] Prototype the SSE turn contract with C; agree on final-only text and failure events.
+- [ ] Prototype the SSE turn contract with Mohamed; agree on final-only text and failure events.
 - [ ] Extract one chapter sample and run the retrieval/RRF spike.
 - [ ] Draft the evaluation rubric with the mathematics reviewer.
 - [ ] Read plan §8, §9, §10, and §16.
@@ -95,7 +95,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 ### Weeks 5–6 — Corpus, agent, and four gates
 
 **Week 5**
-- [ ] Build the ingestion pipeline with C: extract, normalize, chunk, map objectives, and publish.
+- [ ] Build the ingestion pipeline with Mohamed: extract, normalize, chunk, map objectives, and publish.
 - [ ] Implement the reviewer workflow: draft → provenance → normalize → map → review → approve → publish.
 - [ ] Implement publication checks: academic-use note, reviewer sign-off, objective mapping, math notation, retrieval tests, embeddings, content hash.
 - [ ] Implement withdrawal semantics: exclude future retrieval, preserve historical citations, flag dependent exercises.
@@ -115,17 +115,17 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 ### Weeks 7–8 — Photos, rendering safety, and adversarial behavior
 
 **Week 7**
-- [ ] Define the photo symbol-confirmation contract with A: raw image → extracted symbols → confirmed expression.
+- [ ] Define the photo symbol-confirmation contract with Imran: raw image → extracted symbols → confirmed expression.
 - [ ] Add math-gate checks for the confirmed expression.
 - [ ] Test ambiguous symbols, unsupported notation, and unsafe input.
-- [ ] Review the STT/TTS behavior with C; keep voice push-to-talk only.
+- [ ] Review the STT/TTS behavior with Mohamed; keep voice push-to-talk only.
 - [ ] Add tests that raw OCR output never reaches the tutor.
 
 **Week 8**
-- [ ] Integrate the gates into the turn engine with C.
-- [ ] Validate math and rendering payloads with A and C: KaTeX allowlist, length bounds, and no raw HTML, URLs, or scripts.
+- [ ] Integrate the gates into the turn engine with Mohamed.
+- [ ] Validate math and rendering payloads with Imran and Mohamed: KaTeX allowlist, length bounds, and no raw HTML, URLs, or scripts.
 - [ ] Add adversarial tests: direct prompt injection, document injection, photo injection, forged IDs.
-- [ ] Test cancellation and stale `turnId` behavior with A/C.
+- [ ] Test cancellation and stale `turnId` behavior with Imran/Mohamed.
 - [ ] Verify that a failed gate produces a refusal, not a partial answer.
 - [ ] Record gate pass/fail telemetry for the evaluation.
 
@@ -147,7 +147,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 - [ ] Define planner inputs and constraints: availability, target hours, prerequisites, weak areas, 45-minute blocks, breaks, week start, timezone.
 - [ ] Implement deterministic tie-break rules and regeneration behavior.
 - [ ] Add planner tests for no availability, overlaps, DST, and midnight.
-- [ ] Hand planner contracts to A and C.
+- [ ] Hand planner contracts to Imran and Mohamed.
 
 **Exit evidence:** evaluator covers all four types; progress and planner rules are deterministic and tested.
 
@@ -166,7 +166,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 - [ ] Review three-chapter coverage with the reviewer.
 - [ ] Freeze the evaluation dataset and rubric version.
 - [ ] Produce the freeze note: known failures, accepted risks, and release blockers.
-- [ ] Hand the frozen contracts to A and C.
+- [ ] Hand the frozen contracts to Imran and Mohamed.
 
 **Exit evidence:** evaluation harness, frozen corpus/prompts/gates, and a release-blocker list.
 
@@ -193,7 +193,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 **Week 15**
 - [ ] Write the teaching/validation/evaluation report sections: corpus, retrieval, four gates, math verification, metrics, limitations.
 - [ ] Prepare the demo evidence: accepted answer, citation, refusal, insufficient evidence, math refusal, practice evaluation.
-- [ ] Rehearse the live demo with A and C.
+- [ ] Rehearse the live demo with Imran and Mohamed.
 - [ ] Prepare the fallback evidence for provider failure or credit exhaustion.
 - [ ] Update the known-issues list.
 
@@ -259,5 +259,5 @@ Every week:
 - [ ] Extract one chapter sample and run the RRF spike.
 - [ ] Draft the evaluation rubric.
 - [ ] Book the first reviewer session.
-- [ ] Draft the output/citation/refusal contract for A and C.
+- [ ] Draft the output/citation/refusal contract for Imran and Mohamed.
 - [ ] Post the first Friday evidence note.

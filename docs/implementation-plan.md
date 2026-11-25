@@ -143,7 +143,7 @@ If the 16-week schedule slips, reduce in this order. Never weaken authorization,
 | D-14 | FORCE RLS + non-owner app role; service role only in admin/ingest | True application + database authorization |
 | D-15 | SSE with AI SDK-compatible parts; final validated message only | No unvalidated token streaming; fits `useChat` transport |
 | D-16 | Trial credits only; no per-student cap | Global credit ledger, per-turn cap, hard stop, recorded fallback |
-| D-17 | Developer A owns frontend/classroom; Playwright added | Clear ownership and executable acceptance evidence |
+| D-17 | Imran owns frontend/classroom; Playwright added | Clear ownership and executable acceptance evidence |
 | D-18 | `frontend/AGENTS.md` amended for Playwright | Plan and repo policy must not conflict |
 | D-19 | Local demo + optional free-tier deployment; recorded fallback | No paid hosting budget; p95 is best-effort |
 | D-20 | Use PDF scope-reduction order after voice | Simplify diagrams, planning, exercise breadth, photo conditions |
@@ -958,7 +958,7 @@ Edge cases:
 
 ### 13.1 Ownership and routes
 
-- Owner: Developer A.
+- Owner: Imran.
 - Routes: `/login`, `/` (classroom), `/practice`, `/study-plan`, `/history`, `/session/:id`.
 - Replace the Vite starter with the classroom shell.
 
@@ -1193,11 +1193,17 @@ Release gates:
 
 | Workstream | Accountable | Responsible |
 | --- | --- | --- |
-| Classroom/frontend/photos/Playwright | Developer A | Developer A |
-| Teaching/retrieval/validation/evaluation | Developer B | Developer B |
-| Platform/auth/backend/DB/jobs/deployment/planning | Developer C | Developer C |
-| Curriculum/math/exercises/grading | Mathematics reviewer | Reviewer + Developer B |
+| Classroom/frontend/photos/Playwright | Imran | Imran |
+| Teaching/retrieval/validation/evaluation | Yassine | Yassine |
+| Platform/auth/backend/DB/jobs/deployment/planning | Mohamed | Mohamed |
+| Curriculum/math/exercises/grading | Mathematics reviewer | Reviewer + Yassine |
 | Academic/institutional/rights acknowledgment | Academic supervisor | Team lead |
+
+Per-member execution plans (weekly tasks, handoffs, tests, report sections, and demo duties):
+
+- [Imran — frontend, classroom, photos, Playwright](team/member-a.md)
+- [Yassine — teaching, retrieval, validation, evaluation](team/member-b.md)
+- [Mohamed — platform, auth, backend, database, jobs, deployment, planning](team/member-c.md)
 
 ### 17.3 Critical path
 
@@ -1223,14 +1229,14 @@ If not, reduce scope and record the decision.
 | Risk | Mitigation | Owner |
 | --- | --- | --- |
 | Rights concern | Local-only corpus, short quotes, academic-use note, no public distribution | Team lead |
-| Reviewer capacity | Corpus first; 20+20 acceptance; freeze unreviewed coverage; expand only if hours confirmed | Developer B |
-| Trial credits exhausted | Global ledger, per-turn cap, hard stop, cached/recorded fallback | Developer C |
-| Free-tier hosting limits | Local demo first; recorded fallback | Developer C |
-| Model quality | Week-1 benchmark; model switch; narrow scope | Developer B |
-| Math errors | SymPy + rubric + wrong-answer set + reviewer sampling | Developer B |
-| Prompt injection | Four gates, allowlists, trust boundaries, adversarial tests | Developer B |
+| Reviewer capacity | Corpus first; 20+20 acceptance; freeze unreviewed coverage; expand only if hours confirmed | Yassine |
+| Trial credits exhausted | Global ledger, per-turn cap, hard stop, cached/recorded fallback | Mohamed |
+| Free-tier hosting limits | Local demo first; recorded fallback | Mohamed |
+| Model quality | Week-1 benchmark; model switch; narrow scope | Yassine |
+| Math errors | SymPy + rubric + wrong-answer set + reviewer sampling | Yassine |
+| Prompt injection | Four gates, allowlists, trust boundaries, adversarial tests | Yassine |
 | Scope creep | Reduction ladder; change control after Week 12 | Team |
-| Frontend orphan | Developer A ownership; Playwright; weekly demo | Developer A |
+| Frontend orphan | Imran ownership; Playwright; weekly demo | Imran |
 | Late integration | Week-1 walking skeleton; deploy early | Team |
 
 ### 17.6 Change control

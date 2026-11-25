@@ -1,6 +1,6 @@
-# Member A — Frontend, Classroom, Photos, Playwright
+# Imran — Frontend, Classroom, Photos, Playwright
 
-> Replace “Member A” with the actual name when distributing this file.
+> **Member:** Imran.
 >
 > **Role source:** `docs/implementation-plan.md` §17.2 RACI.
 > **Read first:** `AGENTS.md`, `frontend/AGENTS.md`, and the implementation plan.
@@ -14,7 +14,7 @@
 | --- | --- |
 | Accountable for | Classroom/frontend/photos/Playwright |
 | Responsible for | The complete React classroom experience, KaTeX math rendering in the transcript, push-to-talk UI, photo-confirmation flow, and end-to-end acceptance tests |
-| Supports | Member B on citations, refusals, practice, and planning UI; Member C on auth, session, SSE, and media integration |
+| Supports | Yassine on citations, refusals, practice, and planning UI; Mohamed on auth, session, SSE, and media integration |
 | Not responsible for | Retrieval, four-gate validation, prompt design, database schema, RLS, deployment, credit ledger |
 | Main paths | `frontend/src/`, `frontend/e2e/`, `frontend/playwright.config.ts`, `frontend/src/index.css`, `frontend/AGENTS.md` |
 | Main interfaces | `/api/v1/me`, curriculum, sessions, turns/SSE, exercises, progress, study plan, media |
@@ -27,7 +27,7 @@
 - Read the relevant plan section before starting a feature. Do not invent scope.
 - Use **pnpm only**. No `npm install`, no `yarn`.
 - Every task ships with TypeScript types, error/loading/empty states, and Playwright coverage where the flow is user-visible.
-- Every PR gets one reviewer from B or C. No direct pushes to `master`.
+- Every PR gets one reviewer from Yassine or Mohamed. No direct pushes to `master`.
 - Friday demo: show one working path, one failing edge case, and the Playwright evidence.
 - Update `frontend/AGENTS.md` when a convention changes.
 - Never put provider keys or the Supabase service-role key in the browser.
@@ -38,17 +38,17 @@
 
 | When | From | To | Artifact |
 | --- | --- | --- | --- |
-| Week 2 | Member C | A | OpenAPI types for `/me`, chapters, sessions, turns, exercises, study plan |
-| Week 2 | Member B | A | Citation, refusal, and validated-step shapes |
-| Week 3 | A | C | Auth/session integration notes and 401/403 behavior |
-| Week 4 | C | A | Session CRUD and persistence endpoints |
-| Week 6 | C + B | A | SSE event sequence and final-message payload |
-| Week 7 | C | A | Photo upload, STT, TTS, and media limits |
-| Week 8 | C + B | A | Interrupt endpoint, validated-content rendering contract, stale-turn behavior |
-| Week 9 | B + C | A | Exercise types, evaluator results, attempt persistence |
-| Week 10 | B + C | A | Planner rules and study-plan endpoints |
-| Week 13 | A | B | E2E failure list and frontend metrics |
-| Week 15 | A | All | Demo script, recorded fallback, frontend report section |
+| Week 2 | Mohamed | Imran | OpenAPI types for `/me`, chapters, sessions, turns, exercises, study plan |
+| Week 2 | Yassine | Imran | Citation, refusal, and validated-step shapes |
+| Week 3 | Imran | Mohamed | Auth/session integration notes and 401/403 behavior |
+| Week 4 | Mohamed | Imran | Session CRUD and persistence endpoints |
+| Week 6 | Mohamed + Yassine | Imran | SSE event sequence and final-message payload |
+| Week 7 | Mohamed | Imran | Photo upload, STT, TTS, and media limits |
+| Week 8 | Mohamed + Yassine | Imran | Interrupt endpoint, validated-content rendering contract, stale-turn behavior |
+| Week 9 | Yassine + Mohamed | Imran | Exercise types, evaluator results, attempt persistence |
+| Week 10 | Yassine + Mohamed | Imran | Planner rules and study-plan endpoints |
+| Week 13 | Imran | Yassine | E2E failure list and frontend metrics |
+| Week 15 | Imran | All | Demo script, recorded fallback, frontend report section |
 
 If a contract is missing, do not guess silently. Add a typed placeholder, mark it `TODO(contract)`, and ask the owning member in the PR.
 
@@ -70,7 +70,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 - [ ] Build reusable `RefusalBanner`, `CitationList`, `EvidenceExcerpt`, and `GateStatus` components with fixtures.
 - [ ] Write the Playwright plan for the 10 scripted journeys and the 20 interruption cases.
 - [ ] Review keyboard navigation, focus order, labels, and contrast on the shell.
-- [ ] Hand the API type map to C and the SSE expectations to B/C.
+- [ ] Hand the API type map to Mohamed and the SSE expectations to Yassine/Mohamed.
 
 **Exit evidence:** typed frontend contracts, auth screen, reusable citation/refusal components, and a written E2E matrix.
 
@@ -80,7 +80,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 - [ ] Wire Supabase session handling, bearer injection, logout, and protected routes.
 - [ ] Call `/api/v1/me`; display the synthetic profile and role.
 - [ ] Handle `401`, `403`, expired sessions, and network failures with French messages.
-- [ ] Add profile preferences (display name) only if C exposes the endpoint.
+- [ ] Add profile preferences (display name) only if Mohamed exposes the endpoint.
 - [ ] Add Playwright auth tests for valid, missing, and expired tokens.
 - [ ] Prove two synthetic users cannot see each other’s sessions in the UI.
 
@@ -90,7 +90,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 - [ ] Add KaTeX rendering for validated math in the transcript, behind the validated message contract.
 - [ ] Add session persistence UI: reload restores the validated history.
 - [ ] Add the first classroom journey test: create session → send text → reload → resume.
-- [ ] Hand session UI assumptions to C.
+- [ ] Hand session UI assumptions to Mohamed.
 
 **Exit evidence:** authenticated classroom, persistent session reload, two-user isolation test, and validated math rendering in the transcript.
 
@@ -130,7 +130,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 - [ ] Test that TTS does not play before the validated message is rendered.
 - [ ] Build the 20 interruption cases from the plan.
 - [ ] Test reconnect after a dropped stream without duplicating a completed turn.
-- [ ] Review math/rendering safety behavior with B and C.
+- [ ] Review math/rendering safety behavior with Yassine and Mohamed.
 
 **Exit evidence:** photo confirmation, push-to-talk, validated rendering, and 20/20 interruption cases.
 
@@ -142,7 +142,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 - [ ] Render `correct`, `incorrect`, and `inconclusive` distinctly.
 - [ ] Show error categories and feedback in French.
 - [ ] Add practice attempt, retry, and hint tests.
-- [ ] Hand evaluator assumptions to B.
+- [ ] Hand evaluator assumptions to Yassine.
 
 **Week 10**
 - [ ] Build availability windows with `Africa/Casablanca` timezone handling.
@@ -150,7 +150,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 - [ ] Add complete/skip task actions and regeneration behavior.
 - [ ] Show progress and revision indicators with cautious labels, not mastery percentages.
 - [ ] Add planner edge-case tests: no availability, overlapping windows, DST/midnight.
-- [ ] Hand planner UI assumptions to B and C.
+- [ ] Hand planner UI assumptions to Yassine and Mohamed.
 
 **Exit evidence:** practice attempts persist, and the study plan is editable and resumable.
 
@@ -181,7 +181,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 - [ ] Record every failure with a screenshot, trace, and reproduction steps.
 - [ ] Triage failures into frontend, backend, validation, or data.
 - [ ] Fix frontend blockers; do not hide failures with UI changes.
-- [ ] Provide B with the frontend evidence for the evaluation report.
+- [ ] Provide Yassine with the frontend evidence for the evaluation report.
 
 **Week 14**
 - [ ] Run regression on the release candidate.
@@ -241,7 +241,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 ## 8. Risks you own
 
 - **Frontend orphan:** keep weekly demos and integration PRs; do not build in isolation.
-- **Late integration:** use typed contracts early and test against the real API as soon as C exposes it.
+- **Late integration:** use typed contracts early and test against the real API as soon as Mohamed exposes it.
 - **Unsafe rendering:** never bypass the validated message contract.
 - **Accessibility debt:** test keyboard and screen-reader basics every week, not only at the end.
 
@@ -252,5 +252,5 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 - [ ] Create the four `src/lib/` client modules.
 - [ ] Add `/login` and `/session/:id` placeholders.
 - [ ] Write the E2E matrix for 10 journeys and 20 interruption cases.
-- [ ] Ask C for the API contract and B for citation/refusal shapes.
+- [ ] Ask Mohamed for the API contract and Yassine for citation/refusal shapes.
 - [ ] Post the first Friday demo note.
