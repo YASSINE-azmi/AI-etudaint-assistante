@@ -13,9 +13,9 @@ This is the FastAPI service for the **AI Mathematics Tutor** (**MAXI Maths — T
 - PyJWT + Supabase JWKS for access-token verification
 - `httpx` for outbound HTTP
 - `pytest` + `pytest-asyncio` + `mypy` + `ruff` for tests, type checking, and linting
-- Supabase Python client (`supabase`) for server-side DB, Auth, and Private Storage
+- Supabase Python client (`supabase`) for the reviewer CLI and ingestion only (service role). The API reaches Postgres through SQLAlchemy as `app_runtime` and Storage with the student's own JWT; it never holds the service-role key
 - SQLAlchemy models + Alembic migrations for database schema changes
-- Supabase `pgvector` for semantic search and Postgres French full-text search (`to_tsvector('french', ...)`) for keyword retrieval. Hybrid search runs vector and full-text queries separately—scoped by `status = 'published'`, `track = 'TCS'`, and `chapter_id`—then fuses ranked results in Python with Reciprocal Rank Fusion (RRF).
+- Supabase `pgvector` for semantic search and Postgres French full-text search (`to_tsvector('french', ...)`) for keyword retrieval. Hybrid search runs vector and full-text queries separately—scoped by `status = 'published'`, `chapter_id`, and approved objective IDs (single TCS track, D-01)—then fuses ranked results in Python with Reciprocal Rank Fusion (RRF).
 - `structlog` for PII-redacted structured logging
 - `uv` for dependency + project management
 
@@ -71,12 +71,13 @@ backend/
 │   │   ├── source_gate.py      # Gate 1: citation and revision validity
 │   │   ├── scope_gate.py       # Gate 2: chapter/objective coverage
 │   │   ├── grounding_gate.py   # Gate 3: quote match and claim coverage
-│   │   ├── math_gate.py        # Gate 4a: SymPy and rubric verification
+│   │   ├── math_parser.py      # AST allowlist parser for MathClaim expressions
+│   │   ├── math_gate.py        # Gate 4a: SymPy (killable process) and rubric verification
 │   │   ├── render_gate.py      # Gate 4b: KaTeX and rendering safety
 │   │   ├── refusal.py          # Stable French refusal templates
 │   │   └── pipeline.py         # Ordered gate execution
 │   ├── practice/
-│   │   ├── evaluator.py        # MCQ, numeric, algebraic, guided multi-step
+│   │   ├── evaluator.py        # MCQ, numeric tolerance, algebraic expression
 │   │   └── schemas.py          # Exercise and attempt contracts
 │   ├── planning/
 │   │   └── generator.py        # Deterministic weekly planner
@@ -84,13 +85,13 @@ backend/
 │   │   ├── llm.py              # OpenAI-compatible LLM adapter
 │   │   ├── vision.py           # Vision/OCR symbol extraction
 │   │   ├── embeddings.py       # Embedding adapter
+│   │   ├── storage.py          # Storage REST calls with the student's JWT
 │   │   └── speech.py           # STT and TTS adapters
 │   ├── budget/
-│   │   ├── reservation.py      # Pre-turn credit holds
-│   │   └── reconciliation.py   # Usage reconciliation and hard stop
+│   │   └── ledger.py           # Credit holds on the locked ledger row, reconciliation, hard stop
 │   ├── jobs/
-│   │   ├── runner.py           # FOR UPDATE SKIP LOCKED claim loop
-│   │   └── handlers.py         # Stuck turns, cleanup, reconciliation
+│   │   ├── periodic.py         # Lifespan task on the app_worker connection
+│   │   └── handlers.py         # Stuck turns (SKIP LOCKED), cleanup, reservation release
 │   └── database/
 │       ├── session.py          # Async engine, session factory, readiness ping
 │       ├── models/             # SQLAlchemy table models used by Alembic
@@ -121,7 +122,8 @@ backend/
 - Alembic is the source of truth for schema changes. Do not change production tables manually in the Supabase dashboard.
 - SQLAlchemy models describe normal tables and columns. Alembic autogenerate creates candidate migrations, but every generated migration must be reviewed before applying.
 - Supabase/Postgres-specific features belong in explicit migration operations: `create extension if not exists vector`, `vector(1536)` columns, generated French `tsvector` columns (`to_tsvector('french', chunk_text)`), HNSW/GIN indexes, RLS enablement, and RLS policies.
-- Alembic must use the direct/session database connection, not the Supabase transaction pooler URL.
+- Alembic must use a session-mode connection (Supavisor session pooler on port 5432, or the IPv6-only direct host), never the transaction pooler. `alembic/env.py` reads only `DATABASE_URL` via `get_migration_settings()`.
+- The API never runs `SET ROLE`. Policies target `app_runtime` / `app_worker` and use `public.request_user_id()` (plan §5.3, ADR 0002).
 - Run migrations from `backend/` with `uv run alembic upgrade head`.
 
 ## Tests

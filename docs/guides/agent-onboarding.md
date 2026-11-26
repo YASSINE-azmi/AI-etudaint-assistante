@@ -89,13 +89,18 @@ Create or reuse a Supabase project, then collect:
 
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY` (server-only; never put it in the frontend)
-- the **direct/session** Postgres connection string, not the transaction pooler
+- `SUPABASE_SERVICE_ROLE_KEY` (reviewer CLI/ingestion only; the API does not read it; never put it in the frontend)
+- a **session-mode** Postgres connection string: the Session pooler (port 5432) on IPv4 networks, or the IPv6-only direct host; never the transaction pooler
 
 The API uses a non-owner runtime role so `FORCE ROW LEVEL SECURITY` can apply.
 Run [`backend/scripts/bootstrap_runtime_role.sql`](../../backend/scripts/bootstrap_runtime_role.sql)
-once as the project owner, replacing the password placeholder. Then set
-`DATABASE_RUNTIME_URL` with the `app_runtime` user.
+once as the project owner, replacing both password placeholders. It creates
+`app_runtime` (API) and `app_worker` (worker) and revokes PostgREST's default
+`anon`/`authenticated` grants. Then set `DATABASE_RUNTIME_URL` with the
+`app_runtime` user.
+
+For a local database instead, `docker compose up -d postgres` creates the same
+roles with local passwords (see [backend setup](backend-setup.md#local-postgres)).
 
 Do not use the service-role key in the browser. Do not commit `.env`.
 

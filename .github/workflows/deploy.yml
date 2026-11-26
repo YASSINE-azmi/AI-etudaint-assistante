@@ -91,22 +91,27 @@ jobs:
     name: Deploy to Railway (when token is set)
     needs: [backend-image, frontend-image]
     runs-on: ubuntu-latest
-    if: ${{ secrets.RAILWAY_TOKEN != '' }}
-    environment: production
+    # `secrets` is not available in a job-level `if`, so the token check lives on each step.
+    environment: demo
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
+      - name: Skip notice
+        if: ${{ env.RAILWAY_TOKEN == '' }}
+        run: echo "RAILWAY_TOKEN is not set; skipping the Railway deploy."
+
       - name: Install Railway CLI
+        if: ${{ env.RAILWAY_TOKEN != '' }}
         run: npm install -g @railway/cli
 
       - name: Deploy backend
+        if: ${{ env.RAILWAY_TOKEN != '' }}
         run: railway up --service backend --detach
         working-directory: backend
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
       - name: Deploy frontend
+        if: ${{ env.RAILWAY_TOKEN != '' }}
         run: railway up --service frontend --detach
         working-directory: frontend
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

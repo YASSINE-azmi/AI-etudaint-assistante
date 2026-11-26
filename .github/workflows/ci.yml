@@ -132,12 +132,14 @@ jobs:
     services:
       postgres:
         image: pgvector/pgvector:pg16
+        # The owner is `postgres`, as on Supabase. The API role `app_runtime` is created
+        # by scripts/local_db_init.sh as a non-superuser so RLS tests are real.
         env:
-          POSTGRES_USER: app_runtime
-          POSTGRES_PASSWORD: app_runtime_password
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
           POSTGRES_DB: ai_math_tutor
         options: >-
-          --health-cmd "pg_isready -U app_runtime -d ai_math_tutor"
+          --health-cmd "pg_isready -U postgres -d ai_math_tutor"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -158,15 +160,24 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen
 
+      - name: Create Supabase role shim and runtime roles
+        run: ./scripts/local_db_init.sh
+        env:
+          PGHOST: localhost
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: ai_math_tutor
+
       - name: Run migrations
         run: uv run alembic upgrade head
         env:
-          DATABASE_URL: postgresql+psycopg://app_runtime:app_runtime_password@localhost:5432/ai_math_tutor
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/ai_math_tutor
 
       - name: Integration tests
         run: uv run python -m pytest -m "integration"
         env:
-          DATABASE_URL: postgresql+psycopg://app_runtime:app_runtime_password@localhost:5432/ai_math_tutor
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/ai_math_tutor
+          DATABASE_RUNTIME_URL: postgresql+psycopg://app_runtime:app_runtime_password@localhost:5432/ai_math_tutor
 
   docker-build:
     name: Build Docker images

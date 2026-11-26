@@ -1,7 +1,7 @@
 # ADR 0004 — Claim-level provenance (`teaching_claims`)
 
 - **Status:** Accepted
-- **Date:** 24 November 2026
+- **Date:** 24 November 2026 (revised 26 November 2026, D-37)
 
 ## Context
 
@@ -13,8 +13,14 @@ provenance could not be reconstructed after a turn.
 Add a first-class `teaching_claims` table (claim text, objective, span, and an
 optional `MathClaim`). `turn_citations.teaching_claim_id` references it, and
 every citation belongs to a claim on the same turn. `ClaimDraft` carries
-`objective_id` and `claim_span_start/end`; connective text outside spans is
-allowed without a citation.
+`objective_id`, `text_fr`, and citations of `{chunk_id, quote}`; connective text
+outside spans is allowed without a citation.
+
+Revision (D-37): the model does not produce spans, pages, revisions, or hashes.
+The server computes `claim_span_start/end` by locating `text_fr` verbatim in
+the step's `display_text_fr`, and copies page, section, revision, and hash from
+the cited chunk. LLMs are unreliable at character offsets and metadata, so
+asking for them only produced false Gate-1 refusals.
 
 ## Consequences
 

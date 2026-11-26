@@ -30,8 +30,8 @@ Copy `backend/.env.example` to `backend/.env` and set:
 | -------- | ------- |
 | `SUPABASE_URL` | Hosted Supabase project URL |
 | `SUPABASE_ANON_KEY` | Supabase anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-only key for the reviewer CLI and ingestion (never expose to frontend) |
-| `DATABASE_URL` | Direct/session Postgres connection string for Alembic |
+| `SUPABASE_SERVICE_ROLE_KEY` | Reviewer CLI and ingestion only (`AdminSettings`). The API does not read it and starts without it; never expose it to the frontend |
+| `DATABASE_URL` | Session-mode Postgres connection (pooler port 5432, or the direct host if your network has IPv6) for Alembic |
 | `DATABASE_RUNTIME_URL` | API connection using the non-owner `app_runtime` role |
 | `AI_PROVIDER_BASE_URL` | OpenAI-compatible base URL |
 | `AI_PROVIDER_API_KEY` | Server-side API key for LLM, Vision/OCR, STT, TTS, and embeddings |
@@ -57,7 +57,7 @@ Alembic owns database schema changes. SQLAlchemy models live in `backend/app/dat
 Alembic is already initialized in `backend/alembic/`. Import every new model module in
 `app/database/models/__init__.py` so autogenerate sees its metadata.
 
-`alembic/env.py` reads `DATABASE_URL` from `app.config.get_settings()`. Always use the **direct/session** Supabase database connection string—not the transaction pooler URL—for migrations.
+`alembic/env.py` reads only `DATABASE_URL`, through `app.config.get_migration_settings()`, so migrations run without the API or provider keys. Use a **session-mode** connection for migrations: the Supavisor session pooler (port 5432) works on IPv4 networks; the direct host `db.<ref>.supabase.co` is IPv6-only on the free tier. Never use the transaction pooler (port 6543) for migrations.
 
 Create a migration after changing SQLAlchemy models:
 
@@ -71,8 +71,13 @@ Always review the generated migration in `backend/alembic/versions/` and add exp
 - `vector(1536)` embedding columns on `document_chunks`
 - Generated French full-text search `tsvector` columns (`to_tsvector('french', chunk_text)`)
 - HNSW and GIN indexes for hybrid retrieval
-- Row-Level Security (RLS) enablement, `FORCE ROW LEVEL SECURITY`, and ownership policies on `tutoring_sessions`, `session_turns`, `teaching_steps`, `turn_citations`, `exercise_attempts`, `hint_events`, `study_plans`, and `study_tasks`
-- The non-owner `app_runtime` role used by `DATABASE_RUNTIME_URL`
+- Row-Level Security (RLS) enablement, `FORCE ROW LEVEL SECURITY`, and ownership policies on `tutoring_sessions`, `session_turns`, `teaching_steps`, `turn_citations`, `exercise_attempts`, `study_plans`, and `study_tasks`. Policies target `app_runtime` (and `app_worker` where the worker needs it) and read the caller through `public.request_user_id()`; never `SET ROLE authenticated` (plan §5.3, ADR 0002)
+
+The roles themselves are not migrations: `scripts/bootstrap_runtime_role.sql` creates `app_runtime` and `app_worker` once per project.
+
+### Local Postgres
+
+`docker compose up -d postgres` starts pgvector Postgres owned by `postgres` and runs `scripts/local_db_init.sh`, which adds the `anon`/`authenticated` role shim and non-superuser `app_runtime` / `app_worker` roles (passwords `app_runtime_password` / `app_worker_password`). A superuser bypasses RLS, so never point `DATABASE_RUNTIME_URL` at `postgres`.
 
 Apply migrations:
 

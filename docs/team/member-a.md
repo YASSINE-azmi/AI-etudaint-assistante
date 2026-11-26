@@ -117,7 +117,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 ### Weeks 7–8 — Photos, voice, and interruption
 
 **Week 7**
-- [ ] Build photo upload with preview, MIME/size checks, and the ambiguous-symbol confirmation dialog.
+- [ ] Build photo upload with preview, MIME/size checks, and the ambiguous-symbol confirmation dialog. Upload directly with supabase-js to the `{user_id}/{session_id}/{asset_id}` path returned by `POST /sessions/{id}/media` (D-38).
 - [ ] Submit only the confirmed expression to the tutor.
 - [ ] Build push-to-talk with `MediaRecorder`; show recording, processing, and error states.
 - [ ] Stop audio capture and local playback in **under 500 ms**.
@@ -125,7 +125,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 - [ ] Add a test that an unconfirmed photo never starts tutoring.
 
 **Week 8**
-- [ ] Implement validated-content-before-speech: render the validated text and math, then play TTS.
+- [ ] Implement validated-content-before-speech: render the validated text and math, then call `POST /speech/synthesize` and play TTS. There is no `speech.ready` stream event (D-39).
 - [ ] Play only the server-provided validated `spokenTextFr`; never speak a client-side interpretation of the math.
 - [ ] Implement interruption: stop audio, abort the SSE stream, call `/interrupt`, and reject stale `turnId` events.
 - [ ] Test that TTS does not play before the validated message is rendered.
@@ -138,7 +138,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 ### Weeks 9–10 — Practice and planning
 
 **Week 9**
-- [ ] Build the exercise list and the four exercise UIs: MCQ, numeric, algebraic, guided multi-step.
+- [ ] Build the exercise list and the three exercise UIs: MCQ, numeric, algebraic expression (guided multi-step is deferred, D-42).
 - [ ] Show hints individually; never leak answers before submission.
 - [ ] Render `correct`, `incorrect`, and `inconclusive` distinctly.
 - [ ] Show error categories and feedback in French.

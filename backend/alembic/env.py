@@ -3,7 +3,7 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
-from app.config import get_settings
+from app.config import get_migration_settings
 from app.database.models import Base
 
 config = context.config
@@ -16,7 +16,7 @@ target_metadata = Base.metadata
 
 def _set_database_url() -> None:
     # ConfigParser treats percent signs as interpolation markers; passwords may contain them.
-    url = get_settings().database_url.replace("%", "%%")
+    url = get_migration_settings().database_url.replace("%", "%%")
     config.set_main_option("sqlalchemy.url", url)
 
 

@@ -1,7 +1,7 @@
 # ADR 0003 — Media and speech contracts
 
 - **Status:** Accepted (whiteboard deferred out of `v0.1.0`)
-- **Date:** 24 November 2026
+- **Date:** 24 November 2026 (revised 26 November 2026, D-38/D-39)
 
 ## Context
 
@@ -17,8 +17,17 @@ Add dedicated endpoints and tables for media and speech:
   `POST /media/{id}/interpret`, `POST /media/{id}/confirm`.
 - `POST /speech/transcribe`, `POST /speech/synthesize`.
 - Table: `media_assets`.
-- The turn request carries `mediaAssetId` and `confirmedExpression`; the SSE
-  stream adds `speech.ready`.
+- The turn request carries `mediaAssetId` and `confirmedExpression`.
+- **Upload path (D-38).** `POST /sessions/{id}/media` registers the asset and
+  returns its path `{user_id}/{session_id}/{asset_id}`. The browser uploads with
+  supabase-js to the private `exercise-photos` bucket; a `storage.objects`
+  policy lets a user write and read only under their own `user_id/` prefix. The
+  API downloads with the student's forwarded JWT, re-encodes with Pillow, and
+  strips metadata before vision. The API never needs the service-role key.
+- **One speech path (D-39).** Audio is fetched only through
+  `POST /speech/synthesize`, called by the client after the validated text
+  renders. The turn stream carries no `speech.ready` event, so interruption has
+  one audio source to stop.
 
 ## Consequences
 
