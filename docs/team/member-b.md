@@ -194,7 +194,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 ### Weeks 15–16 — Report, rehearsal, submission
 
 **Week 15**
-- [ ] Write the teaching/validation/evaluation report sections: corpus, retrieval, four gates, math verification, metrics, limitations.
+- [ ] Write the teaching/validation/evaluation report sections: corpus, retrieval, four gates, math verification, metrics, limitations — including why this release covers 3 of the 15 chapters and what each added chapter requires (§2.7).
 - [ ] Prepare the demo evidence: accepted answer, citation, refusal, insufficient evidence, math refusal, practice evaluation.
 - [ ] Rehearse the live demo with Imran and Mohamed.
 - [ ] Prepare the fallback evidence for provider failure or credit exhaustion.

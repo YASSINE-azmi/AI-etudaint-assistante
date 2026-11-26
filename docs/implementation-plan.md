@@ -62,7 +62,7 @@ The academic demo is done when:
 
 ### 2.2 Approved chapters
 
-Exactly three chapters from **MAXI Maths — Tronc Commun Scientifique**:
+Exactly three of the fifteen chapters from **MAXI Maths — Tronc Commun Scientifique** (expansion path in §2.7):
 
 1. **Les ensembles de nombres**
 2. **Calcul vectoriel**
@@ -85,7 +85,7 @@ Chapter IDs, objective IDs, page ranges, and the coverage matrix must be confirm
 ### 2.4 Out of scope
 
 - 1BAC, 2BAC, Collège, or university content.
-- Full MAXI Maths textbook ingestion.
+- Full MAXI Maths textbook ingestion (chapters 4–15; expansion path in §2.7).
 - Two-track support.
 - Simultaneous Arabic/Darija/French teaching.
 - Payments, subscriptions, social features, marketplaces.
@@ -121,6 +121,35 @@ If the 16-week schedule slips, reduce in this order. Never weaken authorization,
 | Latency | Best effort: p50 ≤ 5 s, p95 ≤ 12 s to first accepted output on the demo machine |
 | Documentation | Plan, architecture, contracts, evaluation, runbooks, demo script, known issues |
 
+### 2.7 Expansion path (post-`v0.1.0`)
+
+MAXI Maths — TCS has **15 chapters**. This release publishes and evaluates **3**; the other **12** are deferred, not rejected. Nothing in the schema, retrieval, or validation design depends on the chapter count:
+
+- `curriculum_chapters` is a table row per chapter, with a stable slug ID.
+- Retrieval, objectives, revisions, chunks, exercises, and citations are all `chapter_id`-scoped.
+- Publishing a new chapter creates a new `source_revision`; chapters already published are not re-embedded.
+- Sessions are chapter-scoped, so a new chapter does not disturb existing sessions.
+
+Adding one chapter requires all of:
+
+1. The academic-use note still covering the added content.
+2. A coverage matrix (objectives, concept tags, prerequisites) confirmed by the reviewer.
+3. Extraction, normalization, and chunking with math-block atomicity (§9.4).
+4. Reviewer sign-off; raw OCR is never published.
+5. A chapter-specific retrieval set: ≥ 10 labeled pairs and Recall@5 ≥ 0.80 for that chapter (§10.5).
+6. A chapter-specific answer set for the new objectives. The global evaluation is re-run, but acceptance is reported **per chapter**, so one weak chapter cannot hide behind the average.
+7. Reviewed exercises before practice is enabled for that chapter.
+
+Constraints:
+
+- **Review throughput is the binding constraint.** Three chapters take roughly 10 weeks at 2–3 h/week; twelve more at that rate is 40+ weeks. Expansion needs a second reviewer or a batch review model — it is a staffing decision, not a schedule assumption.
+- **Freeze the embedding model before scaling.** Changing `EMBEDDING_MODEL_NAME` or dimensions after 15 chapters are published means re-embedding every chunk and issuing 15 new revisions.
+- **The evaluation baseline grows.** 20+20 is the acceptance sample for the 3-chapter release. Each added chapter brings its own labeled set, and the boundary set is extended with the new out-of-scope surface.
+- **Copyright exposure grows linearly.** More chapters means a larger corpus under the same academic-use assumption; public or commercial use requires rights review before publication.
+- Per-turn cost stays bounded by top-k, not corpus size. Storage and ingestion embedding cost grow linearly.
+
+Out of scope for `v0.1.0`: any code, schema, or evaluation work for chapters 4–15. The 3-chapter contract and the 20+20 evaluation remain the release gate.
+
 ---
 
 ## 3. Locked decisions
@@ -130,7 +159,7 @@ If the 16-week schedule slips, reduce in this order. Never weaken authorization,
 | D-01 | TCS, one track | Matches `AGENTS.md`, client brief, and the approved scope |
 | D-02 | Single project plan at `docs/implementation-plan.md` | One source of truth for scope, backend, frontend, demo, and delivery |
 | D-03 | 16-week full `v0.1.0` academic demo | Includes text, push-to-talk, photos, practice, planning; whiteboard deferred |
-| D-04 | Three chapters: client-brief trio | Les ensembles de nombres; Calcul vectoriel; Généralités sur les fonctions |
+| D-04 | Three of fifteen chapters: client-brief trio | Les ensembles de nombres; Calcul vectoriel; Généralités sur les fonctions; expansion path in §2.7 |
 | D-05 | Continuous listening out; push-to-talk stays | Matches the client-brief baseline and the reduction ladder |
 | D-06 | Four gates: Source, Scope, Grounding, Mathematical & Rendering Safety | Matches `AGENTS.md` and the client brief; removes the plan's structural-only gate |
 | D-07 | SymPy CAS + rubric verifier | Deterministic checks for computable claims; LLM rubric only as supporting evidence |
@@ -160,6 +189,7 @@ If the 16-week schedule slips, reduce in this order. Never weaken authorization,
 | D-31 | Retrieval is one fused pass plus ≤ 3 bounded agent reads | Prevents unbounded tool loops; keeps retrieval inside the 2 s stage budget; every read is cited and validated |
 | D-32 | Retrieval acceptance set of 40–60 labeled pairs; Recall@5 ≥ 0.90 | Sufficiency thresholds and reranker weights are calibrated, not guessed |
 | D-33 | Deterministic score reranker; cross-encoder deferred | Improves precision within the latency budget; a model reranker does not fit 2 s over 20 candidates |
+| D-34 | 3 of 15 chapters in `v0.1.0`; the other 12 are a post-release content path (§2.7) | The platform is chapter-agnostic; expansion is gated by review capacity and per-chapter evaluation, not by code |
 
 ---
 
