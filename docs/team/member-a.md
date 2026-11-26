@@ -57,12 +57,12 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 ### Weeks 1–2 — Foundation and frontend contracts
 
 **Week 1**
-- [ ] Run `pnpm install --frozen-lockfile`, `pnpm typecheck`, `pnpm lint`, `pnpm build`, and the Playwright smoke suite.
-- [ ] Read plan §7 (API/SSE), §13 (frontend), and §16 (testing).
-- [ ] Add the frontend client modules: `src/lib/supabase.ts`, `src/lib/http.ts`, `src/lib/api.ts`, and `src/lib/sse.ts` skeletons.
-- [ ] Add `/login` and `/session/:id` route placeholders without pretending they work.
-- [ ] Keep the environment gate working; no direct `import.meta.env` reads outside `src/lib/env.ts`.
-- [ ] Document the component boundaries for chat, math rendering, media, practice, and planning.
+- [x] Run `pnpm install --frozen-lockfile`, `pnpm typecheck`, `pnpm lint`, `pnpm build`, and the Playwright smoke suite.
+- [x] Read plan §7 (API/SSE), §13 (frontend), and §16 (testing).
+- [x] Add the frontend client modules: `src/lib/supabase.ts`, `src/lib/http.ts`, `src/lib/api.ts`, and `src/lib/sse.ts` skeletons.
+- [x] Add `/login` and `/session/:id` route placeholders without pretending they work.
+- [x] Keep the environment gate working; no direct `import.meta.env` reads outside `src/lib/env.ts`.
+- [x] Document the component boundaries for chat, math rendering, media, practice, and planning.
 
 **Week 2**
 - [ ] Convert the API contract into TypeScript types for profile, curriculum, sessions, turns, citations, refusals, exercises, and study plans.
@@ -246,10 +246,10 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 
 ## 9. First 7 days checklist
 
-- [ ] Run the current frontend checks and smoke tests.
-- [ ] Read plan §7, §13, and §16.
-- [ ] Create the four `src/lib/` client modules.
-- [ ] Add `/login` and `/session/:id` placeholders.
+- [x] Run the current frontend checks and smoke tests.
+- [x] Read plan §7, §13, and §16.
+- [x] Create the four `src/lib/` client modules.
+- [x] Add `/login` and `/session/:id` placeholders.
 - [ ] Write the E2E matrix for 10 journeys and 20 interruption cases.
 - [ ] Ask Mohamed for the API contract and Yassine for citation/refusal shapes.
 - [ ] Post the first Friday demo note.
