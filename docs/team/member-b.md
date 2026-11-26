@@ -68,7 +68,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 - [ ] Confirm chapter IDs, objective IDs, page ranges, and coverage with the reviewer.
 - [ ] Record the academic-use note input with the team lead and supervisor.
 - [ ] Freeze the draft output contract, citation contract, refusal codes, and status mapping.
-- [ ] Build the first reviewer-labeled retrieval set.
+- [ ] Build the first reviewer-labeled retrieval set: 40–60 query → chunk pairs, graded 0/1/2, ≥ 10 per chapter, every published objective represented; 70/30 tune/holdout split.
 - [ ] Produce the Week-2 go/no-go evidence: benchmark, coverage, contracts, and risks.
 
 **Exit evidence:** benchmark report, sample RRF result, reviewer-confirmed coverage matrix, and signed-off contracts.
@@ -76,18 +76,21 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 ### Weeks 3–4 — Retrieval and sufficiency
 
 **Week 3**
-- [ ] Specify the retrieval schema: `document_chunks`, `chunk_objectives`, `search_text`, embeddings, and indexes.
+- [ ] Specify the retrieval schema: `document_chunks` with `unit_id`, `chunk_objectives`, `search_text`, embeddings, and indexes.
 - [ ] Create the seed corpus with synthetic/open-licensed content; never commit textbook text.
-- [ ] Benchmark embedding models; default to `text-embedding-3-small` with 1536 dimensions.
-- [ ] Implement query normalization: accents, case, LaTeX delimiters, math symbols, French synonyms.
+- [ ] Benchmark embedding models on math queries, not prose only; keep `text-embedding-3-small` at 1536 only if it wins or ties on Recall@5.
+- [ ] Implement query normalization: accents, case, LaTeX delimiters, math symbols, spoken math ("x au carré", "racine de"), French synonyms.
+- [ ] Implement chunking with math-block atomicity and `unit_id` grouping.
 - [ ] Add unit tests for normalization and scope filters.
 
 **Week 4**
 - [ ] Implement scoped hybrid retrieval: pgvector cosine + French full-text search.
 - [ ] Implement RRF with `k = 60`, deterministic tie-break, deduplication, and top-k selection.
-- [ ] Add neighbor expansion and context token budget.
+- [ ] Implement the deterministic reranker (§10.7) before the top-5–8 cut.
+- [ ] Build the retrieval query from chapter/objective titles plus the last validated topic (§10.6); no model rewrite.
+- [ ] Add neighbor expansion by `(revision_id, unit_id)` and the context token budget.
 - [ ] Implement the sufficiency check using raw cosine, lexical coverage, objective match, and citable evidence.
-- [ ] Measure Recall@5 and MRR on the reviewer-labeled set.
+- [ ] Measure Recall@5 and MRR on the reviewer-labeled set and confirm on the 30% holdout (Recall@5 ≥ 0.90, MRR ≥ 0.70).
 - [ ] Add retrieval failure cases: missing evidence, wrong chapter, ambiguous question.
 
 **Exit evidence:** retrieval module with unit tests, RRF output, sufficiency behavior, and a baseline retrieval report.
@@ -103,7 +106,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 - [ ] Add ingestion and publication tests.
 
 **Week 6**
-- [ ] Build the PydanticAI tutor agent with bounded tools: `search_maxi_chapter`, `read_chunk`, `read_neighboring_chunks`.
+- [ ] Build the PydanticAI tutor agent with bounded tools: `search_maxi_chapter`, `read_chunk`, `read_neighboring_chunks`; at most 3 extra reads per turn, then re-check sufficiency (§10.3).
 - [ ] Write `assistant/instructions.md` and versioned prompts.
 - [ ] Implement Gate 1 (source validity), Gate 2 (scope validity), Gate 3 (grounding), and Gate 4 (math/rendering safety).
 - [ ] Implement French refusal templates and stable refusal codes.

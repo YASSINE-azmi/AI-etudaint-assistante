@@ -157,6 +157,9 @@ If the 16-week schedule slips, reduce in this order. Never weaken authorization,
 | D-28 | API never holds the service-role key; split admin/ingest settings | Service role only in CLI/ingest; API starts without it |
 | D-29 | Role source is JWT `app_metadata.role` | No self-escalation; `profiles.role` is display-only or removed |
 | D-30 | Model routing is static by role (ADR 0008) | One model per role from settings; no dynamic selection or failover; keeps 20+20 evaluation reproducible |
+| D-31 | Retrieval is one fused pass plus ≤ 3 bounded agent reads | Prevents unbounded tool loops; keeps retrieval inside the 2 s stage budget; every read is cited and validated |
+| D-32 | Retrieval acceptance set of 40–60 labeled pairs; Recall@5 ≥ 0.90 | Sufficiency thresholds and reranker weights are calibrated, not guessed |
+| D-33 | Deterministic score reranker; cross-encoder deferred | Improves precision within the latency budget; a model reranker does not fit 2 s over 20 candidates |
 
 ---
 
@@ -289,7 +292,7 @@ backend/
 | `objective_prerequisites` | Prerequisite graph | `objective_id`; `prerequisite_id`; both FKs; cycle check in app/CI |
 | `source_documents` | Source identity | `id`; `title`; `publisher`; `edition_year`; `provenance_notes`; `academic_use_basis`; `rights_status` |
 | `source_revisions` | Immutable chapter revisions | `id`; `source_document_id`; `chapter_id`; `revision_number`; `content_hash`; `reviewer_id`; `status`; `reviewed_at`; `published_at`; `supersedes_revision_id`; `withdrawn_at`; `withdrawal_reason` |
-| `document_chunks` | Retrieval units | `id`; `revision_id`; `chapter_id`; `chunk_index`; `section_path`; `page_start`; `page_end`; `char_start`; `char_end`; `content_type`; `chunk_text`; `search_text`; `content_hash`; `token_count`; `embedding` `vector(1536)`; `status` |
+| `document_chunks` | Retrieval units | `id`; `revision_id`; `chapter_id`; `chunk_index`; `unit_id`; `section_path`; `page_start`; `page_end`; `char_start`; `char_end`; `content_type`; `chunk_text`; `search_text`; `content_hash`; `token_count`; `embedding` `vector(1536)`; `status` |
 | `chunk_objectives` | Chunk ↔ objective | `chunk_id`; `objective_id`; both FKs |
 | `tutoring_sessions` | Conversation scope | `id`; `student_id`; `chapter_id`; `objective_id` (nullable current focus); `curriculum_revision_id`; `title`; `status` (`active`/`archived`/`deleted`); `turn_count` |
 | `session_turns` | One student turn | `id`; `session_id`; `turn_index`; `student_prompt`; `response_status` (`pending`/`processing`/`completed`/`failed`/`cancelled`); `educational_status`; `refusal_code`; `message_fr`; `final_payload` (`JSONB`); `model_name`; `prompt_version`; `retrieval_config`; `token_counts`; `latency_ms`; `validation_metadata` (`JSONB`); `created_at`; `processing_started_at`; `expires_at`; `locked_by` |
@@ -324,6 +327,8 @@ backend/
 - `source_revisions` content is immutable after publication. Status transitions are append-only.
 - Citations pin `revision_id` and `content_hash`, not a mutable chunk row.
 - `document_chunks.status` is derived from its revision; only `published` revisions participate in retrieval.
+- Chunks sharing a `unit_id` are one pedagogical unit: contiguous `chunk_index`, same `section_path` and `content_type`. A unit is never split across revisions.
+- Retrieval may expand a unit by `(revision_id, unit_id)`; citations still pin the individual `chunk_id` and `content_hash`.
 - Exercise attempts pin `exercise_revision_id`.
 - One active `study_plan` per student; completed tasks survive plan regeneration.
 - One active `budget_reservation` per turn. Reservation and reconciliation lock the singleton `budget_ledger` row with `FOR UPDATE` so totals are atomic with the cap check.
@@ -335,6 +340,7 @@ backend/
 - B-tree indexes on `student_id`, `session_id`, `chapter_id`, `status`, `created_at`, `(session_id, turn_index)`.
 - HNSW index on `document_chunks.embedding` with `vector_cosine_ops`.
 - GIN index on `document_chunks.search_vector`.
+- B-tree index on `document_chunks (revision_id, unit_id, chunk_index)` for unit expansion.
 - GIN/JSONB indexes on `concept_tags` and validation metadata where queried.
 - Enable and `FORCE ROW LEVEL SECURITY` on every table in the `public` schema; deny by default.
 - `app_runtime` is a non-owner runtime role. Per transaction, the API sets `request.jwt.claims` from the verified JWT and `SET LOCAL ROLE authenticated` before queries; `auth.uid()` is otherwise null.
@@ -531,9 +537,10 @@ turn.failed { code, educationalStatus, messageFr, retryable }
 Authenticate
   → resolve session, chapter, objective, curriculum revision
   → pre-scope check
-  → hybrid retrieval
-  → evidence sufficiency check
-  → PydanticAI draft (claims + steps)
+  → hybrid retrieval (one fused pass)
+  → initial evidence sufficiency check
+  → PydanticAI draft (claims + steps), with at most 3 bounded retrieval reads for evidence gaps
+  → evidence sufficiency re-check over every chunk read
   → Gate 1: Source validity
   → Gate 2: Scope validity
   → Gate 3: Grounding
@@ -764,7 +771,11 @@ Each chapter is imported as a manifest plus structured units:
 - Normalize accents and whitespace for search, but preserve display text.
 - Keep the original page/section/character offsets.
 - Split by pedagogical units: definition, property, theorem, method, example, exercise.
-- Max chunk size: ~500 tokens; overlap: ~50 tokens.
+- Max chunk size: ~500 tokens; overlap: ~50 tokens (prose only).
+- Never split inside a math block (`$...$`, `$$...$$`, `\(...\)`, `\[...\]`). Split at step or paragraph boundaries instead; a single math block larger than the cap becomes its own chunk.
+- Overlap repeats prose only; a math block is never duplicated by overlap.
+- Chunks of one pedagogical unit share `unit_id` and a contiguous `chunk_index`, and keep `section_path` and `content_type`, so the unit can be read back whole.
+- Retrieval ranks child chunks; `read_neighboring_chunks` expands to `(revision_id, unit_id)` when evidence or a citation span crosses a chunk boundary.
 - Tables and figures stay with their caption and section.
 - Stable chunk IDs and content hashes; re-chunking creates a new revision.
 
@@ -789,7 +800,7 @@ Publication gate:
 - Reviewer sign-off.
 - Objective mapping checked.
 - Math notation reviewed.
-- Representative retrieval tests pass.
+- Representative retrieval tests pass (§10.5).
 - Embeddings are non-null.
 - Content hash recorded.
 
@@ -813,10 +824,10 @@ Withdrawal:
 
 ### 10.1 Embeddings
 
-- Benchmark candidate embedding models during Week 1.
+- Benchmark candidate embedding models during Week 1. The benchmark must include French math queries, not prose only: verbalized notation ("x au carré"), interval notation, and symbol-heavy prompts. The default is kept only if it wins or ties on Recall@5 over the reviewer-labeled set (§10.5).
 - Default: `text-embedding-3-small`, 1536 dimensions.
 - Store the model name and dimensions with each chunk.
-- Changing the model requires a new revision and re-embedding job.
+- Changing the model requires a new revision and re-embedding job. Model and dimension are effectively a one-way door once chapters are published: decide in Week 1, not Week 8.
 - Batch embeddings, retry with backoff, and log cost.
 
 ### 10.2 Hybrid search
@@ -827,6 +838,7 @@ Withdrawal:
 - Normalize the query:
   - accents, case, LaTeX delimiters;
   - math symbols (`≤`, `√`, `x²`, `x^2`);
+  - spoken math: "au carré"/"au cube" → `²`/`³`, "racine de" → `√`, "inférieur ou égal" → `≤`, "valeur absolue" → `|·|`, "appartient à" → `∈`, "union"/"inter" → `∪`/`∩`. The map is data the reviewer can extend, not hard-coded branches;
   - French synonyms and chapter/objective titles.
 - Add a normalized `search_text` column:
   - lowercased, unaccented, LaTeX-stripped/transliterated;
@@ -840,10 +852,13 @@ Withdrawal:
 - RRF `k = 60`, 1-based ranks.
 - Deduplicate by chunk/revision.
 - Deterministic tie-break by chunk ID.
+- Rerank the fused candidates with the deterministic score in §10.7.
 - Select top 5–8 chunks.
-- Diversity: max 2 chunks per section; optional MMR.
+- Diversity: max 2 chunks per section, raised to 3 when one section supplies both a definition and its worked example for the objective; optional MMR.
 - Neighbor expansion: `read_neighboring_chunks` for definitions that span boundaries.
 - Context token budget: cap total evidence tokens; drop lowest-ranked chunks first.
+
+**Retrieval shape (normative).** Each turn gets one fused pass; the agent does not control retrieval start. During drafting it may make at most **3 bounded reads** (`read_chunk`, `read_neighboring_chunks`, `search_maxi_chapter`) to fill an evidence gap. Every chunk read joins the evidence set, is recorded in `retrieval_config`, and is subject to the same sufficiency re-check and citation validation. The budget is per turn, not per attempt; exhausting it routes to `INSUFFICIENT_EVIDENCE`.
 
 ### 10.4 Sufficiency
 
@@ -855,14 +870,38 @@ The sufficiency check is not a single RRF threshold. It combines:
 - section/objective match;
 - a calibrated minimum evidence set for the question type.
 
-If insufficient → `INSUFFICIENT_EVIDENCE` or `AMBIGUOUS_QUESTION`. Calibrate thresholds on the evaluation set.
+If insufficient → `INSUFFICIENT_EVIDENCE` or `AMBIGUOUS_QUESTION`. Calibrate thresholds on the 70% tuning split of §10.5 and confirm the false refusal rate on the holdout. Start permissive and tighten: an early strict threshold hides real retrieval bugs behind clean-looking refusals.
 
 ### 10.5 Retrieval evaluation
 
-- Recall@5 and MRR on a reviewer-labeled retrieval set.
-- Per-objective coverage.
-- False refusal rate.
-- Track retrieval failures separately from answer failures.
+- Reviewer-labeled set: **40–60 query → chunk pairs** across the three chapters, graded relevance (0 = not relevant, 1 = related, 2 = directly answers), with at least 10 pairs per chapter and every published objective represented.
+- Labels are produced against a specific `curriculum_revision_id`; a new revision invalidates the set and it must be relabeled before the gate can be claimed.
+- Split 70/30: tuning (RRF weights, reranker weights, sufficiency thresholds) on 70%, holdout on 30%. The holdout is never used for tuning.
+- Targets: **Recall@5 ≥ 0.90** overall and ≥ 0.80 per chapter; **MRR ≥ 0.70**; false refusal rate ≤ 10%.
+- Track retrieval failures separately from answer failures, recording the query, expected chunk, retrieved chunks, and whether the miss was lexical, semantic, scoping, or chunking.
+- Run this set before publication (§9.6) and after any chunking, embedding, normalization, or reranker change.
+
+### 10.6 Conversational query construction
+
+Retrieval never embeds the latest message alone. The query is composed deterministically from:
+
+1. the active chapter and objective titles;
+2. the last validated topic of the session (the primary objective of the last `completed` turn);
+3. the normalized new message.
+
+A follow-up such as "et si x est négatif ?" is therefore embedded with its subject. The history prefix is dropped in two cases only: an explicit chapter/objective change, and a self-contained first message.
+
+Model-based query rewriting (condensation, HyDE, multi-query) is out of scope for `v0.1.0`: it adds latency inside the 2 s retrieval budget and a second failure mode. Add it only if deterministic construction misses the Recall@5 target in §10.5, and then behind the same evaluation.
+
+### 10.7 Reranking
+
+RRF is rank-only and carries no relevance magnitude. After fusion and before the top-5–8 cut, candidates are reranked by a deterministic score:
+
+- normalized cosine similarity and normalized `ts_rank_cd`, weighted (default 0.7 / 0.3, tuned on the 70% split);
+- section and objective match bonus;
+- `content_type` match against the question type (definition question → definition chunk).
+
+A cross-encoder or LLM reranker is deferred: it does not fit the 2 s retrieval stage target over 20 candidates. Revisit when Recall@5 passes but answer accuracy stalls — that pattern means the right chunk is retrieved and ranked too low.
 
 ---
 
@@ -912,6 +951,7 @@ This is an academic demo with trial credits only.
 - Cancellation checks between stages; best-effort provider cancellation.
 - Client abort marks the turn `cancelled` when detected; release the reservation.
 - Stuck turns are recovered by a worker after `session_turns.expires_at`; workers fence with `processing_started_at`/`locked_by` and never overwrite a completed turn.
+- Prompt caching: order the prompt stable-first (instructions, objective metadata, retrieved evidence) and volatile-last (history, new message) so provider prefix caching can hit. `usage_events.cached_tokens` records hits; a week at zero is a prompt-ordering bug, not a provider issue.
 
 ### 11.5 Context and history
 
