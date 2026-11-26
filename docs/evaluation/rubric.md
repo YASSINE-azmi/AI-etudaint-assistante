@@ -108,6 +108,29 @@ Then write one row per question:
 
 Summary to report: in-scope passes /20 · false refusals /20 · unsupported releases per boundary category (/8, /6, /6) · citation validity %.
 
+### 6.1 How a run is done
+
+The reviewer only grades. Everything before that is scripted.
+
+1. **Cases.** The 40 questions live in [cases.json](cases.json) (`cases-v0.1-draft`). Inside each set they go from vague (`detail_level` 1, "pgcd ?") to plain (2) to fully specified (3, with numbers, method and what to justify). Each case states the expected outcome and, where there is one, the correct result.
+2. **Sending.** `backend/scripts/run_evaluation.py` sends each question in a fresh session through the real tutor API (retrieval, draft, four gates), exactly as a student would. It never calls the model directly. It needs the tutor endpoints from Weeks 6–8, so it cannot run before then.
+
+   ```powershell
+   uv run python -m scripts.run_evaluation --api http://localhost:8000 --token-file <token file> --prompt-version teach-v0.1 --corpus-revision <id> --grader "<reviewer name>"
+   ```
+
+3. **Sheet.** The runner writes `data/extracted/evaluation/<timestamp>/run.json` (the section-6 header) and `grading.csv`: one row per case with the question, the expected outcome, the answer, the refusal code, the citations, and **empty** score columns. It is gitignored because answers quote the textbook.
+4. **Grading.** The reviewer opens `grading.csv` in Excel or LibreOffice and fills in `correctness`, `scope`, `notation`, `age`, `citation_ok`, `pass` and `grader_note` with sections 2–5.
+
+What the version fields mean:
+
+| Field | Meaning |
+| --- | --- |
+| Prompt version | The label of the exact instructions sent to the model every turn (`PROMPT_VERSION`). Any wording change gets a new label. |
+| Corpus revision | The published textbook revision retrieval searched (`curriculum_revision_id`). Re-chunking, a fix or re-embedding creates a new one. |
+| Gate version | The backend git commit at run time; the runner records it automatically. |
+| Grader | Who filled in the scores. |
+
 ## 7. Questions for the mathematics reviewer
 
 Answer these during the review, then update the rubric and sign below.
@@ -118,6 +141,7 @@ Answer these during the review, then update the rubric and sign below.
 4. Should a right result reached by a method the chapter does not teach (for example the Euclidean algorithm before it is introduced) score scope 2 or 1?
 5. Notation: are there textbook conventions to add (decimal comma, `]a ; b[` intervals, `;` as the separator)?
 6. Time: do you confirm 4–5 hours for grading the 20+20 in Week 13?
+7. Cases: in [cases.json](cases.json), are the expected outcomes and correct results right? In particular, are the six missing-evidence topics (divisibility by 11 and 7, the sieve of Eratosthenes, infinitely many primes, base 2, Goldbach) really absent from the approved chapters?
 
 ## 8. Sign-off
 
