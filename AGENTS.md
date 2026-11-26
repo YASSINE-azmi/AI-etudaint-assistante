@@ -22,7 +22,7 @@ This repository implements the **AI Mathematics Tutor** — a browser-based, Fre
 - **Retrieval:** Supabase `pgvector` + Postgres French full-text search (`to_tsvector('french', ...)`) + RRF fusion
 - **Auth:** Supabase Auth (email only)
 - **Hosting:** Local demo first; optional free-tier Railway/Supabase (no production environment in `v0.1.0`)
-- **AI Providers:** OpenAI-compatible SDK behind server-side provider adapters (LLM, Vision/OCR, STT, TTS, embeddings)
+- **AI Providers:** OpenAI-compatible SDK behind server-side provider adapters (LLM, Vision/OCR, STT, embeddings)
 
 Stack is locked unless explicitly changed. Don't propose alternatives without a stated reason.
 

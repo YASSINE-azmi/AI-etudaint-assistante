@@ -31,7 +31,7 @@ This release is an **academic demo**, not a production pilot. It uses synthetic 
 4. Retrieve approved textbook evidence.
 5. Generate a short structured teaching step.
 6. Validate it through four gates.
-7. Present it as validated text, rendered math notation, and French speech.
+7. Present it as validated text and rendered math notation.
 8. Save, resume, practice, and plan.
 
 The demo must prove **control and provenance**, not unlimited tutoring. The system must never fall back to an ungrounded answer.
@@ -41,7 +41,7 @@ The demo must prove **control and provenance**, not unlimited tutoring. The syst
 The academic demo is done when:
 
 - 10/10 scripted end-to-end journeys complete, save, and reload.
-- 20/20 interruption tests reject stale events and stop local audio in under 500 ms.
+- 20/20 interruption tests reject stale events and stop recording and the UI in under 500 ms.
 - At least 90% of in-scope evaluation tasks are fully correct and scoped.
 - 0 unsupported releases across the boundary set (out-of-scope, missing evidence, prompt injection).
 - 100% of released steps cite valid published source IDs and page references.
@@ -75,7 +75,7 @@ Chapter IDs, objective IDs, page ranges, and the coverage matrix must be confirm
 | Mode | In scope | Notes |
 | --- | --- | --- |
 | Text chat | Yes | Primary interaction; French-first |
-| Push-to-talk French audio | Yes | STT → controlled teaching → TTS; no continuous listening |
+| Push-to-talk French audio | Yes | STT → editable transcript → controlled teaching; answers are text only (no text-to-speech, D-43); no continuous listening |
 | Exercise photo upload | Yes | Preview, OCR/symbol extraction, ambiguity confirmation |
 | Shared whiteboard | No | Deferred beyond `v0.1.0`; the classroom ships text, KaTeX math notation, photos, and voice |
 | Continuous listening | No | Explicitly out of scope |
@@ -113,7 +113,7 @@ If the 16-week schedule slips, reduce in this order. Never weaken authorization,
 | Area | Target |
 | --- | --- |
 | End-to-end demo | 10/10 scripted journeys complete, save, reload |
-| Interruption | 20/20 stale events rejected; local audio stop < 500 ms |
+| Interruption | 20/20 stale events rejected; recording/UI stop < 500 ms |
 | In-scope correctness | ≥ 90% fully correct and scoped on reviewer-approved tasks |
 | Boundary behavior | 0 unsupported releases on out-of-scope, missing-evidence, and injection cases |
 | Provenance | 100% of released steps cite valid published source IDs/pages |
@@ -180,7 +180,7 @@ Out of scope for `v0.1.0`: any code, schema, or evaluation work for chapters 4�
 | D-20 | Use PDF scope-reduction order after voice | Simplify diagrams, planning, exercise breadth, photo conditions |
 | D-21 | Academic demo only; client-brief pilot deferred | Written supervisor waiver; synthetic profiles; no consent/CNDP work in `v0.1.0` |
 | D-22 | Direct SQLAlchemy runtime + per-request JWT claims GUC; PostgREST denies internal tables | Makes `FORCE RLS` real; no service-role in API; explicit grants |
-| D-23 | Dedicated media and speech endpoints + tables | Photo/voice are in scope; signed uploads, STT/TTS |
+| D-23 | Dedicated media and speech endpoints + tables | Photo/voice input are in scope; signed uploads, STT |
 | D-24 | `teaching_claims` is first-class; citations reference stored claims | Auditable claim-level provenance and Gate 2 objective mapping |
 | D-25 | Structured math contract + SymPy; refuse when unverifiable | Variables, domain, assumptions, expected form; no bare `math_expression` |
 | D-26 | 20 in-scope + 20 boundary evaluation tasks | Fits reviewer capacity; directional evidence, not statistical proof |
@@ -196,10 +196,11 @@ Out of scope for `v0.1.0`: any code, schema, or evaluation work for chapters 4�
 | D-36 | `MathClaim.expression` is restricted SymPy syntax parsed by an AST allowlist in a killable process | No LaTeX parser dependency, no `eval` on model output, real timeouts on Windows; display LaTeX is derived from the parsed expression |
 | D-37 | The model cites only `chunk_id` + verbatim quote; the server fills page, revision, hash, and claim spans | LLMs are unreliable at offsets and metadata; removes a whole class of false Gate-1 refusals |
 | D-38 | The browser uploads photos to Storage under a `{user_id}/` prefix; the API reads with the student's JWT | Media works without the service-role key in the API; Pillow re-encodes and strips metadata |
-| D-39 | TTS is fetched only through `POST /speech/synthesize`, after the text renders | One speech path instead of two; no `speech.ready` on the turn stream |
+| D-39 | Superseded by D-43 (was: TTS only through `POST /speech/synthesize`) | — |
 | D-40 | Demo-scale schema: no `rate_limit_counters`, `jobs`, `budget_reservations`, or `hint_events` tables | Single-instance demo; the ledger row, process-local limits, and a periodic task cover the same guarantees with less work |
 | D-41 | Chapters publish one at a time, chapter 1 first by Week 5, each with its own ≥ 10-pair retrieval set | Breaks the circular wait between Week-6 teaching and the Week-8 retrieval label set |
 | D-42 | Guided multi-step exercises move to the reduction ladder; reviewer hours for exercises confirmed by Week 2 | The client brief asks for MCQ, numeric, and narrow expressions only; reviewer time is already fully allocated |
+| D-43 | No text-to-speech in `v0.1.0`: modalities are text, exercise photos, and push-to-talk speech-to-text | Removes `/speech/synthesize`, `spoken_text_fr`, `SPEECH_UNSAFE`, and `TTS_MODEL_NAME`; one less provider call, gate check, and interruption source |
 
 ---
 
@@ -230,7 +231,7 @@ flowchart LR
 | Supabase Auth | Email-only identity for synthetic demo users |
 | Supabase Postgres | Profiles, curriculum, revisions, chunks, sessions, turns, citations, practice, plans, usage |
 | Supabase Storage | Private source assets, student media (demo only) |
-| AI provider | LLM, embeddings, vision/OCR, STT, TTS behind server-side adapters; one model per role (§8.9) |
+| AI provider | LLM, embeddings, vision/OCR, STT behind server-side adapters; one model per role (§8.9) |
 | Reviewer CLI | Local extraction, review, publication, withdrawal, embedding |
 
 ### 4.3 Backend module layout
@@ -337,7 +338,7 @@ backend/
 | `chunk_objectives` | Chunk ↔ objective | `chunk_id`; `objective_id`; both FKs |
 | `tutoring_sessions` | Conversation scope | `id`; `student_id`; `chapter_id`; `objective_id` (nullable current focus); `curriculum_revision_id`; `title`; `status` (`active`/`archived`/`deleted`); `turn_count` |
 | `session_turns` | One student turn | `id`; `session_id`; `turn_index`; `student_prompt`; `response_status` (`pending`/`processing`/`completed`/`failed`/`cancelled`); `educational_status`; `refusal_code`; `message_fr`; `final_payload` (`JSONB`); `model_name`; `prompt_version`; `retrieval_config`; `token_counts`; `latency_ms`; `validation_metadata` (`JSONB`); `created_at`; `processing_started_at`; `expires_at`; `locked_by`; `reserved_usd` |
-| `teaching_steps` | Validated output units | `id`; `turn_id`; `step_index`; `display_text_fr`; `spoken_text_fr`; `next_actions` (`JSONB`); `validation_status` |
+| `teaching_steps` | Validated output units | `id`; `turn_id`; `step_index`; `display_text_fr`; `next_actions` (`JSONB`); `validation_status` |
 | `turn_citations` | Claim ↔ source | `id`; `turn_id`; `step_id`; `teaching_claim_id` (FK); `chunk_id`; `revision_id`; `content_hash`; `page_number`; `section_reference`; `quote_excerpt`; `quote_start`; `quote_end` |
 | `exercises` | Reviewed exercise bank | `id`; `chapter_id`; `objective_id`; `code`; `source_reference`; `exercise_type` (`mcq`/`numeric_tolerance`/`algebraic_expression`); `answer_schema` (`JSONB`); `hints_fr` (`JSONB`); `difficulty_level`; `status` |
 | `exercise_revisions` | Immutable exercise versions | `id`; `exercise_id`; `revision_number`; `problem_statement_fr`; `answer_schema`; `reviewer_id`; `review_status`; `change_summary` |
@@ -480,7 +481,6 @@ Not in `v0.1.0` (D-40): `rate_limit_counters` (process-local limits), `jobs` (pe
 | `POST` | `/api/v1/media/{id}/interpret` | OCR/symbol extraction; return ambiguity candidates |
 | `POST` | `/api/v1/media/{id}/confirm` | Store the confirmed expression or reject the asset |
 | `POST` | `/api/v1/speech/transcribe` | Push-to-talk French audio → editable transcript |
-| `POST` | `/api/v1/speech/synthesize` | Validated French text → TTS audio URL/stream |
 | `GET` | `/api/v1/exercises/{id}` | Exercise detail without answer schema |
 | `POST` | `/api/v1/exercises/{id}/hints` | Next approved hint |
 
@@ -498,11 +498,11 @@ turn.started
 retrieval.completed       { chunkIds, scores }
 validation.started
 validation.completed      { gates, educationalStatus }
-message.final             { text, citations, spokenText }
+message.final             { text, citations }
 turn.completed
 ```
 
-- Speech is not on the turn stream. After the validated text renders, the client calls `POST /speech/synthesize` (D-39).
+- There is no audio output: answers are text and KaTeX only (D-43).
 
 - On failure:
 
@@ -533,7 +533,6 @@ turn.failed { code, educationalStatus, messageFr, retryable }
       "quote": "short excerpt"
     }
   ],
-  "spokenTextFr": "...",
   "nextActions": [],
   "usage": { "inputTokens": 0, "outputTokens": 0, "costUsd": 0.0 }
 }
@@ -620,7 +619,6 @@ class ClaimDraft(BaseModel):
 class TeachingStepDraft(BaseModel):
     step_id: str
     display_text_fr: str
-    spoken_text_fr: str
     claims: list[ClaimDraft]
     next_actions: list[str] = []
 
@@ -634,10 +632,9 @@ class AgentDraftOutput(BaseModel):
 - Parallel `cited_chunk_ids` / `quoted_excerpts` lists are prohibited.
 - Every claim carries `objective_id`; connective text outside claim spans is allowed and does not require a citation.
 - The server, not the model, fills each citation's `revision_id`, `content_hash`, `page_number`, section, and `quote_start/end` from the cited chunk, and computes `claim_span_start/end` by locating `text_fr` in `display_text_fr`. A claim not found verbatim fails Gate 3 (D-37).
-- Display LaTeX for a math claim is generated from the parsed expression (`sympy.latex`), so the rendered, checked, and spoken math come from one object (D-36).
+- Display LaTeX for a math claim is generated from the parsed expression (`sympy.latex`), so the rendered and checked math come from one object (D-36).
 - `citations` is a list; one or more per claim. Each citation is resolved server-side to a `teaching_claim_id` on the same turn.
 - `math` is required for computation claims and absent for pure prose; Gate 4 uses its variables, assumptions, expected form, and check type.
-- `spoken_text_fr` is not free-form for math: when a step carries a `math` claim, the server replaces the model's spoken text with the deterministic French verbalization of the validated expression. The model's version is kept only for connective prose.
 
 ### 8.3 Gate 1 — Source validity
 
@@ -705,8 +702,7 @@ Failure → `outside_scope` with a specific refusal code.
 - KaTeX subset allowlist; no raw HTML, `\htmlClass`, `\href`, or unsafe commands.
 - Balanced delimiters and supported commands; parser/allowlist, not regex-only.
 - Max display text length and max math expression length.
-- If the validated math cannot be rendered safely, refuse rather than narrate it as visible.
-- **Speech safety.** The spoken form is generated deterministically from `MathClaim` (numbers, operators, intervals, vectors) and must cover every validated expression. A mismatch between displayed and spoken math returns `SPEECH_UNSAFE`; the model's free-form spoken text is never played for a math step.
+- If the validated math cannot be rendered safely, refuse.
 
 ### 8.7 Refusal and clarification
 
@@ -719,7 +715,6 @@ Failure → `outside_scope` with a specific refusal code.
 | `MATH_UNVERIFIABLE` | Cannot verify the computation | Ask for clarification or refuse |
 | `MATH_INCORRECT` | Draft contradicts CAS/rubric | Refuse; log for review |
 | `RENDERING_UNSAFE` | Invalid/unsafe math or rendering payload | Refuse; log |
-| `SPEECH_UNSAFE` | Spoken form contradicts the validated expression | Refuse; log |
 | `SOURCE_WITHDRAWN` | Pinned source revision was withdrawn | Keep history read-only; suggest a new session or a replacement revision |
 | `PROVIDER_UNAVAILABLE` | Provider failure | Explain temporary unavailability; preserve session |
 | `CREDIT_EXHAUSTED` | Trial credits exhausted | Explain demo limitation; show fallback |
@@ -751,7 +746,6 @@ Model routing is **static by role** (ADR 0008). One model per role, resolved fro
 | Query and chunk embeddings | `EMBEDDING_MODEL_NAME` | `retrieval/retriever.py`, ingestion |
 | Photo / OCR extraction | `VISION_MODEL_NAME` | `providers/vision.py` |
 | Speech-to-text | `STT_MODEL_NAME` | `providers/speech.py` |
-| Text-to-speech | `TTS_MODEL_NAME` | `providers/speech.py` |
 | Entailment judge (optional) | `JUDGE_MODEL_NAME` | Gate 3/4 supporting evidence |
 
 - Callers request a **role**, never a model identifier; provider adapters in `app/providers/` own the model string and provider-specific request shape.
@@ -1079,15 +1073,14 @@ Edge cases:
 - `src/lib/api.ts` — product calls.
 - `src/lib/sse.ts` — AI SDK-compatible turn transport.
 - `src/components/chat/` — transcript, citations, refusal banners.
-- `src/components/media/` — push-to-talk recorder, audio stop, photo symbol confirmation.
+- `src/components/media/` — push-to-talk recorder, recording stop, photo symbol confirmation.
 - `src/components/practice/` — exercise UI, hints, feedback.
 - `src/components/planning/` — availability, schedule, task completion.
 
 ### 13.3 Classroom contracts
 
-- Validated-content-before-speech: render the validated text and KaTeX math, then call `/speech/synthesize` and play TTS.
-- Speech plays only the validated `spoken_text_fr`; the model's pre-validation text is never spoken.
-- Interruption: stop local audio < 500 ms, abort the stream, call `/interrupt`, reject stale `turnId` events.
+- Validated-content-only: render only the validated text and KaTeX math; the model's pre-validation text is never shown.
+- Interruption: stop any active recording and the UI < 500 ms, abort the stream, call `/interrupt`, reject stale `turnId` events.
 - Photo (D-38): `POST /sessions/{id}/media` registers the asset and returns its path `{user_id}/{session_id}/{asset_id}` → the browser uploads it with supabase-js to the private `exercise-photos` bucket (a `storage.objects` policy lets a user write only under their own `user_id/` prefix) → preview → `POST /media/{id}/interpret` (the API downloads with the student's forwarded JWT, re-encodes with Pillow, strips metadata, runs vision) → confirm ambiguous symbols (`POST /media/{id}/confirm`) → submit `mediaAssetId` + confirmed expression with the turn.
 - Turn transport: the client generates one `Idempotency-Key` UUID per student submission and reuses it on retry of that submission. `DefaultChatTransport.prepareSendMessagesRequest` sends that header plus only the new prompt (and `mediaAssetId` / `confirmedExpression`), not `useChat`'s full message list; the server rebuilds history from validated turns (§11.5).
 - Speech: push-to-talk posts to `POST /speech/transcribe`; the transcript is editable before submission; raw audio is never stored.
@@ -1171,12 +1164,12 @@ Controls:
 - Preserve session state on recoverable errors.
 - Explain failures in French.
 - Allow safe retry.
-- Never duplicate a completed turn or replay cancelled speech.
+- Never duplicate a completed turn or show a cancelled one.
 - Never fall back to an ungrounded answer.
 
 ### 15.2 Cost model
 
-- Per-turn cost = input tokens + output tokens + cached tokens + embedding + validation judge + speech/vision.
+- Per-turn cost = input tokens + output tokens + cached tokens + embedding + validation judge + STT/vision.
 - Ingestion embeddings are a separate line.
 - Track a global trial-credit balance.
 - Report cost per completed turn and per demo journey.
@@ -1286,7 +1279,7 @@ Release gates:
 | 4 | Persistent classroom sessions | Text classroom saves, reloads, and runs locally |
 | 5 | Ingestion + filtered retrieval | Chapter 1 published with its ≥ 10-pair retrieval set; retrieved with correct metadata |
 | 6 | Grounded teaching + Gates 1–3 | Structured tutor passes initial evaluation |
-| 7 | Photos + push-to-talk + Gate 4 | Confirmed photo interpretation enters controlled tutoring; math and speech validated |
+| 7 | Photos + push-to-talk + Gate 4 | Confirmed photo interpretation enters controlled tutoring; math validated; push-to-talk transcript editable |
 | 8 | Streaming sync + interruption | Late events rejected; integrated math review |
 | 9 | Reviewed practice | Attempts and supported feedback persist |
 | 10 | Progress + planning | Editable schedule and revision indicators work |
@@ -1465,7 +1458,6 @@ These are recorded assumptions, not blockers. The plan proceeds with the default
 | `EMBEDDING_DIMENSIONS` | `1536` |
 | `VISION_MODEL_NAME` | Photo/OCR model: student exercise photos and admin extraction |
 | `STT_MODEL_NAME` | Speech-to-text model |
-| `TTS_MODEL_NAME` | Text-to-speech model |
 | `ALLOWED_ORIGINS` | CORS origins |
 | `TRIAL_CREDIT_BUDGET_USD` | Global trial-credit budget |
 | `MAX_TURN_INPUT_TOKENS` | Per-turn input limit |
@@ -1525,7 +1517,6 @@ AMBIGUOUS_QUESTION
 MATH_UNVERIFIABLE
 MATH_INCORRECT
 RENDERING_UNSAFE
-SPEECH_UNSAFE
 SOURCE_WITHDRAWN
 PROVIDER_UNAVAILABLE
 CREDIT_EXHAUSTED
@@ -1554,7 +1545,7 @@ data: {"type":"text-delta","id":"t1","delta":"Voici la définition..."}
 
 data: {"type":"text-end","id":"t1"}
 
-data: {"type":"data-message-final","data":{"citations":[...],"spokenTextFr":"..."}}
+data: {"type":"data-message-final","data":{"citations":[...]}}
 
 data: {"type":"data-turn-completed","data":{"turnId":"...","usage":{"inputTokens":0,"outputTokens":0,"costUsd":0.0}}}
 
@@ -1658,10 +1649,10 @@ Column additions:
 
 ### 22.3 API (normative additions)
 
-Added endpoints (also in §7.1): `POST /sessions/{id}/media`, `POST /media/{id}/interpret`, `POST /media/{id}/confirm`, `POST /speech/transcribe`, `POST /speech/synthesize`, `GET /exercises/{id}`, `POST /exercises/{id}/hints`.
+Added endpoints (also in §7.1): `POST /sessions/{id}/media`, `POST /media/{id}/interpret`, `POST /media/{id}/confirm`, `POST /speech/transcribe`, `GET /exercises/{id}`, `POST /exercises/{id}/hints`.
 
 - Turn request carries `mediaAssetId` and `confirmedExpression` alongside `prompt`, `chapterId`, `objectiveId`, and `options`; all are covered by `request_hash`.
-- `message.final` carries `spokenText`; audio is fetched separately through `POST /speech/synthesize` (D-39).
+- `message.final` carries `text` and `citations` only; there is no audio output (D-43).
 - `GET /exercises` and `GET /exercises/{id}` never return `answer_schema`.
 
 ### 22.4 Auth, RLS, and service-role isolation
@@ -1714,10 +1705,11 @@ A review of the plan against the code and CI found one contradiction that would 
 | D-36 | `MathClaim.expression` in restricted SymPy syntax; AST allowlist parser; killable process | §8.2, §8.6, §22.5, ADR 0005 |
 | D-37 | Model cites `chunk_id` + quote only; server fills metadata and claim spans | §8.2, §8.3, ADR 0004 |
 | D-38 | Browser uploads to `{user_id}/` Storage prefix; API uses the student's JWT; Pillow | §6.5, §7.1, §13.3, ADR 0003 |
-| D-39 | TTS only via `POST /speech/synthesize`; no `speech.ready` | §7.2, §22.3, App. D, ADR 0003 |
+| D-39 | Superseded by D-43 | — |
 | D-40 | Drop `rate_limit_counters`, `jobs`, `budget_reservations`, `hint_events` | §5.1, §5.2, §6.5, §11.3, §18.5, ADR 0009 |
 | D-41 | Publish chapter by chapter; chapter 1 by Week 5 with ≥ 10 labels | §9.6, §10.5, §17.1 |
 | D-42 | Guided multi-step deferred; exercise reviewer hours confirmed at Week 2 | §2.5, §12.1, §17.4, §22.1 |
+| D-43 | Text-to-speech removed; text, photos, and speech-to-text only | §2.3, §7, §8, §13.3, App. D, ADR 0003, ADR 0008 |
 
 **Second pass (26 November 2026).** Added: the Windows event-loop rule; the Ramadan 2027 calendar risk and the planner's Ramadan clock-change test; short per-stage transactions with no transaction open during provider calls (§11.4); lazy profile creation on `/me` (§6.1); client-side idempotency keys and a minimal turn body (§13.3); bucket-level upload limits (§6.5); the pooler login for custom roles; a manual migration step before deploys; the classroom copy fix.
 

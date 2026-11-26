@@ -63,6 +63,6 @@ Playwright uses bundled Chromium by default. Install it once with
 
 - **Auth & HTTP (`src/lib/supabase.ts`, `src/lib/http.ts`):** All requests to FastAPI (`POST /api/v1/sessions/{id}/turns`, `POST /api/v1/sessions/{id}/interrupt`, practice, and study plans) inject `Authorization: Bearer <supabase_access_token>` and support `AbortController` cancellation.
 - **Environment gate (`src/lib/env.ts`):** The app renders a setup screen when `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, or `VITE_SUPABASE_ANON_KEY` is missing. No other module reads `import.meta.env`.
-- **Validated Math & Voice Sync (`src/components/media/`, KaTeX in the transcript):** Render the validated text and math before playing French TTS audio. Clicking **Stop / Interrupt** must cancel local audio in `< 500 ms` and call `POST /api/v1/sessions/{id}/interrupt`.
+- **Validated Math (KaTeX in the transcript):** Render only validated text and math; there is no audio output (D-43). Clicking **Stop / Interrupt** must stop any recording and the UI in `< 500 ms` and call `POST /api/v1/sessions/{id}/interrupt`.
 - **Photo Symbol Confirmation:** Uploaded exercise photos must go through the symbol-confirmation modal before the confirmed expression is submitted to a tutoring turn.
 - **Acceptance tests (`e2e/`):** Playwright owns the scripted journeys, interruption cases, photo confirmation, practice, session resume, refusal rendering, and credit-exhausted fallback.

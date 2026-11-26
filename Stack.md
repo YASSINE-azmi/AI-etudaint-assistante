@@ -20,7 +20,7 @@ Browser tutor for Moroccan Tronc Commun Scientifique (MAXI Maths). French-first.
 | Pydantic | Request and response models |
 | pydantic-settings | Env config (`app/config.py`) |
 | PydanticAI | Tutor agent (typed steps, tools, outputs) |
-| OpenAI SDK | LLM, vision/OCR, speech-to-text, text-to-speech, embeddings (behind server adapters) |
+| OpenAI SDK | LLM, vision/OCR, speech-to-text, embeddings (behind server adapters) |
 | SymPy | Deterministic math checks in the safety gate (AST-allowlist input, no LaTeX parser) |
 | PyJWT | Supabase JWKS access-token verification |
 | httpx | Outbound HTTP |

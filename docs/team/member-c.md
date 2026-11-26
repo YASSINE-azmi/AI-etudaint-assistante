@@ -50,7 +50,7 @@
 | Week 4 | Mohamed | Imran + Yassine | Session CRUD, validated history persistence |
 | Week 5 | Mohamed | Yassine | Curriculum/source/chunk tables, indexes, publish/withdraw DB support |
 | Week 6 | Mohamed + Yassine | Imran | SSE event sequence, final-message payload, idempotent replay |
-| Week 7 | Mohamed | Imran + Yassine | Private media upload, signed URLs, STT/TTS adapters |
+| Week 7 | Mohamed | Imran + Yassine | Private media upload, signed URLs, STT adapter |
 | Week 8 | Mohamed | Imran + Yassine | Interrupt endpoint, cancellation semantics, stale-turn rejection |
 | Week 9 | Mohamed | Imran + Yassine | Attempt/hint persistence and progress endpoint |
 | Week 10 | Mohamed | Imran + Yassine | Study-plan endpoints, timezone rules, regeneration transaction |
@@ -101,7 +101,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 **Week 4**
 - [ ] Add `tutoring_sessions`, `session_turns`, `teaching_steps`, and `turn_citations` migrations with the plan invariants and indexes.
 - [ ] Implement session create, list, get, rename/archive, soft delete, and resume with cursor pagination.
-- [ ] Persist validated history and display/spoken text from completed steps; nothing unvalidated is stored as teachable content.
+- [ ] Persist validated history and display text from completed steps; nothing unvalidated is stored as teachable content.
 - [ ] Add turn history retrieval for the classroom reload path.
 - [ ] Test migration upgrade from empty and downgrade for every new revision.
 - [ ] Hand session/history behavior and validated-content persistence notes to Imran and Yassine.
@@ -139,9 +139,8 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 - [ ] Create a private Supabase Storage bucket for student media; never make it public.
 - [ ] Implement the media flow (D-38): register the asset and return its `{user_id}/{session_id}/{asset_id}` path; `storage.objects` policies limit each user to their own prefix; the API reads with the student's forwarded JWT, enforces 10 MB and the MIME allowlist, and re-encodes with Pillow to strip metadata. No service-role key in the API.
 - [ ] Enforce ownership on every media read/write; test cross-user access denial.
-- [ ] Add STT and TTS provider adapters behind the server boundary.
+- [ ] Add the STT provider adapter behind the server boundary.
 - [ ] Never persist raw microphone audio. Delete temporary audio immediately after STT.
-- [ ] Return TTS audio from `POST /speech/synthesize` through an authenticated, short-lived path; never expose provider keys. No `speech.ready` stream event (D-39).
 - [ ] Add upload, MIME, oversize, ownership, and audio-retention tests.
 - [ ] Hand the media contract and limits to Imran and Yassine.
 
@@ -274,7 +273,7 @@ Each runbook is tested at least once before Week 16. An untested runbook is a wi
 | 100% cross-user access denial | Automated tests for profiles, sessions, turns, media, attempts, plans |
 | 0 service-role imports in student request graph | Import-boundary test in CI |
 | Idempotent turns | Replay, same-key/different-hash, concurrent duplicate tests |
-| No duplicate or stale speech | Interrupt, cancel, replay, stale-`turnId` tests |
+| No duplicate or stale turns | Interrupt, cancel, replay, stale-`turnId` tests |
 | Credit hard stop | `CREDIT_EXHAUSTED` test with no generated text |
 | Migrations from empty and back | CI log for every revision |
 | Backup restore | Restore into isolated DB and verification query output |
@@ -302,7 +301,7 @@ Each runbook is tested at least once before Week 16. An untested runbook is a wi
 
 - FastAPI platform, auth, database models, repositories, migrations, and RLS policies.
 - Turn engine, idempotency, SSE transport, interruption, budget ledger, and jobs.
-- Media storage and speech/vision adapter integration.
+- Media storage and STT/vision adapter integration.
 - Practice/planning persistence and progress endpoints.
 - CI pipeline, demo deployment, and environment documentation.
 - Backup/restore, rollback, and incident runbooks.

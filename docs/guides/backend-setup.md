@@ -9,7 +9,7 @@ New to the project on Windows 11? Start with [Agent onboarding](agent-onboarding
 - Python `3.12+`
 - [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
 - A configured Supabase project (see [Supabase setup](supabase-setup.md))
-- An OpenAI-compatible API key for LLM, Vision/OCR, STT, TTS, and embeddings
+- An OpenAI-compatible API key for embeddings and STT (plus a DeepSeek key for LLM and Vision/OCR)
 
 ## Init (from `backend/`)
 
@@ -33,9 +33,12 @@ Copy `backend/.env.example` to `backend/.env` and set:
 | `SUPABASE_SERVICE_ROLE_KEY` | Reviewer CLI and ingestion only (`AdminSettings`). The API does not read it and starts without it; never expose it to the frontend |
 | `DATABASE_URL` | Session-mode Postgres connection (pooler port 5432, or the direct host if your network has IPv6) for Alembic |
 | `DATABASE_RUNTIME_URL` | API connection using the non-owner `app_runtime` role |
-| `AI_PROVIDER_BASE_URL` | OpenAI-compatible base URL |
-| `AI_PROVIDER_API_KEY` | Server-side API key for LLM, Vision/OCR, STT, TTS, and embeddings |
-| `LLM_MODEL_NAME` | Chat/reasoning model identifier |
+| `CHAT_PROVIDER_BASE_URL` | OpenAI-compatible base URL for teaching and vision (`https://api.deepseek.com`) |
+| `CHAT_PROVIDER_API_KEY` | Server-side API key for teaching and vision |
+| `LLM_MODEL_NAME` | Teaching model (`deepseek-flash`, pinned from `docs/Benchmark.md`) |
+| `VISION_MODEL_NAME` | Photo/OCR model (`deepseek-flash`) |
+| `AI_PROVIDER_BASE_URL` | OpenAI-compatible base URL for embeddings and speech |
+| `AI_PROVIDER_API_KEY` | Server-side API key for embeddings and STT |
 | `EMBEDDING_MODEL_NAME` | Embedding model identifier (`vector(1536)`) |
 | `EMBEDDING_DIMENSIONS` | Must match the pgvector column (`1536`) |
 | `ALLOWED_ORIGINS` | Comma-separated CORS origins (e.g. `http://localhost:5173`) |
@@ -48,7 +51,7 @@ Copy `backend/.env.example` to `backend/.env` and set:
 
 `backend/.env.example` is the canonical list. Keep it in sync with `app/config.py`.
 
-Model settings are **per role**, not routed per request: `LLM_MODEL_NAME` answers, `EMBEDDING_MODEL_NAME` embeds, `VISION_MODEL_NAME` reads photos, and the STT/TTS names drive speech. There is no router, no dynamic model selection, and no automatic provider failover (plan §8.9, ADR 0008).
+Model settings are **per role**, not routed per request: `LLM_MODEL_NAME` answers, `EMBEDDING_MODEL_NAME` embeds, `VISION_MODEL_NAME` reads photos, and `STT_MODEL_NAME` transcribes push-to-talk. There is no text-to-speech (D-43). There is no router, no dynamic model selection, and no automatic provider failover (plan §8.9, ADR 0008).
 
 ## Database migrations
 

@@ -14,6 +14,8 @@ _TEST_ENV = {
     "SUPABASE_ANON_KEY": "test-anon-key",
     "DATABASE_URL": "postgresql+psycopg://postgres:test@localhost:5432/postgres",
     "DATABASE_RUNTIME_URL": "postgresql+psycopg://app_runtime:test@localhost:5432/postgres",
+    "CHAT_PROVIDER_BASE_URL": "https://chat.example.test",
+    "CHAT_PROVIDER_API_KEY": "test-chat-provider-key",
     "AI_PROVIDER_BASE_URL": "https://api.example.test/v1",
     "AI_PROVIDER_API_KEY": "test-provider-key",
     "TRIAL_CREDIT_BUDGET_USD": "5.00",

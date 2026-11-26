@@ -7,7 +7,7 @@
 
 The plan needs several distinct model capabilities: a chat model for teaching,
 an embedding model for retrieval, a vision model for exercise photos, speech
-models for push-to-talk, and an optional judge model for entailment/rubric
+a speech-to-text model for push-to-talk, and an optional judge model for entailment/rubric
 checks. Each is configured separately in `backend/app/config.py`:
 
 | Role | Setting |
@@ -16,7 +16,6 @@ checks. Each is configured separately in `backend/app/config.py`:
 | Query and chunk embeddings | `EMBEDDING_MODEL_NAME` |
 | Photo / OCR extraction | `VISION_MODEL_NAME` |
 | Speech-to-text | `STT_MODEL_NAME` |
-| Text-to-speech | `TTS_MODEL_NAME` |
 | Entailment judge (optional) | `JUDGE_MODEL_NAME` |
 
 This raised the question of whether the architecture has "AI model routing",

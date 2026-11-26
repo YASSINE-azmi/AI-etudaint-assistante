@@ -11,7 +11,7 @@ This is the React classroom SPA for the **AI Mathematics Tutor** (**MAXI Maths �
 - **`@supabase/supabase-js`** for auth (email only — no Google sign-in, no SSO providers).
 - **Vercel AI SDK UI** (`ai`, `@ai-sdk/react`) for turn state and streaming client behavior (`useChat`).
 - **KaTeX** (`katex`) for French mathematical notation rendering in the classroom transcript.
-- **Web Audio API / `MediaRecorder`** for push-to-talk French audio capture and immediate (`< 500 ms`) local audio interruption.
+- **Web Audio API / `MediaRecorder`** for push-to-talk French audio capture, with recording stopped in under 500 ms on interruption.
 - **Playwright** (`@playwright/test`) for end-to-end acceptance tests.
 
 ## Package manager
@@ -85,8 +85,8 @@ Keep imports consistent with the `@/*` alias (e.g. `@/lib/api`, `@/components/ui
 - Always use `api.get/post/put/patch/delete` from `@/lib/api` — it handles base URL, JSON, Supabase bearer token, `AbortController` timeouts/cancellation, and typed `ApiError`s (including `isNetworkError`).
 - Auth is Supabase email. The bearer token is injected automatically via `src/lib/http.ts` and the AI SDK `DefaultChatTransport`; never thread tokens through component props.
 - **Turn requests:** generate one `Idempotency-Key` UUID per student submission and reuse it on retry. Send only the new prompt (plus `mediaAssetId` / `confirmedExpression`) through `DefaultChatTransport.prepareSendMessagesRequest`, not the full `useChat` message list (plan §13.3).
-- **Validated-content-before-speech:** Render the validated message and KaTeX math before playing French TTS audio. Never narrate content that is not visible.
-- **Immediate interruption:** Clicking **Stop / Interrupt** must cancel local audio in `< 500 ms`, abort the active stream, and call `POST /sessions/{id}/interrupt` so stale `turnId` events are rejected.
+- **Validated content only:** Render only the validated message and KaTeX math. There is no text-to-speech (D-43).
+- **Immediate interruption:** Clicking **Stop / Interrupt** must stop any recording in `< 500 ms`, abort the active stream, and call `POST /sessions/{id}/interrupt` so stale `turnId` events are rejected.
 - **Photo symbol confirmation:** Uploaded exercise photos must pass through the ambiguous-symbol confirmation dialog before tutoring begins.
 
 ## Testing

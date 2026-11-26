@@ -50,7 +50,7 @@ You need credentials for the following external services before running the full
 | Service | Purpose | Resource / Guide |
 | :--- | :--- | :--- |
 | **Supabase** | Auth (email only), Postgres (`pgvector` + French full-text search), Private Storage (`exercise-photos`) | [Supabase Dashboard](https://supabase.com/dashboard) & [docs/guides/supabase-setup.md](docs/guides/supabase-setup.md) |
-| **OpenAI / OpenAI-compatible** | LLM tutoring, Vision/OCR extraction, STT (speech-to-text), TTS (text-to-speech), Embeddings (`vector(1536)`) | [OpenAI API Keys](https://platform.openai.com/api-keys) |
+| **OpenAI / OpenAI-compatible** | LLM tutoring, Vision/OCR extraction, STT (speech-to-text), Embeddings (`vector(1536)`) | [OpenAI API Keys](https://platform.openai.com/api-keys) |
 | **Railway / Supabase (optional)** | Demo hosting only; not a production environment in `v0.1.0` | [Railway Dashboard](https://railway.com) |
 
 > [!IMPORTANT]

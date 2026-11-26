@@ -56,8 +56,8 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 ### Weeks 1–2 — Benchmark, corpus sample, and scope gate
 
 **Week 1**
-- [ ] Benchmark 20 French math prompts for correctness, latency, cost, and JSON reliability.
-- [ ] Record the candidate model, provider, prompt version, and failure modes. Model choice is static per role (ADR 0008): benchmark first, then pin it in settings — no runtime routing.
+- [x] Benchmark 20 French math prompts for correctness, latency, cost, and JSON reliability.
+- [x] Record the candidate model, provider, prompt version, and failure modes. Model choice is static per role (ADR 0008): benchmark first, then pin it in settings — no runtime routing.
 - [ ] Prototype the SSE turn contract with Mohamed; agree on final-only text and failure events.
 - [ ] Extract one chapter sample and run the retrieval/RRF spike.
 - [ ] Draft the evaluation rubric with the mathematics reviewer.
@@ -120,10 +120,10 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 
 **Week 7**
 - [ ] Define the photo symbol-confirmation contract with Imran: raw image → extracted symbols → confirmed expression.
-- [ ] Implement Gate 4: the AST allowlist math parser over restricted SymPy syntax (no `sympify`/`parse_expr`), SymPy checks in a killable worker process with a 2 s limit, KaTeX rendering allowlist, and the deterministic speech form (`SPEECH_UNSAFE`) (D-36).
+- [ ] Implement Gate 4: the AST allowlist math parser over restricted SymPy syntax (no `sympify`/`parse_expr`), SymPy checks in a killable worker process with a 2 s limit, and the KaTeX rendering allowlist (D-36).
 - [ ] Add math-gate checks for the confirmed expression.
 - [ ] Test ambiguous symbols, unsupported notation, and unsafe input.
-- [ ] Review the STT/TTS behavior with Mohamed; keep voice push-to-talk only.
+- [ ] Review the STT behavior with Mohamed; keep voice push-to-talk only.
 - [ ] Add tests that raw OCR output never reaches the tutor.
 
 **Week 8**
