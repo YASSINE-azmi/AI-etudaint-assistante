@@ -1,10 +1,12 @@
 """Week-1 retrieval/RRF spike: chunk one chapter, rank with lexical, semantic and RRF.
 
 In memory only (no database): BM25 stands in for Postgres French full-text search and
-NumPy-free cosine stands in for pgvector. Embeddings use the AI_PROVIDER_* settings.
+cosine stands in for pgvector. Embeddings run locally through fastembed (ONNX); model
+weights download once into data/models/ (gitignored).
 
-    uv run python -m scripts.retrieval_spike ../data/sources/01_Chapitre_1_L_ensemble_N.md
-    uv run python -m scripts.retrieval_spike <chapter.md> --lexical-only   # no API key needed
+    uv run python -m scripts.retrieval_spike <chapter.md> --lexical-only
+    uv run python -m scripts.retrieval_spike <chapter.md> --model <hf-model> [--model ...]
+    (add --models-dir <path> to keep weights outside a synced folder such as OneDrive)
 
 Chunk text and embeddings are cached under data/extracted/ (gitignored); only metrics
 and chunk IDs are printed.
@@ -13,19 +15,22 @@ and chunk IDs are printed.
 import json
 import math
 import sys
+import time
 from collections import Counter
 from pathlib import Path
 
-from openai import OpenAI
+from fastembed import TextEmbedding
 
-from app.config import get_settings
 from app.retrieval.fusion import rrf
 from app.retrieval.normalize import tokens
 from ingest.chunking import Chunk, chunk_chapter
 
 TOP_PER_CHANNEL = 20
 QUERIES = Path(__file__).with_name("retrieval_spike_queries.json")
-CACHE_DIR = Path(__file__).resolve().parents[2] / "data" / "extracted"
+DATA = Path(__file__).resolve().parents[2] / "data"
+CACHE_DIR = DATA / "extracted"
+MODELS_DIR = DATA / "models"
+RRF_K = 60
 
 
 def bm25(chunks: list[Chunk], query: str, k1: float = 1.2, b: float = 0.75) -> list[str]:
@@ -47,12 +52,11 @@ def bm25(chunks: list[Chunk], query: str, k1: float = 1.2, b: float = 0.75) -> l
     return [cid for _, cid in scores[:TOP_PER_CHANNEL]]
 
 
-def embed(client: OpenAI, model: str, texts: list[str]) -> list[list[float]]:
-    out: list[list[float]] = []
-    for i in range(0, len(texts), 64):
-        resp = client.embeddings.create(model=model, input=texts[i : i + 64])
-        out += [d.embedding for d in resp.data]
-    return out
+def embed(model: TextEmbedding, texts: list[str], kind: str) -> list[list[float]]:
+    # E5 models are trained with "query: " / "passage: " prefixes; others take raw text.
+    if "e5" in model.model_name.lower():
+        texts = [f"{kind}: {t}" for t in texts]
+    return [v.tolist() for v in model.embed(texts, batch_size=16)]
 
 
 def cosine(a: list[float], b: list[float]) -> float:
@@ -60,8 +64,8 @@ def cosine(a: list[float], b: list[float]) -> float:
     return dot / (math.sqrt(sum(x * x for x in a)) * math.sqrt(sum(y * y for y in b)))
 
 
-def chunk_vectors(client: OpenAI, model: str, chunks: list[Chunk]) -> dict[str, list[float]]:
-    cache = CACHE_DIR / f"spike_embeddings_{model}.json"
+def chunk_vectors(model: TextEmbedding, chunks: list[Chunk]) -> dict[str, list[float]]:
+    cache = CACHE_DIR / f"spike_embeddings_{model.model_name.replace('/', '__')}.json"
     stored: dict[str, list[float]] = {}
     if cache.exists():
         stored = json.loads(cache.read_text(encoding="utf-8"))
@@ -69,7 +73,7 @@ def chunk_vectors(client: OpenAI, model: str, chunks: list[Chunk]) -> dict[str, 
     missing = [c for c in chunks if f"{c.chunk_id}|{hashes[c.chunk_id]}" not in stored]
     if missing:
         texts = [" > ".join(c.section_path) + "\n" + c.text for c in missing]
-        for c, v in zip(missing, embed(client, model, texts), strict=True):
+        for c, v in zip(missing, embed(model, texts, "passage"), strict=True):
             stored[f"{c.chunk_id}|{c.content_hash}"] = v
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         cache.write_text(json.dumps(stored), encoding="utf-8")
@@ -86,44 +90,51 @@ def metrics(ranked: list[list[str]], relevant: list[set[str]], k: int = 5) -> tu
     return hits / len(ranked), rr / len(ranked)
 
 
-def main(source: Path, lexical_only: bool) -> None:
+def main(source: Path, models: list[str], models_dir: Path) -> None:
     spec = json.loads(QUERIES.read_text(encoding="utf-8"))
     chunks = chunk_chapter(
         source.read_text(encoding="utf-8"), spec["chapter_id"], "Chapitre 1 - Ensemble N"
     )
     questions = [q["q"] for q in spec["queries"]]
     relevant = [set(q["relevant"]) for q in spec["queries"]]
-    channels = {"lexical (BM25)": [bm25(chunks, q) for q in questions]}
-    model = "none"
-    if not lexical_only:
-        settings = get_settings()
-        client = OpenAI(
-            base_url=settings.ai_provider_base_url, api_key=settings.ai_provider_api_key
-        )
-        model = settings.embedding_model_name
-        vectors = chunk_vectors(client, model, chunks)
-        channels["semantic"] = [
+    lexical = [bm25(chunks, q) for q in questions]
+    channels = {"lexical (BM25)": lexical}
+    for name in models:
+        started = time.perf_counter()
+        model = TextEmbedding(model_name=name, cache_dir=str(models_dir))
+        vectors = chunk_vectors(model, chunks)
+        qvecs = embed(model, questions, "query")
+        elapsed = time.perf_counter() - started
+        short = name.split("/")[-1]
+        semantic = [
             sorted(vectors, key=lambda cid: (-cosine(qv, vectors[cid]), cid))[:TOP_PER_CHANNEL]
-            for qv in embed(client, model, questions)
+            for qv in qvecs
         ]
-        channels["RRF"] = [
-            [cid for cid, _ in rrf([lx, sm], k=settings.rrf_k)]
-            for lx, sm in zip(channels["lexical (BM25)"], channels["semantic"], strict=True)
+        channels[f"semantic {short}"] = semantic
+        channels[f"RRF {short}"] = [
+            [cid for cid, _ in rrf([lx, sm], k=RRF_K)]
+            for lx, sm in zip(lexical, semantic, strict=True)
         ]
+        dims = len(next(iter(vectors.values())))
+        print(f"{short}: dims={dims} load+embed={elapsed:.1f}s")
 
-    print(f"chunks={len(chunks)} queries={len(questions)} embedding={model}")
+    print(f"chunks={len(chunks)} queries={len(questions)}")
     for name, ranked in channels.items():
         recall, mrr = metrics(ranked, relevant)
-        print(f"{name:15} Recall@5={recall:.2f}  MRR={mrr:.2f}")
-    print(f"\nrank of first relevant chunk ({' / '.join(channels)}); '-' = not in top 20")
-    last = list(channels.values())[-1]
+        print(f"{name:40} Recall@5={recall:.2f}  MRR={mrr:.2f}")
+    print("\nrank of first relevant chunk per channel, in the order above; '-' = not in top 20")
     for i, (q, rel) in enumerate(zip(questions, relevant, strict=True)):
         ranks = [
             next((str(r) for r, c in enumerate(ranked[i], 1) if c in rel), "-")
             for ranked in channels.values()
         ]
-        print(f"{' / '.join(ranks):>10}  {q}  top5={[c[-4:] for c in last[i][:5]]}")
+        print(f"{' / '.join(ranks):>22}  {q}")
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]), lexical_only="--lexical-only" in sys.argv[2:])
+    args = sys.argv[1:]
+    chosen = [args[i + 1] for i, a in enumerate(args) if a == "--model"]
+    if not chosen and "--lexical-only" not in args:
+        sys.exit("pass --lexical-only or at least one --model <hf-model>")
+    md = next((args[i + 1] for i, a in enumerate(args) if a == "--models-dir"), None)
+    main(Path(args[0]), chosen, Path(md) if md else MODELS_DIR)

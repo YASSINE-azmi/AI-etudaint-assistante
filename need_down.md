@@ -50,7 +50,7 @@ You need credentials for the following external services before running the full
 | Service | Purpose | Resource / Guide |
 | :--- | :--- | :--- |
 | **Supabase** | Auth (email only), Postgres (`pgvector` + French full-text search), Private Storage (`exercise-photos`) | [Supabase Dashboard](https://supabase.com/dashboard) & [docs/guides/supabase-setup.md](docs/guides/supabase-setup.md) |
-| **OpenAI / OpenAI-compatible** | LLM tutoring, Vision/OCR extraction, STT (speech-to-text), Embeddings (`vector(1536)`) | [OpenAI API Keys](https://platform.openai.com/api-keys) |
+| **OpenAI / OpenAI-compatible** | LLM tutoring, Vision/OCR extraction, STT (speech-to-text); embeddings run locally (`intfloat/multilingual-e5-large`, `vector(1024)`, no key) | [OpenAI API Keys](https://platform.openai.com/api-keys) |
 | **Railway / Supabase (optional)** | Demo hosting only; not a production environment in `v0.1.0` | [Railway Dashboard](https://railway.com) |
 
 > [!IMPORTANT]
@@ -77,7 +77,7 @@ Open `backend/.env` and provide your credentials:
 - `DATABASE_URL` (session-mode connection string for Alembic)
 - `DATABASE_RUNTIME_URL` (non-owner `app_runtime` role for the API)
 - `AI_PROVIDER_BASE_URL`, `AI_PROVIDER_API_KEY`, `LLM_MODEL_NAME`
-- `EMBEDDING_MODEL_NAME` (`text-embedding-3-small`), `EMBEDDING_DIMENSIONS` (`1536`)
+- `EMBEDDING_MODEL_NAME` (`intfloat/multilingual-e5-large`), `EMBEDDING_DIMENSIONS` (`1024`), `EMBEDDING_CACHE_DIR`
 - `TRIAL_CREDIT_BUDGET_USD`, `ALLOWED_ORIGINS` (`http://localhost:5173`)
 
 ### 2. Install Dependencies

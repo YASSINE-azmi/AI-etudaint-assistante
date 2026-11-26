@@ -1,7 +1,7 @@
 # Retrieval / RRF spike: chapter 1 (Week 1)
 
 - **Owner:** Yassine · **Task:** [member-b.md](../team/member-b.md) Week 1 "Extract one chapter sample and run the retrieval/RRF spike"
-- **Status:** chunking and lexical channel run; **semantic channel and RRF are pending an embedding API key** (see "To finish").
+- **Status:** done. **Decision (D-44): local `intfloat/multilingual-e5-large` (1024 dims) + BM25, fused with RRF.** Labels are still provisional (reviewer to confirm).
 - **Plan:** §9.4 (chunking), §10.2 (hybrid search), §10.3 (RRF), §10.5 (retrieval evaluation)
 
 No textbook text is in this file or in git. The chapter source stays in `data/sources/` (gitignored); chunk text and embedding caches go to `data/extracted/` (gitignored).
@@ -20,8 +20,10 @@ Run it from `backend/`:
 
 ```powershell
 uv run python -m scripts.retrieval_spike ../data/sources/01_Chapitre_1_L_ensemble_N.md --lexical-only
-uv run python -m scripts.retrieval_spike ../data/sources/01_Chapitre_1_L_ensemble_N.md
+uv run python -m scripts.retrieval_spike ../data/sources/01_Chapitre_1_L_ensemble_N.md --model intfloat/multilingual-e5-large --models-dir $env:LOCALAPPDATA/ai-math-tutor/models
 ```
+
+Embeddings run locally through `fastembed` (ONNX, no PyTorch, no API key). Keep the model cache outside OneDrive: inside the synced folder the 2.2 GB download stalled repeatedly.
 
 ## Chunking result (chapter 1, "Ensemble N - notions d'arithmétique")
 
@@ -32,24 +34,30 @@ uv run python -m scripts.retrieval_spike ../data/sources/01_Chapitre_1_L_ensembl
 - An "Exemple" inside an exercise stays with that exercise.
 - Images become `[figure]`; the figure contents (division tables for the successive-division method) are lost, which matters for the PGCD method (see findings).
 
-## Retrieval result (20 queries, lexical channel only)
+## Retrieval result (20 queries)
 
 | Channel | Recall@5 | MRR |
 | --- | --- | --- |
 | Lexical (BM25 over normalized text) | **0.90** | **0.79** |
-| Semantic (`text-embedding-3-small`) | pending | pending |
-| RRF (lexical + semantic) | pending | pending |
+| Semantic, `paraphrase-multilingual-MiniLM-L12-v2` (384 dims, 0.22 GB) | 0.60 | 0.41 |
+| RRF, BM25 + MiniLM | 0.85 | 0.61 |
+| Semantic, `multilingual-e5-large` (1024 dims, 2.2 GB) | 0.85 | 0.78 |
+| **RRF, BM25 + e5-large (chosen)** | **0.90** | **0.79** |
 
-Plan target (§10.5): per chapter Recall@5 ≥ 0.80, overall ≥ 0.90, MRR ≥ 0.70. The lexical channel alone already meets the chapter target.
+Plan target (§10.5): per chapter Recall@5 ≥ 0.80, overall ≥ 0.90, MRR ≥ 0.70. BM25 + e5-large meets all three on chapter 1.
+
+**Why e5-large and RRF, when BM25 alone scores the same:** the two channels fail on different queries. e5-large ranks "algorithme d'Euclide" first (BM25: 11th), and RRF lifts it into the top 5. BM25 catches exact-number queries that embeddings blur. MiniLM was too weak: fused with BM25 it scored *below* BM25 alone. On a 20-query set the totals tie, but the fused ranking is safer on unseen wording.
+
+**Speed (CPU):** model load 2.4 s once at startup; **about 45 ms per query**, well inside the 2 s retrieval budget; embedding all 83 chunks takes about 2 minutes (ingestion only).
 
 Misses and near-misses:
 
 | Query | Rank of first relevant chunk | Why |
 | --- | --- | --- |
-| "algorithme d'Euclide pour trouver le pgcd" | 11 | The chapter never says "Euclide" in the course text, only in the objectives. A vocabulary gap: the semantic channel should fix it; otherwise add "algorithme d'Euclide → divisions successives" to the synonym map. |
-| "décomposer un nombre en produit de facteurs premiers" | 11 | Exercises 21–29 repeat the exact phrase and outrank the property. The §10.7 reranker should boost `definition`/`property` over `exercise` for "what is / how to" questions. |
+| "algorithme d'Euclide pour trouver le pgcd" | BM25 11 · e5 1 · RRF 5 | The course text never says "Euclide". e5 bridges it; also add "algorithme d'Euclide → divisions successives" to the synonym map. |
+| "décomposer un nombre en produit de facteurs premiers" | BM25 11 · e5 7 · RRF 9 | Exercises 21–29 repeat the exact phrase and outrank the property. The §10.7 reranker should boost `definition`/`property` over `exercise` for "what is / how to" questions. |
 | "comment savoir si un nombre est divisible par 3" | 3 | A worked method ranks above the property; acceptable. |
-| "utiliser le ppcm pour additionner deux fractions" | 3 | The objectives chunk ranks first; consider excluding `intro` chunks from teaching retrieval. |
+| "utiliser le ppcm pour additionner deux fractions" | BM25 3 · e5 >20 · RRF 9 | The objectives chunk ranks first; consider excluding `intro` chunks from teaching retrieval. |
 
 ## Findings for the plan
 
@@ -60,9 +68,8 @@ Misses and near-misses:
 5. **Token count is estimated** (characters ÷ 4). Use the embedding model's tokenizer when ingestion is built properly.
 6. **No overlap yet.** The plan asks for ~50 tokens of prose overlap; only one unit is long enough to split, so this was deferred.
 
-## To finish this task
+## Follow-ups (not part of this spike)
 
-1. Put a valid OpenAI key in `backend/.env` (`AI_PROVIDER_BASE_URL`, `AI_PROVIDER_API_KEY`) along with the other required settings from `.env.example`.
-2. Run the full command above (without `--lexical-only`) and fill in the semantic and RRF rows.
-3. If RRF beats both channels, keep `text-embedding-3-small` (§10.1: the model is a one-way door after Week 1).
-4. Have the mathematics reviewer confirm or correct the 20 labels; they are provisional.
+1. The mathematics reviewer confirms or corrects the 20 labels; they are provisional.
+2. The §10.7 reranker adds a content-type prior so definitions and properties beat exercises.
+3. Weeks 2–5: build the real ingestion (Postgres FTS + pgvector `vector(1024)`) and re-run this set against it.
