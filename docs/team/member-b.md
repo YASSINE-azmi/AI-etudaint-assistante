@@ -69,7 +69,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 - [x] Record the academic-use note input with the team lead and supervisor. Input recorded: [academic-use-input](../academic-use-input.md) (3 chapters now, academic use only). The team lead's note and the supervisor's acknowledgment are tracked in that file's sign-off table.
 - [x] Freeze the draft output contract, citation contract, refusal codes, and status mapping. Frozen: [teaching-contracts-v0.1](../contracts/teaching-contracts.md) (`draft-output-v0.1`, `refusal-fr-v0.1`); accepted by Imran and Mohamed.
 - [x] Build the first reviewer-labeled retrieval set: 40–60 query → chunk pairs, graded 0/1/2, ≥ 10 per chapter, every published objective represented; 70/30 tune/holdout split. Done: 56 queries (19 / 17 / 20), 301 graded pairs, all 22 objectives, 40 tune / 16 holdout; RRF Recall@5 0.89 (holdout 0.81). Graded by Claude at the reviewer's request; reviewer spot-check pending ([spike](../spikes/retrieval-rrf-ch01.md)).
-- [ ] Produce the Week-2 go/no-go evidence: benchmark, coverage, contracts, and risks.
+- [x] Produce the Week-2 go/no-go evidence: benchmark, coverage, contracts, and risks. Done: [go/no-go](../go-no-go-week2.md), conditional GO with 4 open conditions (owners and deadlines inside); reviewer hours confirmed.
 
 **Exit evidence:** benchmark report, sample RRF result, reviewer-confirmed coverage matrix, and signed-off contracts.
 
