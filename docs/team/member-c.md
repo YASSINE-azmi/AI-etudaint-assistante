@@ -1,4 +1,4 @@
-# Mohamed — Platform, Auth, Backend, Database, Jobs, Deployment, Planning
+# Mohamed — Platform, Auth, Backend, Database, Jobs, Deployment
 
 > **Member:** Mohamed.
 >
@@ -12,12 +12,12 @@
 
 | Item | Detail |
 | --- | --- |
-| Accountable for | Platform/auth/backend/DB/jobs/deployment/planning |
-| Responsible for | FastAPI platform, Supabase auth and RLS, schema and migrations, turn state machine, idempotency, budget ledger, media storage, background jobs, CI, deployment, backups, runbooks, study-plan persistence |
+| Accountable for | Platform/auth/backend/DB/jobs/deployment |
+| Responsible for | FastAPI platform, Supabase auth and RLS, schema and migrations, turn state machine, idempotency, budget ledger, media storage, background jobs, CI, deployment, backups, runbooks |
 | Supports | Imran on API/SSE contracts, auth behavior, media upload, and resume; Yassine on retrieval schema, ingestion CLI, gate integration, evaluator persistence, and evaluation environment |
 | Not responsible for | React UI, KaTeX math rendering, prompt design, retrieval ranking, gate logic, math verification, Playwright test authoring |
 | Main paths | `backend/app/`, `backend/alembic/`, `backend/tests/`, `.github/workflows/`, deployment config, `docs/guides/` |
-| Main interfaces | Auth/JWT, `/api/v1/me`, curriculum, sessions, turns/SSE, interrupt, exercises, progress, study plan, media, jobs, usage/budget |
+| Main interfaces | Auth/JWT, `/api/v1/me`, curriculum, sessions, turns/SSE, interrupt, exercises, media, jobs, usage/budget |
 
 **You own the safety envelope.** Identity, authorization, persistence, turn state, cancellation, credit limits, and deployment are enforced server-side and in Postgres — not in the browser and not by the model. If a rule is not enforced by the database or the API, it is not enforced.
 
@@ -50,10 +50,9 @@
 | Week 4 | Mohamed | Imran + Yassine | Session CRUD, validated history persistence |
 | Week 5 | Mohamed | Yassine | Curriculum/source/chunk tables, indexes, publish/withdraw DB support |
 | Week 6 | Mohamed + Yassine | Imran | SSE event sequence, final-message payload, idempotent replay |
-| Week 7 | Mohamed | Imran + Yassine | Private media upload, signed URLs, STT adapter |
+| Week 7 | Mohamed | Imran + Yassine | Private media upload, signed URLs, audio route |
 | Week 8 | Mohamed | Imran + Yassine | Interrupt endpoint, cancellation semantics, stale-turn rejection |
-| Week 9 | Mohamed | Imran + Yassine | Attempt/hint persistence and progress endpoint |
-| Week 10 | Mohamed | Imran + Yassine | Study-plan endpoints, timezone rules, regeneration transaction |
+| Week 10 | Mohamed | Imran | Usage/budget reporting queries for the admin summary |
 | Week 11 | Mohamed | All | Jobs, usage/budget report, metrics, demo deployment |
 | Week 13 | Mohamed | Yassine | Stable evaluation environment, DB snapshot, cost/latency exports |
 | Week 15 | Mohamed | All | Runbooks, restore evidence, deployment notes, platform report section |
@@ -139,7 +138,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 - [ ] Create a private Supabase Storage bucket for student media; never make it public.
 - [ ] Implement the media flow (D-38): register the asset and return its `{user_id}/{session_id}/{asset_id}` path; `storage.objects` policies limit each user to their own prefix; the API reads with the student's forwarded JWT, enforces 10 MB and the MIME allowlist, and re-encodes with Pillow to strip metadata. No service-role key in the API.
 - [ ] Enforce ownership on every media read/write; test cross-user access denial.
-- [ ] Add the STT provider adapter behind the server boundary.
+- [ ] Expose the push-to-talk audio route and temporary-file handling for Yassine's STT adapter (D-47).
 - [ ] Never persist raw microphone audio. Delete temporary audio immediately after STT.
 - [ ] Add upload, MIME, oversize, ownership, and audio-retention tests.
 - [ ] Hand the media contract and limits to Imran and Yassine.
@@ -155,33 +154,26 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 
 **Exit evidence:** private media, push-to-talk support, interrupt/cancel semantics, stale-event rejection, and worker recovery.
 
-### Weeks 9–10 — Practice and planning platform
+### Weeks 9–10 — Practice and planning support
+
+Practice persistence moved to Yassine and the study-plan backend to Imran (D-47). This block gives you room to start Week-11 jobs early.
 
 **Week 9**
-- [ ] Add `exercise_attempts` (with `hints_requested`) with `exercise_revision_id` pinning and RLS; no separate `hint_events` table (D-40).
-- [ ] Implement exercise listing, attempt submission, hint recording, and `GET /api/v1/progress`.
-- [ ] Persist evaluator results, error categories, feedback, and hint counts.
-- [ ] Enforce one attempt per submission and reject attempts against unpublished exercises.
-- [ ] Integrate Yassine's evaluator without moving evaluation logic into the route handler.
-- [ ] Add tests for ownership, revision pinning, unpublished exercises, and repeated attempts.
-- [ ] Hand persistence and error behavior to Imran and Yassine.
+- [ ] Review Yassine's `exercise_attempts` migration, RLS policies, and endpoints against the platform rules (RLS, `FORCE ROW LEVEL SECURITY`, idempotency, `DATABASE_RUNTIME_URL`).
+- [ ] Start the periodic handlers early: reservation release and expired idempotency keys, on the `app_worker` connection.
+- [ ] Add integration tests for both handlers, including a stuck-turn recovery run.
 
 **Week 10**
-- [ ] Add `study_plans`, `availability_windows`, and `study_tasks` with the partial unique active-plan constraint and `start < end` checks.
-- [ ] Implement `GET /api/v1/study-plan`, `PUT /api/v1/study-plan`, and `PATCH /api/v1/study-tasks/{id}`.
-- [ ] Implement transactional plan replacement that preserves completed tasks and never leaves two active plans.
-- [ ] Enforce `Africa/Casablanca` timezone handling and bounded daily minutes at the API boundary.
-- [ ] Integrate Yassine's deterministic planner rules; keep generation out of the route handler.
-- [ ] Add tests for no availability, overlapping windows, DST/midnight, regeneration, and concurrent plan updates.
-- [ ] Hand planner behavior to Imran and Yassine.
+- [ ] Review Imran's study-plan migrations, RLS policies, and plan-replacement transaction for concurrency safety.
+- [ ] Add the usage/budget reporting queries that Imran's admin summary page reads.
+- [ ] Add the metrics groundwork for Week 11: per-stage latency and gate pass/fail counters.
 
-**Exit evidence:** attempts and hints persist, progress is queryable, and the study plan is editable, timezone-safe, and concurrency-safe.
+**Exit evidence:** practice and planning backends reviewed; reservation and idempotency handlers running and tested.
 
 ### Weeks 11–12 — Admin, jobs, observability, and freeze
 
 **Week 11**
-- [ ] Add the remaining idempotent periodic handlers: reservation release, expired idempotency keys, media cleanup, optional evaluation. No `jobs` table in `v0.1.0` (D-40).
-- [ ] Add usage/budget reporting and the admin read-only summary needed for the academic demo.
+- [ ] Add the remaining idempotent periodic handlers: media cleanup and optional evaluation. No `jobs` table in `v0.1.0` (D-40).
 - [ ] Add session summaries and reconnect support if the plan's Week-11 increment requires them.
 - [ ] Add metrics: p50/p95 latency by stage, gate pass/fail, refusal rate, provider errors, credit remaining, cross-user attempts.
 - [ ] Add alerts for 80% credit, provider outage, stuck turns, and migration failure without student content.
@@ -260,7 +252,7 @@ Each runbook is tested at least once before Week 16. An untested runbook is a wi
 ## 6. Tests you own
 
 - **Unit:** settings validation, error envelope, cursor pagination, rate limits, idempotency keys, budget reservation, state transitions.
-- **Integration:** migrations up/down, RLS policies, session CRUD, turn persistence, SSE, replay, interrupt, jobs, storage, study plans.
+- **Integration:** migrations up/down, RLS policies, session CRUD, turn persistence, SSE, replay, interrupt, jobs, storage.
 - **Security:** JWT/JWKS edge cases, cross-user access, forged IDs, service-role import boundary, media ownership, secrets in bundle/logs.
 - **Reliability:** duplicate turns, concurrent sessions, timeout, cancellation, stuck-turn recovery, provider outage, credit exhaustion.
 - **Operations:** backup restore, rollback, migration failure drill, health/readiness.
@@ -301,8 +293,7 @@ Each runbook is tested at least once before Week 16. An untested runbook is a wi
 
 - FastAPI platform, auth, database models, repositories, migrations, and RLS policies.
 - Turn engine, idempotency, SSE transport, interruption, budget ledger, and jobs.
-- Media storage and STT/vision adapter integration.
-- Practice/planning persistence and progress endpoints.
+- Media storage and vision adapter integration.
 - CI pipeline, demo deployment, and environment documentation.
 - Backup/restore, rollback, and incident runbooks.
 - Platform/security/operations section of the academic report.

@@ -13,7 +13,7 @@
 | Item | Detail |
 | --- | --- |
 | Accountable for | Teaching/retrieval/validation/evaluation |
-| Responsible for | Corpus mapping, hybrid retrieval, RRF, sufficiency, PydanticAI tutor, prompts, four gates, SymPy/rubric math checks, exercise evaluator, planner rules, evaluation harness |
+| Responsible for | Corpus mapping, hybrid retrieval, RRF, sufficiency, PydanticAI tutor, prompts, four gates, SymPy/rubric math checks, exercise evaluator, practice persistence and progress API, STT adapter, planner rules, evaluation harness |
 | Supports | Imran on citations, refusals, practice, and planning; Mohamed on retrieval schema, ingestion, and turn-engine integration |
 | Not responsible for | React UI, database migrations, auth/RLS, deployment, jobs, Playwright infrastructure |
 | Main paths | `backend/app/retrieval/`, `assistant/`, `validation/`, `practice/`, `planning/`, `backend/ingest/`, `backend/tests/` |
@@ -44,8 +44,8 @@
 | Week 6 | Yassine | Mohamed + Imran | Validated-step payload and gate status contract |
 | Week 7 | Yassine | Imran + Mohamed | Photo symbol-confirmation contract and math-gate behavior |
 | Week 8 | Yassine | Mohamed + Imran | Math/rendering gate results and stale-turn behavior |
-| Week 9 | Yassine | Mohamed + Imran | Exercise evaluator contract and error categories |
-| Week 10 | Yassine | Mohamed + Imran | Planner inputs, constraints, and tie-break rules |
+| Week 9 | Yassine | Mohamed + Imran | Exercise evaluator contract, error categories, attempt/hint persistence, and progress endpoint |
+| Week 10 | Yassine | Imran | Planner rules (pure functions): inputs, constraints, and tie-break rules |
 | Week 13 | Yassine | All | Evaluation results and triage list |
 | Week 15 | Yassine | All | Teaching/validation/evaluation report sections and demo evidence |
 
@@ -61,14 +61,14 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 - [ ] Prototype the SSE turn contract with Mohamed; agree on final-only text and failure events. Content side done ([contract](../contracts/sse-turn-contract.md)); tick once Mohamed signs off and his fixture endpoint streams it.
 - [x] Extract one chapter sample and run the retrieval/RRF spike. Done: [spike](../spikes/retrieval-rrf-ch01.md); local e5-large + BM25 RRF, Recall@5 0.90 / MRR 0.79 (D-44).
 - [x] Draft the evaluation rubric with the mathematics reviewer. Approved: [rubric-v0.1](../evaluation/rubric.md) and [cases-v0.1](../evaluation/cases.json) (reviewer: Yassine, D-45).
-- [ ] Read plan §8, §9, §10, and §16.
+- [x] Read plan §8, §9, §10, and §16.
 
 **Week 2**
-- [ ] Build the coverage matrix: three chapters, objectives, concept tags, and prerequisites.
-- [ ] Confirm chapter IDs, objective IDs, page ranges, and coverage with the reviewer.
-- [ ] Record the academic-use note input with the team lead and supervisor.
-- [ ] Freeze the draft output contract, citation contract, refusal codes, and status mapping.
-- [ ] Build the first reviewer-labeled retrieval set: 40–60 query → chunk pairs, graded 0/1/2, ≥ 10 per chapter, every published objective represented; 70/30 tune/holdout split.
+- [x] Build the coverage matrix: three chapters, objectives, concept tags, and prerequisites. [coverage-v0.1](../curriculum/coverage-matrix.md): 22 objectives (D-46).
+- [x] Confirm chapter IDs, objective IDs, page ranges, and coverage with the reviewer. Approved: [coverage-v0.1](../curriculum/coverage-matrix.md) (reviewer: Yassine, D-45); pages 15–28 / 29–50 / 51–72.
+- [x] Record the academic-use note input with the team lead and supervisor. Input recorded: [academic-use-input](../academic-use-input.md) (3 chapters now, academic use only). The team lead's note and the supervisor's acknowledgment are tracked in that file's sign-off table.
+- [x] Freeze the draft output contract, citation contract, refusal codes, and status mapping. Frozen: [teaching-contracts-v0.1](../contracts/teaching-contracts.md) (`draft-output-v0.1`, `refusal-fr-v0.1`); accepted by Imran and Mohamed.
+- [x] Build the first reviewer-labeled retrieval set: 40–60 query → chunk pairs, graded 0/1/2, ≥ 10 per chapter, every published objective represented; 70/30 tune/holdout split. Done: 56 queries (19 / 17 / 20), 301 graded pairs, all 22 objectives, 40 tune / 16 holdout; RRF Recall@5 0.89 (holdout 0.81). Graded by Claude at the reviewer's request; reviewer spot-check pending ([spike](../spikes/retrieval-rrf-ch01.md)).
 - [ ] Produce the Week-2 go/no-go evidence: benchmark, coverage, contracts, and risks.
 
 **Exit evidence:** benchmark report, sample RRF result, reviewer-confirmed coverage matrix, and signed-off contracts.
@@ -123,6 +123,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 - [ ] Implement Gate 4: the AST allowlist math parser over restricted SymPy syntax (no `sympify`/`parse_expr`), SymPy checks in a killable worker process with a 2 s limit, and the KaTeX rendering allowlist (D-36).
 - [ ] Add math-gate checks for the confirmed expression.
 - [ ] Test ambiguous symbols, unsupported notation, and unsafe input.
+- [ ] Add the STT provider adapter behind the server boundary (moved from Mohamed, D-47). DeepSeek has no STT model: pick the provider first.
 - [ ] Review the STT behavior with Mohamed; keep voice push-to-talk only.
 - [ ] Add tests that raw OCR output never reaches the tutor.
 
@@ -142,9 +143,13 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 - [ ] Implement the exercise evaluator: MCQ, numeric tolerance, algebraic expression (guided multi-step is deferred, D-42).
 - [ ] Use SymPy canonicalization for algebraic answers; support multiple solutions and `inconclusive`.
 - [ ] Record hints individually and classify error categories.
-- [ ] Pin attempts to `exercise_revision_id`.
 - [ ] Review exercises and grading rules with the reviewer.
 - [ ] Add tests for units, significant figures, equivalent forms, and unsupported forms.
+- [ ] Add `exercise_attempts` (with `hints_requested`) with `exercise_revision_id` pinning and RLS; no separate `hint_events` table (D-40). Moved from Mohamed (D-47).
+- [ ] Implement exercise listing, attempt submission, hint recording, and `GET /api/v1/progress`; keep evaluation logic out of the route handler.
+- [ ] Enforce one attempt per submission and reject attempts against unpublished exercises.
+- [ ] Add API tests for ownership, revision pinning, unpublished exercises, and repeated attempts.
+- [ ] Hand the persistence and error behavior to Imran.
 
 **Week 10**
 - [ ] Define progress indicators: objectives attempted, recent practice, repeated errors, hints, last-practiced date.
@@ -152,9 +157,9 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 - [ ] Define planner inputs and constraints: availability, target hours, prerequisites, weak areas, 45-minute blocks, breaks, week start, timezone.
 - [ ] Implement deterministic tie-break rules and regeneration behavior.
 - [ ] Add planner tests for no availability, overlaps, DST, and midnight.
-- [ ] Hand planner contracts to Imran and Mohamed.
+- [ ] Hand the planner rules (pure functions) to Imran, who owns the study-plan backend and UI (D-47).
 
-**Exit evidence:** evaluator covers all four types; progress and planner rules are deterministic and tested.
+**Exit evidence:** evaluator covers all four types; attempts and hints persist; progress is queryable; planner rules are deterministic and tested.
 
 ### Weeks 11–12 — Evaluation harness and freeze
 

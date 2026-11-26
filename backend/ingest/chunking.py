@@ -36,6 +36,13 @@ _MARKERS = [
     (re.compile(r"^exer[cg]ice\s+r[ée]sol", re.I), "solved_exercise"),
     (re.compile(r"^exercice\s*\(?\s*\d", re.I), "exercise"),
 ]
+_PART_TYPE = {
+    "activities": "activity",
+    "worked_methods": "method",
+    "solved_exercises": "solved_exercise",
+    "exercises": "exercise",
+}
+_DECORATION = re.compile(r"^[#*\s]+|[#*\s]+$")
 _NUMBERED_TITLE = re.compile(r"^\d+\.\s+([A-ZÀ-Ý][^$]{2,70})$")
 
 
@@ -68,7 +75,8 @@ def estimate_tokens(text: str) -> int:
 
 
 def _bare(line: str) -> str:
-    return line.strip().lstrip("#").strip().strip("*").strip()
+    # OCR wraps headings in any mix of "#" and "**", e.g. "**## EXERCICE RESOLU 4**".
+    return _DECORATION.sub("", line)
 
 
 def _is_heading(line: str) -> bool:
@@ -107,7 +115,7 @@ def _units(source: str, chapter_title: str) -> list[_Unit]:
             titled = _NUMBERED_TITLE.match(bare)
             if new_part and line.lstrip().startswith("#") and marker is None:
                 part, section = new_part, ""
-                start({"worked_methods": "method"}.get(part, part.rstrip("s")), offset)
+                start(_PART_TYPE.get(part, part), offset)
             elif line.lstrip().startswith("## ") and marker is None and part != "intro":
                 section = bare
                 start("exercise" if part == "exercises" else "course", offset)
@@ -125,16 +133,22 @@ def _units(source: str, chapter_title: str) -> list[_Unit]:
 
 
 def _split(unit: _Unit) -> list[list[tuple[int, str]]]:
-    """Split an over-long unit at blank lines outside math blocks."""
+    """Split an over-long unit outside math blocks, at blank lines when possible."""
     pieces: list[list[tuple[int, str]]] = [[]]
     in_math = False
+
+    def size(lines: list[tuple[int, str]]) -> int:
+        return estimate_tokens(_IMAGE.sub("[figure]", "".join(t for _, t in lines)))
+
     for item in unit.lines:
         _, text = item
+        if not in_math and pieces[-1] and size([*pieces[-1], item]) > MAX_TOKENS:
+            # No blank line came in time: cut at this line end rather than overflow.
+            pieces.append([])
         if text.count("$$") % 2 == 1:
             in_math = not in_math
         pieces[-1].append(item)
-        size = estimate_tokens(_IMAGE.sub("[figure]", "".join(t for _, t in pieces[-1])))
-        if not in_math and not text.strip() and size >= MAX_TOKENS * 0.8:
+        if not in_math and not text.strip() and size(pieces[-1]) >= MAX_TOKENS * 0.8:
             pieces.append([])
     return [p for p in pieces if any(t.strip() for _, t in p)]
 

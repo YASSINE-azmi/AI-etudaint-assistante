@@ -1,0 +1,432 @@
+{
+  "version": "coverage-v0.1",
+  "status": "approved by the mathematics reviewer (Yassine, D-45) on 2026-11-26",
+  "source": "MAXI Maths — Tronc Commun Scientifique, chapters 1–3 (D-46)",
+  "note": "IDs, titles, tags and page ranges only; no textbook text. Page ranges come from the printed book (reviewer, 2026-11-26). The 'course' part also holds the 'Pour comprendre' worked methods.",
+  "chapters": [
+    {
+      "id": "tcs_ch01",
+      "chapter_number": 1,
+      "title_fr": "L'ensemble ℕ et notions d'arithmétique",
+      "page_start": 15,
+      "page_end": 28,
+      "parts": [
+        {
+          "part": "intro",
+          "page_start": 15,
+          "page_end": 15
+        },
+        {
+          "part": "activities",
+          "page_start": 16,
+          "page_end": 17
+        },
+        {
+          "part": "course",
+          "page_start": 18,
+          "page_end": 23
+        },
+        {
+          "part": "solved_exercises",
+          "page_start": 24,
+          "page_end": 25
+        },
+        {
+          "part": "exercises",
+          "page_start": 26,
+          "page_end": 28
+        }
+      ],
+      "objectives": [
+        {
+          "id": "tcs_ch01_o01",
+          "code": "1.1",
+          "title_fr": "Connaître l'ensemble ℕ et l'ensemble ℕ*",
+          "section": "1 Divisibilité dans ℕ — Notation",
+          "concept_tags": [
+            "entier-naturel",
+            "ensemble-n",
+            "ensemble-n-etoile"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "tcs_ch01_o02",
+          "code": "1.2",
+          "title_fr": "Déterminer les diviseurs et les multiples d'un entier naturel",
+          "section": "1 Divisibilité dans ℕ — Diviseurs et multiples",
+          "concept_tags": [
+            "diviseur",
+            "multiple",
+            "divisibilite"
+          ],
+          "prerequisites": [
+            "tcs_ch01_o01"
+          ]
+        },
+        {
+          "id": "tcs_ch01_o03",
+          "code": "1.3",
+          "title_fr": "Différencier les nombres pairs et les nombres impairs",
+          "section": "1 Divisibilité dans ℕ — Nombres pairs, nombres impairs",
+          "concept_tags": [
+            "parite",
+            "nombre-pair",
+            "nombre-impair"
+          ],
+          "prerequisites": [
+            "tcs_ch01_o02"
+          ]
+        },
+        {
+          "id": "tcs_ch01_o04",
+          "code": "1.4",
+          "title_fr": "Connaître les critères de divisibilité par 2, 3, 4, 5 et 9",
+          "section": "1 Divisibilité dans ℕ — Critères de divisibilité",
+          "concept_tags": [
+            "critere-divisibilite",
+            "somme-des-chiffres"
+          ],
+          "prerequisites": [
+            "tcs_ch01_o02"
+          ]
+        },
+        {
+          "id": "tcs_ch01_o05",
+          "code": "1.5",
+          "title_fr": "Reconnaître un nombre premier",
+          "section": "1 Divisibilité dans ℕ — Nombres premiers",
+          "concept_tags": [
+            "nombre-premier"
+          ],
+          "prerequisites": [
+            "tcs_ch01_o02"
+          ]
+        },
+        {
+          "id": "tcs_ch01_o06",
+          "code": "1.6",
+          "title_fr": "Décomposer un entier naturel en produit de facteurs premiers",
+          "section": "1 Divisibilité dans ℕ — Décomposition en produit de facteurs premiers",
+          "concept_tags": [
+            "decomposition-facteurs-premiers",
+            "facteur-premier"
+          ],
+          "prerequisites": [
+            "tcs_ch01_o04",
+            "tcs_ch01_o05"
+          ]
+        },
+        {
+          "id": "tcs_ch01_o07",
+          "code": "1.7",
+          "title_fr": "Déterminer le PGCD et le PPCM de deux entiers à l'aide de la décomposition",
+          "section": "Le plus grand commun diviseur ; le plus petit commun multiple",
+          "concept_tags": [
+            "pgcd",
+            "ppcm",
+            "premiers-entre-eux"
+          ],
+          "prerequisites": [
+            "tcs_ch01_o06"
+          ]
+        },
+        {
+          "id": "tcs_ch01_o08",
+          "code": "1.8",
+          "title_fr": "Déterminer le PGCD par l'algorithme d'Euclide (divisions successives)",
+          "section": "Le plus grand commun diviseur — divisions successives",
+          "concept_tags": [
+            "pgcd",
+            "algorithme-euclide",
+            "division-euclidienne"
+          ],
+          "prerequisites": [
+            "tcs_ch01_o02"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tcs_ch02",
+      "chapter_number": 2,
+      "title_fr": "Les ensembles des nombres",
+      "page_start": 29,
+      "page_end": 50,
+      "parts": [
+        {
+          "part": "intro",
+          "page_start": 29,
+          "page_end": 29
+        },
+        {
+          "part": "activities",
+          "page_start": 30,
+          "page_end": 33
+        },
+        {
+          "part": "course",
+          "page_start": 34,
+          "page_end": 41
+        },
+        {
+          "part": "solved_exercises",
+          "page_start": 42,
+          "page_end": 43
+        },
+        {
+          "part": "exercises",
+          "page_start": 44,
+          "page_end": 50
+        }
+      ],
+      "objectives": [
+        {
+          "id": "tcs_ch02_o01",
+          "code": "2.1",
+          "title_fr": "Reconnaître les ensembles ℕ, ℤ, 𝔻, ℚ, ℝ et utiliser ∈, ∉, ⊂, ⊄",
+          "section": "1 Les ensembles ℕ ; ℤ ; 𝔻 ; ℚ ; ℝ",
+          "concept_tags": [
+            "ensemble-z",
+            "ensemble-d",
+            "ensemble-q",
+            "ensemble-r",
+            "appartenance",
+            "inclusion"
+          ],
+          "prerequisites": [
+            "tcs_ch01_o01"
+          ]
+        },
+        {
+          "id": "tcs_ch02_o02",
+          "code": "2.2",
+          "title_fr": "Différencier les nombres et les représenter sur la droite numérique",
+          "section": "1 Les ensembles de nombres — Différencier les nombres ; droite numérique",
+          "concept_tags": [
+            "nombre-decimal",
+            "nombre-rationnel",
+            "nombre-irrationnel",
+            "droite-numerique"
+          ],
+          "prerequisites": [
+            "tcs_ch02_o01"
+          ]
+        },
+        {
+          "id": "tcs_ch02_o03",
+          "code": "2.3",
+          "title_fr": "Utiliser les opérations dans ℝ et leurs propriétés (rappels)",
+          "section": "2 Opérations dans l'ensemble ℝ (rappels)",
+          "concept_tags": [
+            "operations-reels",
+            "fraction",
+            "distributivite",
+            "inverse",
+            "oppose"
+          ],
+          "prerequisites": [
+            "tcs_ch02_o01"
+          ]
+        },
+        {
+          "id": "tcs_ch02_o04",
+          "code": "2.4",
+          "title_fr": "Calculer et simplifier avec les racines carrées",
+          "section": "3 Les racines carrées",
+          "concept_tags": [
+            "racine-carree",
+            "simplification-racine"
+          ],
+          "prerequisites": [
+            "tcs_ch02_o03"
+          ]
+        },
+        {
+          "id": "tcs_ch02_o05",
+          "code": "2.5",
+          "title_fr": "Utiliser les règles des puissances et les puissances de 10",
+          "section": "4 Les puissances — puissances de 10",
+          "concept_tags": [
+            "puissance",
+            "puissance-de-10",
+            "regles-puissances"
+          ],
+          "prerequisites": [
+            "tcs_ch02_o03"
+          ]
+        },
+        {
+          "id": "tcs_ch02_o06",
+          "code": "2.6",
+          "title_fr": "Utiliser l'écriture scientifique d'un nombre",
+          "section": "4 Les puissances — écriture scientifique",
+          "concept_tags": [
+            "ecriture-scientifique"
+          ],
+          "prerequisites": [
+            "tcs_ch02_o05"
+          ]
+        },
+        {
+          "id": "tcs_ch02_o07",
+          "code": "2.7",
+          "title_fr": "Développer et factoriser avec les identités remarquables",
+          "section": "5 Identités remarquables — développement et factorisation",
+          "concept_tags": [
+            "identite-remarquable",
+            "developpement",
+            "factorisation"
+          ],
+          "prerequisites": [
+            "tcs_ch02_o03"
+          ]
+        },
+        {
+          "id": "tcs_ch02_o08",
+          "code": "2.8",
+          "title_fr": "Reconnaître et utiliser les identités a³ − b³ et a³ + b³",
+          "section": "5 Identités remarquables — a³ − b³ et a³ + b³",
+          "concept_tags": [
+            "identite-cube",
+            "factorisation"
+          ],
+          "prerequisites": [
+            "tcs_ch02_o07"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tcs_ch03",
+      "chapter_number": 3,
+      "title_fr": "L'ordre dans ℝ",
+      "page_start": 51,
+      "page_end": 72,
+      "parts": [
+        {
+          "part": "intro",
+          "page_start": 51,
+          "page_end": 51
+        },
+        {
+          "part": "activities",
+          "page_start": 52,
+          "page_end": 53
+        },
+        {
+          "part": "course",
+          "page_start": 54,
+          "page_end": 65
+        },
+        {
+          "part": "solved_exercises",
+          "page_start": 66,
+          "page_end": 67
+        },
+        {
+          "part": "exercises",
+          "page_start": 68,
+          "page_end": 72
+        }
+      ],
+      "objectives": [
+        {
+          "id": "tcs_ch03_o01",
+          "code": "3.1",
+          "title_fr": "Comparer deux réels et utiliser les propriétés de l'ordre avec les opérations",
+          "section": "1 Ordre et opérations",
+          "concept_tags": [
+            "ordre",
+            "comparaison",
+            "ordre-addition",
+            "ordre-multiplication",
+            "ordre-inverse",
+            "ordre-carre-racine"
+          ],
+          "prerequisites": [
+            "tcs_ch02_o03",
+            "tcs_ch02_o04"
+          ]
+        },
+        {
+          "id": "tcs_ch03_o02",
+          "code": "3.2",
+          "title_fr": "Connaître les intervalles bornés et non bornés ; intersection et réunion",
+          "section": "2 Encadrement et intervalles — intervalles",
+          "concept_tags": [
+            "intervalle",
+            "intervalle-borne",
+            "intervalle-non-borne",
+            "intersection",
+            "reunion"
+          ],
+          "prerequisites": [
+            "tcs_ch03_o01",
+            "tcs_ch02_o02"
+          ]
+        },
+        {
+          "id": "tcs_ch03_o03",
+          "code": "3.3",
+          "title_fr": "Encadrer un nombre ou une expression ; amplitude d'un encadrement",
+          "section": "2 Encadrement et intervalles — encadrement et opérations",
+          "concept_tags": [
+            "encadrement",
+            "amplitude",
+            "majoration",
+            "minoration"
+          ],
+          "prerequisites": [
+            "tcs_ch03_o01"
+          ]
+        },
+        {
+          "id": "tcs_ch03_o04",
+          "code": "3.4",
+          "title_fr": "Connaître la valeur absolue et ses propriétés",
+          "section": "3 Valeur absolue et ses propriétés",
+          "concept_tags": [
+            "valeur-absolue"
+          ],
+          "prerequisites": [
+            "tcs_ch03_o01"
+          ]
+        },
+        {
+          "id": "tcs_ch03_o05",
+          "code": "3.5",
+          "title_fr": "Relier la valeur absolue à la distance ; centre et rayon d'un intervalle borné",
+          "section": "4 Distance et valeur absolue",
+          "concept_tags": [
+            "distance",
+            "centre-intervalle",
+            "rayon-intervalle"
+          ],
+          "prerequisites": [
+            "tcs_ch03_o02",
+            "tcs_ch03_o04"
+          ]
+        },
+        {
+          "id": "tcs_ch03_o06",
+          "code": "3.6",
+          "title_fr": "Déterminer une approximation (par défaut, par excès, décimale) ; utiliser la calculatrice",
+          "section": "5 Approximations et approximations décimales",
+          "concept_tags": [
+            "approximation",
+            "approximation-decimale",
+            "par-defaut",
+            "par-exces",
+            "partie-entiere",
+            "calculatrice"
+          ],
+          "prerequisites": [
+            "tcs_ch03_o03",
+            "tcs_ch03_o04"
+          ]
+        }
+      ]
+    }
+  ]
+}

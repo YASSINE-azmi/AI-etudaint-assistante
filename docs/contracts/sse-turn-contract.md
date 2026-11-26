@@ -73,7 +73,7 @@ turn.failed           { code, educationalStatus, messageFr, retryable }
 | `RATE_LIMITED` | HTTP 429, no stream | — | yes (after a wait) |
 | `TURN_LIMIT_REACHED` | HTTP 409, no stream | — | no (new session) |
 
-The French messages are in `refusal.py` (version `refusal-fr-v0.1-draft`) and must be approved by the mathematics reviewer before the demo.
+The French messages are in `refusal.py` (version `refusal-fr-v0.1`), approved by the mathematics reviewer on 2026-11-26 ([teaching-contracts.md](teaching-contracts.md)).
 
 ## Fixtures
 

@@ -70,3 +70,23 @@ def test_long_units_split_at_blank_lines_never_inside_math(monkeypatch) -> None:
 def test_images_become_a_placeholder() -> None:
     chunks = chunk_chapter("## Le COURS\n\n**DÉFINITION**\nvoir ![](https://x/y.jpg)\n", "t", "T")
     assert chunks[0].text.endswith("voir [figure]")
+
+
+def test_markers_wrapped_in_bold_and_hashes_still_start_a_unit() -> None:
+    source = (
+        "## EXERCICES <br> RÉSOLUS\n\n**EXERCICE RESOLU 1**\nun\n\n**## EXERCICE RESOLU 2**\ndeux\n"
+    )
+    chunks = chunk_chapter(source, "t", "T")
+    assert [c.text.splitlines()[-1] for c in chunks] == ["un", "deux"]
+
+
+def test_a_heading_only_part_gets_a_singular_content_type() -> None:
+    source = "## ACTIVITES\n\nUne situation sans numéro.\n\n## LE COURS\n\n**DÉFINITION**\nX\n"
+    assert chunk_chapter(source, "t", "T")[0].content_type == "activity"
+
+
+def test_a_long_unit_without_blank_lines_is_still_split(monkeypatch) -> None:
+    monkeypatch.setattr(chunking, "MAX_TOKENS", 20)
+    source = "## Le COURS\n\n**DÉFINITION**\n" + "une ligne de texte\n" * 40
+    chunks = chunk_chapter(source, "t", "T")
+    assert len(chunks) > 1 and all(c.token_count <= 25 for c in chunks)

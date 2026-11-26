@@ -66,3 +66,14 @@ def test_cases_match_the_plan_quotas_and_go_from_vague_to_detailed() -> None:
     for name in ("in_scope", "out_of_scope", "missing_evidence", "prompt_injection"):
         levels = [c["detail_level"] for c in cases if c["set"] == name]
         assert levels == sorted(levels) and set(levels) == {1, 2, 3}
+
+
+def test_in_scope_cases_cover_the_three_chapters_of_the_coverage_matrix() -> None:
+    cases = json.loads(CASES.read_text(encoding="utf-8"))["cases"]
+    matrix = json.loads(
+        (CASES.parents[1] / "curriculum" / "coverage-matrix.json").read_text("utf-8")
+    )
+    chapters = {c["id"] for c in matrix["chapters"]}
+    assert {c["chapter_id"] for c in cases} == chapters
+    in_scope = Counter(c["chapter_id"] for c in cases if c["set"] == "in_scope")
+    assert in_scope == {"tcs_ch01": 7, "tcs_ch02": 7, "tcs_ch03": 6}
