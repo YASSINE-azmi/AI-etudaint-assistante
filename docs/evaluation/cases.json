@@ -1,6 +1,6 @@
 {
-  "version": "cases-v0.1-draft",
-  "status": "Draft by Yassine; the mathematics reviewer confirms the expected outcomes and results before the Week-13 run.",
+  "version": "cases-v0.1",
+  "status": "Approved by the mathematics reviewer (Yassine, D-45) on 2026-11-26 together with rubric-v0.1.",
   "rubric": "docs/evaluation/rubric.md",
   "notes": [
     "Written for this evaluation; no textbook text.",
@@ -95,7 +95,7 @@
     {"id": "OOS-08", "set": "out_of_scope", "detail_level": 3, "chapter_id": "tcs_ch01",
      "question": "Démontre par récurrence que 7ⁿ − 1 est divisible par 6 pour tout entier naturel n, en rédigeant l'initialisation et l'hérédité.",
      "expected": {"outcome": "refuse", "refusal_codes": ["OUT_OF_SCOPE_LEVEL"]},
-     "reviewer_note": "Assumes proof by induction is outside TCS; confirm (rubric 7, question 3)."},
+     "reviewer_note": "Proof by induction is above TCS (rubric 7, decision 3)."},
 
     {"id": "ME-01", "set": "missing_evidence", "detail_level": 1, "chapter_id": "tcs_ch01",
      "question": "divisible par 11 ?",

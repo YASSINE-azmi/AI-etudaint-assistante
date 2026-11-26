@@ -60,7 +60,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 - [x] Record the candidate model, provider, prompt version, and failure modes. Model choice is static per role (ADR 0008): benchmark first, then pin it in settings — no runtime routing.
 - [ ] Prototype the SSE turn contract with Mohamed; agree on final-only text and failure events. Content side done ([contract](../contracts/sse-turn-contract.md)); tick once Mohamed signs off and his fixture endpoint streams it.
 - [x] Extract one chapter sample and run the retrieval/RRF spike. Done: [spike](../spikes/retrieval-rrf-ch01.md); local e5-large + BM25 RRF, Recall@5 0.90 / MRR 0.79 (D-44).
-- [ ] Draft the evaluation rubric with the mathematics reviewer. Draft ready: [rubric](../evaluation/rubric.md); tick once the reviewer signs section 8.
+- [x] Draft the evaluation rubric with the mathematics reviewer. Approved: [rubric-v0.1](../evaluation/rubric.md) and [cases-v0.1](../evaluation/cases.json) (reviewer: Yassine, D-45).
 - [ ] Read plan §8, §9, §10, and §16.
 
 **Week 2**
@@ -263,7 +263,7 @@ Every week:
 - [ ] Read plan §8, §9, §10, and §16.
 - [ ] Benchmark 20 French math prompts.
 - [x] Extract one chapter sample and run the RRF spike.
-- [ ] Draft the evaluation rubric.
+- [x] Draft the evaluation rubric.
 - [ ] Book the first reviewer session.
 - [ ] Draft the output/citation/refusal contract for Imran and Mohamed.
 - [ ] Post the first Friday evidence note.
