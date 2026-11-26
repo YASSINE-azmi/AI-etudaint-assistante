@@ -50,7 +50,15 @@ The Railway step is skipped until `RAILWAY_TOKEN` is configured.
 3. Set the backend environment variables in Railway (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `DATABASE_URL`,
    `DATABASE_RUNTIME_URL`, `AI_PROVIDER_*`, `ALLOWED_ORIGINS`, etc.). Never set
    `SUPABASE_SERVICE_ROLE_KEY` on the API service: it is for the local reviewer CLI only.
-4. Set the three `VITE_*` variables in GitHub Actions, then push a `v*` tag or
+4. Before each deploy that adds migrations, run them once from a laptop against the
+   hosted database (the image never migrates on boot, plan §18.4):
+
+   ```powershell
+   cd backend
+   uv run alembic upgrade head   # DATABASE_URL = hosted session-mode string
+   ```
+
+5. Set the three `VITE_*` variables in GitHub Actions, then push a `v*` tag or
    run the workflow manually.
 
 The demo remains local-first: nothing deploys automatically, and no production

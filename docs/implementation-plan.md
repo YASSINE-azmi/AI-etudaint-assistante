@@ -405,6 +405,7 @@ Not in `v0.1.0` (D-40): `rate_limit_counters` (process-local limits), `jobs` (pe
   - signature, expiry, `kid` rotation, clock skew
   - cached keys with refresh
 - Derive `user_id` and role from verified JWT claims (`sub`, `app_metadata.role`). `profiles.role` is a display mirror only and never an authorization input.
+- The first authenticated `GET /api/v1/me` upserts the caller's `profiles` row (`id = sub`, email, `is_synthetic = true`). No trigger on the Supabase `auth` schema; every other endpoint may assume the row exists after `/me`.
 
 ### 6.2 Roles
 
@@ -444,7 +445,7 @@ Not in `v0.1.0` (D-40): `rate_limit_counters` (process-local limits), `jobs` (pe
 - Max concurrent turns per user: 1.
 - Max turns per minute per user: 6.
 - Max turns per session: 30.
-- Max photo size: 10 MB; MIME allowlist; re-encode and strip metadata server-side with Pillow after upload (D-38).
+- Max photo size: 10 MB; MIME allowlist; re-encode and strip metadata server-side with Pillow after upload (D-38). Because the browser uploads directly, the `exercise-photos` bucket also sets a 10 MB file-size limit and the same allowed MIME types, so oversize or wrong-type files are refused before they are stored.
 - Rate-limit state is process-local for the single-instance demo (D-40). A Postgres counter table is the documented upgrade if the API ever runs more than one instance.
 
 ---
@@ -996,6 +997,7 @@ This is an academic demo with trial credits only.
 - Cancellation checks between stages; best-effort provider cancellation.
 - Client abort marks the turn `cancelled` when detected; release the reservation.
 - Stuck turns are recovered by a worker after `session_turns.expires_at`; workers fence with `processing_started_at`/`locked_by` and never overwrite a completed turn.
+- **No DB transaction stays open during a provider call.** A turn uses short transactions per stage: (1) claim the turn, reserve credits, load scope and history; (2) retrieval queries; (3) persist the validated result and reconcile usage. Each transaction re-runs `set_config('request.jwt.claims', …, true)`. Holding one transaction across a 10–20 s model call would pin a pooled connection (pool of 5 + 5) and its row locks for the whole turn.
 - Prompt caching: order the prompt stable-first (instructions, objective metadata, retrieved evidence) and volatile-last (history, new message) so provider prefix caching can hit. `usage_events.cached_tokens` records hits; a week at zero is a prompt-ordering bug, not a provider issue.
 
 ### 11.5 Context and history
@@ -1056,7 +1058,7 @@ Edge cases:
 
 - no availability → actionable message, not an impossible schedule;
 - changes produce an editable update, not silent deletion;
-- DST/midnight boundaries tested;
+- DST/midnight boundaries tested, including Morocco's Ramadan clock change (`Africa/Casablanca` moves from UTC+1 to UTC+0 for the month; the dates come from tzdata, never hard-coded);
 - unsupported objectives are never invented.
 
 ---
@@ -1087,6 +1089,7 @@ Edge cases:
 - Speech plays only the validated `spoken_text_fr`; the model's pre-validation text is never spoken.
 - Interruption: stop local audio < 500 ms, abort the stream, call `/interrupt`, reject stale `turnId` events.
 - Photo (D-38): `POST /sessions/{id}/media` registers the asset and returns its path `{user_id}/{session_id}/{asset_id}` → the browser uploads it with supabase-js to the private `exercise-photos` bucket (a `storage.objects` policy lets a user write only under their own `user_id/` prefix) → preview → `POST /media/{id}/interpret` (the API downloads with the student's forwarded JWT, re-encodes with Pillow, strips metadata, runs vision) → confirm ambiguous symbols (`POST /media/{id}/confirm`) → submit `mediaAssetId` + confirmed expression with the turn.
+- Turn transport: the client generates one `Idempotency-Key` UUID per student submission and reuses it on retry of that submission. `DefaultChatTransport.prepareSendMessagesRequest` sends that header plus only the new prompt (and `mediaAssetId` / `confirmedExpression`), not `useChat`'s full message list; the server rebuilds history from validated turns (§11.5).
 - Speech: push-to-talk posts to `POST /speech/transcribe`; the transcript is editable before submission; raw audio is never stored.
 - Citations: display chapter, section, page, short excerpt; no full chunk.
 - Refusals: render the French message, code, and next actions.
@@ -1343,6 +1346,8 @@ If not, reduce scope and record the decision.
 | Scope creep | Reduction ladder; change control after Week 12 | Team |
 | Frontend orphan | Imran ownership; Playwright; weekly demo | Imran |
 | Late integration | Week-1 walking skeleton; deploy early | Team |
+| Ramadan 2027 overlaps Weeks 12–16 | Week 1 is 23–29 Nov 2026, so freeze, evaluation, and demo fall around the expected Ramadan dates (mid-Feb to mid-Mar 2027). Book the Week-13 reviewer hours and the demo date by mid-December; move evaluation labeling earlier where possible; plan reduced hours in Weeks 12–16 | Team lead |
+| Windows dev machines | Psycopg async needs a selector event loop: run uvicorn with `--reload` or `--loop asyncio:SelectorEventLoop`; tests set the policy in `conftest.py` | Mohamed |
 
 ### 17.6 Change control
 
@@ -1383,7 +1388,7 @@ No `os.getenv`, `load_dotenv`, or direct `import.meta.env` reads outside those m
 
 ### 18.4 Deployment and migrations
 
-- Migrations run as a release step, not on every app boot.
+- Migrations run as a release step, not on every app boot: run `uv run alembic upgrade head` from `backend/` against the hosted `DATABASE_URL` before deploying a new image (`docs/guides/deployment.md`).
 - `alembic upgrade head` against the direct connection.
 - Health/readiness endpoints.
 - Rollback procedure documented.
@@ -1434,6 +1439,7 @@ These are recorded assumptions, not blockers. The plan proceeds with the default
 | Pilot | Academic demo only; written supervisor waiver for the client-brief 5-student pilot |
 | Demo-day fallback | Cached validated answers + recorded video, clearly labeled; re-validated against the current revision |
 | Real-student walkthrough | Not part of this release; requires supervisor approval and no data retention |
+| Calendar | Week 1 = 23–29 Nov 2026; Week 16 = 8–14 Mar 2027 |
 | Frontend test policy | Playwright allowed after `frontend/AGENTS.md` amendment |
 | Math dependency | SymPy added to backend dependencies with a written justification |
 | Math parsing | AST allowlist over restricted SymPy syntax; no LaTeX parser package (D-36) |
@@ -1616,6 +1622,8 @@ Status on 26 November 2026: the backend foundation, CI workflows, and the `maste
 - [x] Add the Windows 11 agent onboarding guide, pin Python 3.12, and pin pnpm 12.18.0.
 - [ ] Create the remaining walking-skeleton path: session → validated turn → SSE → classroom UI.
 - [ ] Get a written supervisor waiver for the client-brief 5-student pilot (D-21).
+- [ ] Book the Week-13 reviewer hours and the demo date with the supervisor (Ramadan 2027 overlaps Weeks 12–16).
+- [x] Soften the `ClassroomPage.tsx` header copy so it no longer claims the chapters are already reviewed (§22.8).
 
 ---
 
@@ -1710,5 +1718,7 @@ A review of the plan against the code and CI found one contradiction that would 
 | D-40 | Drop `rate_limit_counters`, `jobs`, `budget_reservations`, `hint_events` | §5.1, §5.2, §6.5, §11.3, §18.5, ADR 0009 |
 | D-41 | Publish chapter by chapter; chapter 1 by Week 5 with ≥ 10 labels | §9.6, §10.5, §17.1 |
 | D-42 | Guided multi-step deferred; exercise reviewer hours confirmed at Week 2 | §2.5, §12.1, §17.4, §22.1 |
+
+**Second pass (26 November 2026).** Added: the Windows event-loop rule; the Ramadan 2027 calendar risk and the planner's Ramadan clock-change test; short per-stage transactions with no transaction open during provider calls (§11.4); lazy profile creation on `/me` (§6.1); client-side idempotency keys and a minimal turn body (§13.3); bucket-level upload limits (§6.5); the pooler login for custom roles; a manual migration step before deploys; the classroom copy fix.
 
 Also corrected: the Appendix D SSE example now matches the AI SDK UI message stream format; `document_chunks` gains `search_vector`, `embedding_model`, and `embedding_dimensions`; the Week-1 status line no longer claims a green CI; `DATABASE_URL` guidance prefers the session pooler on IPv4 networks.

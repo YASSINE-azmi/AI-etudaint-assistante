@@ -1,4 +1,10 @@
+import asyncio
 import os
+import sys
+
+# Psycopg's async mode cannot run on Windows' default ProactorEventLoop.
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 # Settings are validated at import time by `app.main`. Tests never reach the network:
 # the database engine and JWKS client are constructed lazily and only connect on use.

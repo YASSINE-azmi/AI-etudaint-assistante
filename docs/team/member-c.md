@@ -92,7 +92,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 **Week 3**
 - [ ] Add the `profiles` migration with role, `academic_track='TCS'`, `is_synthetic`, and timestamps.
 - [ ] Enable RLS and `FORCE ROW LEVEL SECURITY`; add policies for own-profile read/update and role checks.
-- [ ] Implement `GET /api/v1/me` and `PATCH /api/v1/me` against the verified JWT and profile row.
+- [ ] Implement `GET /api/v1/me` and `PATCH /api/v1/me` against the verified JWT; the first `GET /me` upserts the caller's profile row (plan §6.1).
 - [ ] Verify JWKS behavior: signature, issuer, audience, expiry, `kid` rotation, clock skew, missing/invalid token.
 - [ ] Add auth tests for valid, expired, wrong-audience, wrong-issuer, and unknown-user tokens.
 - [ ] Prove two synthetic users cannot read or mutate each other's profile, sessions, or turns.
