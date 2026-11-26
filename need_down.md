@@ -49,12 +49,12 @@ You need credentials for the following external services before running the full
 
 | Service | Purpose | Resource / Guide |
 | :--- | :--- | :--- |
-| **Supabase** | Auth (email only), Postgres (`pgvector` + French full-text search), Private Storage (`exercise-photos`, `maxi-sources`) | [Supabase Dashboard](https://supabase.com/dashboard) & [docs/guides/supabase-setup.md](docs/guides/supabase-setup.md) |
+| **Supabase** | Auth (email only), Postgres (`pgvector` + French full-text search), Private Storage (`exercise-photos`) | [Supabase Dashboard](https://supabase.com/dashboard) & [docs/guides/supabase-setup.md](docs/guides/supabase-setup.md) |
 | **OpenAI / OpenAI-compatible** | LLM tutoring, Vision/OCR extraction, STT (speech-to-text), TTS (text-to-speech), Embeddings (`vector(1536)`) | [OpenAI API Keys](https://platform.openai.com/api-keys) |
 | **Railway / Supabase (optional)** | Demo hosting only; not a production environment in `v0.1.0` | [Railway Dashboard](https://railway.com) |
 
 > [!IMPORTANT]
-> - Use the **direct/session** database connection (`db.<project-ref>.supabase.co:5432`) for `DATABASE_URL` so Alembic can apply migrations, vector extensions, and RLS policies. Do not use the transaction pooler.
+> - Use a **session-mode** connection for `DATABASE_URL` so Alembic can apply migrations, vector extensions, and RLS policies. On most home networks (IPv4 only) that is the **Session pooler** string (`aws-0-<region>.pooler.supabase.com:5432`); the direct host `db.<project-ref>.supabase.co` is IPv6-only on the free tier. Do not use the transaction pooler (port 6543).
 > - Never place `SUPABASE_SERVICE_ROLE_KEY` or `AI_PROVIDER_API_KEY` in frontend environment files.
 
 ---
@@ -73,8 +73,8 @@ Copy-Item .env.example .env
 ```
 
 Open `backend/.env` and provide your credentials:
-- `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- `DATABASE_URL` (direct connection string for Alembic)
+- `SUPABASE_URL`, `SUPABASE_ANON_KEY` (and `SUPABASE_SERVICE_ROLE_KEY` only if you run the reviewer CLI; the API does not read it)
+- `DATABASE_URL` (session-mode connection string for Alembic)
 - `DATABASE_RUNTIME_URL` (non-owner `app_runtime` role for the API)
 - `AI_PROVIDER_BASE_URL`, `AI_PROVIDER_API_KEY`, `LLM_MODEL_NAME`
 - `EMBEDDING_MODEL_NAME` (`text-embedding-3-small`), `EMBEDDING_DIMENSIONS` (`1536`)

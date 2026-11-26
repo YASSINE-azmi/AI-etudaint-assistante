@@ -1,5 +1,10 @@
 # Client Brief — AI Mathematics Tutor for Moroccan Tronc Commun Scientifique Students
 
+> **Reconciliation with the implementation plan (`v0.1.0`).** This brief is kept as the client wrote it. Three criteria were changed by recorded decisions, and the [implementation plan](implementation-plan.md) wins where they differ:
+> - **Evaluation size:** 20 in-scope + 20 boundary tasks instead of 60 + 60 ([ADR 0006](adr/0006-evaluation-size.md)).
+> - **Pilot:** synthetic academic demo; the 5-student consented pilot is waived in writing ([ADR 0001](adr/0001-academic-demo-pilot-waiver.md)).
+> - **Budget:** one global trial-credit ledger with a hard stop instead of per-student quotas and monthly caps (plan D-16).
+
 ## The Project & Stakeholders
 
 * **Product:** A browser-based, controlled AI Mathematics Tutor specifically designed for Moroccan **Tronc Commun Scientifique (TCS)** students.

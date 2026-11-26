@@ -102,12 +102,12 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 - [ ] Implement the reviewer workflow: draft → provenance → normalize → map → review → approve → publish.
 - [ ] Implement publication checks: academic-use note, reviewer sign-off, objective mapping, math notation, retrieval tests, embeddings, content hash.
 - [ ] Implement withdrawal semantics: exclude future retrieval, preserve historical citations, flag dependent exercises.
-- [ ] Publish one sample chapter and run retrieval against it.
+- [ ] Publish chapter 1 with its own ≥ 10-pair retrieval set (Recall@5 ≥ 0.80) and run retrieval against it (D-41). Weeks 3–4 retrieval work runs on the Week-1 sample extract.
 - [ ] Label 10–15 retrieval pairs while reviewing each chapter (§10.5); store them against the revision ID. Do not defer labeling to Week 13.
 - [ ] Add ingestion and publication tests.
 
 **Week 6**
-- [ ] Build the PydanticAI tutor agent with bounded tools: `search_maxi_chapter`, `read_chunk`, `read_neighboring_chunks`; at most 3 extra reads per turn, then re-check sufficiency (§10.3).
+- [ ] Build the PydanticAI tutor agent with bounded tools (citations are `{chunk_id, quote}` only; the server fills page, revision, hash, and claim spans, D-37): `search_maxi_chapter`, `read_chunk`, `read_neighboring_chunks`; at most 3 extra reads per turn, then re-check sufficiency (§10.3).
 - [ ] Write `assistant/instructions.md` and versioned prompts.
 - [ ] Implement Gate 1 (source validity), Gate 2 (scope validity), and Gate 3 (grounding). Gate 4 lands in Week 7.
 - [ ] Implement French refusal templates and stable refusal codes.
@@ -120,7 +120,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 
 **Week 7**
 - [ ] Define the photo symbol-confirmation contract with Imran: raw image → extracted symbols → confirmed expression.
-- [ ] Implement Gate 4: SymPy math checks, KaTeX rendering allowlist, and the deterministic speech form (`SPEECH_UNSAFE`).
+- [ ] Implement Gate 4: the AST allowlist math parser over restricted SymPy syntax (no `sympify`/`parse_expr`), SymPy checks in a killable worker process with a 2 s limit, KaTeX rendering allowlist, and the deterministic speech form (`SPEECH_UNSAFE`) (D-36).
 - [ ] Add math-gate checks for the confirmed expression.
 - [ ] Test ambiguous symbols, unsupported notation, and unsafe input.
 - [ ] Review the STT/TTS behavior with Mohamed; keep voice push-to-talk only.
@@ -139,7 +139,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 ### Weeks 9–10 — Practice, progress, and planning
 
 **Week 9**
-- [ ] Implement the exercise evaluator: MCQ, numeric tolerance, algebraic expression, guided multi-step.
+- [ ] Implement the exercise evaluator: MCQ, numeric tolerance, algebraic expression (guided multi-step is deferred, D-42).
 - [ ] Use SymPy canonicalization for algebraic answers; support multiple solutions and `inconclusive`.
 - [ ] Record hints individually and classify error categories.
 - [ ] Pin attempts to `exercise_revision_id`.

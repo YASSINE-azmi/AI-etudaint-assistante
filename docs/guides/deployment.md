@@ -46,9 +46,10 @@ The Railway step is skipped until `RAILWAY_TOKEN` is configured.
 1. Create two Railway services (backend + frontend) from the repo, pointing each
    at its subdirectory, or deploy the GHCR images directly.
 2. Add `RAILWAY_TOKEN` (Repository → Settings → Actions → Secrets) and an
-   `environment` named `production`.
-3. Set the backend environment variables in Railway (`SUPABASE_*`, `DATABASE_URL`,
-   `DATABASE_RUNTIME_URL`, `AI_PROVIDER_*`, `ALLOWED_ORIGINS`, etc.).
+   `environment` named `demo`.
+3. Set the backend environment variables in Railway (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `DATABASE_URL`,
+   `DATABASE_RUNTIME_URL`, `AI_PROVIDER_*`, `ALLOWED_ORIGINS`, etc.). Never set
+   `SUPABASE_SERVICE_ROLE_KEY` on the API service: it is for the local reviewer CLI only.
 4. Set the three `VITE_*` variables in GitHub Actions, then push a `v*` tag or
    run the workflow manually.
 

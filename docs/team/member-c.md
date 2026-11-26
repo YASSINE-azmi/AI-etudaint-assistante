@@ -127,7 +127,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 - [ ] Wire the pipeline: auth → scope resolution → retrieval → draft → gates → persist → SSE final.
 - [ ] Implement the SSE contract with final-only text; never forward raw model tokens.
 - [ ] Add stage timeouts, bounded retries, and cancellation checks between stages.
-- [ ] Add `budget_reservations` and `usage_events`; reserve before dispatch and reconcile after completion.
+- [ ] Add `usage_events` and `session_turns.reserved_usd`; reserve on the locked `budget_ledger` row before dispatch and reconcile after completion (D-40).
 - [ ] Add integration tests for state transitions, replay, conflicts, timeout, and budget rejection.
 - [ ] Hand the agreed SSE sequence and replay behavior to Imran.
 
@@ -137,11 +137,11 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 
 **Week 7**
 - [ ] Create a private Supabase Storage bucket for student media; never make it public.
-- [ ] Implement photo upload with a 10 MB limit, MIME allowlist, re-encode, metadata stripping, and signed access.
+- [ ] Implement the media flow (D-38): register the asset and return its `{user_id}/{session_id}/{asset_id}` path; `storage.objects` policies limit each user to their own prefix; the API reads with the student's forwarded JWT, enforces 10 MB and the MIME allowlist, and re-encodes with Pillow to strip metadata. No service-role key in the API.
 - [ ] Enforce ownership on every media read/write; test cross-user access denial.
 - [ ] Add STT and TTS provider adapters behind the server boundary.
 - [ ] Never persist raw microphone audio. Delete temporary audio immediately after STT.
-- [ ] Return TTS audio through an authenticated, short-lived path; never expose provider keys.
+- [ ] Return TTS audio from `POST /speech/synthesize` through an authenticated, short-lived path; never expose provider keys. No `speech.ready` stream event (D-39).
 - [ ] Add upload, MIME, oversize, ownership, and audio-retention tests.
 - [ ] Hand the media contract and limits to Imran and Yassine.
 
@@ -149,7 +149,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 - [ ] Implement `POST /api/v1/sessions/{id}/interrupt` with ownership checks and idempotent behavior.
 - [ ] Mark turns `cancelled` on client abort when detected, release the reservation, and reject stale `turnId` events.
 - [ ] Add the validated-content rendering contract and server-side safety boundary with Imran and Yassine.
-- [ ] Add the worker claim pattern with `FOR UPDATE SKIP LOCKED` and the stuck-turn recovery handler.
+- [ ] Add the periodic worker (API lifespan task on an `app_worker` connection) with `FOR UPDATE SKIP LOCKED` and the stuck-turn recovery handler (D-40).
 - [ ] Add adversarial tests: forged session/turn IDs, cross-user interrupt, stale turn, replay after cancel.
 - [ ] Support Imran's 20 interruption cases with deterministic backend behavior.
 - [ ] Verify a failed gate or cancellation never persists a partial teachable turn.
@@ -159,7 +159,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 ### Weeks 9–10 — Practice and planning platform
 
 **Week 9**
-- [ ] Add `exercise_attempts` and `hint_events` with `exercise_revision_id` pinning and RLS.
+- [ ] Add `exercise_attempts` (with `hints_requested`) with `exercise_revision_id` pinning and RLS; no separate `hint_events` table (D-40).
 - [ ] Implement exercise listing, attempt submission, hint recording, and `GET /api/v1/progress`.
 - [ ] Persist evaluator results, error categories, feedback, and hint counts.
 - [ ] Enforce one attempt per submission and reject attempts against unpublished exercises.
@@ -181,7 +181,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 ### Weeks 11–12 — Admin, jobs, observability, and freeze
 
 **Week 11**
-- [ ] Add the `jobs` table, runner, and idempotent handlers: stuck turns, reservation release, expired idempotency keys, media cleanup, optional evaluation.
+- [ ] Add the remaining idempotent periodic handlers: reservation release, expired idempotency keys, media cleanup, optional evaluation. No `jobs` table in `v0.1.0` (D-40).
 - [ ] Add usage/budget reporting and the admin read-only summary needed for the academic demo.
 - [ ] Add session summaries and reconnect support if the plan's Week-11 increment requires them.
 - [ ] Add metrics: p50/p95 latency by stage, gate pass/fail, refusal rate, provider errors, credit remaining, cross-user attempts.

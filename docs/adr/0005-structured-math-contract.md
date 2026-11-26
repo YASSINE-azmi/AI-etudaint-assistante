@@ -1,7 +1,7 @@
 # ADR 0005 — Structured math contract + SymPy
 
 - **Status:** Accepted
-- **Date:** 24 November 2026
+- **Date:** 24 November 2026 (revised 26 November 2026, D-36)
 
 ## Context
 
@@ -11,11 +11,25 @@ expected form.
 
 ## Decision
 
-Add a `MathClaim` structure: `expression_latex`, `variables`, `assumptions`,
+Add a `MathClaim` structure: `expression`, `variables`, `assumptions`,
 `expected_form`, and `check` (`simplify`/`solve`/`interval`/`vector`/`property`).
-SymPy parses from this structure (never free text) in a sandbox with a short
-timeout and a banned-function allowlist. Unverifiable claims return
-`MATH_UNVERIFIABLE`.
+Unverifiable claims return `MATH_UNVERIFIABLE`.
+
+Revision (D-36):
+
+- `expression` and `assumptions` use a restricted SymPy syntax
+  (`(x + 1)**2`, `sqrt(2)`, `Interval(0, 1)`), not LaTeX. SymPy's
+  `parse_latex` needs an extra parser package (`antlr4-python3-runtime` or
+  `lark`), and its LaTeX coverage is partial.
+- `validation/math_parser.py` parses with `ast.parse(..., mode="eval")` and
+  accepts only numeric constants, declared variables, arithmetic and comparison
+  operators, and allowlisted SymPy constructors, building the SymPy object node
+  by node. `sympify` and `parse_expr` are never called on model output because
+  both use `eval`.
+- Each check runs in a worker process with a hard 2 s kill. Threads cannot be
+  stopped and `signal.alarm` does not exist on Windows.
+- The displayed LaTeX is generated from the parsed expression with
+  `sympy.latex`, so the rendered, checked, and spoken math are one object.
 
 ## Consequences
 

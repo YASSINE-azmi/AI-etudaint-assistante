@@ -20,7 +20,6 @@ class Settings(BaseSettings):
 
     supabase_url: str
     supabase_anon_key: str
-    supabase_service_role_key: str
 
     database_url: str
     database_runtime_url: str
@@ -59,6 +58,46 @@ class Settings(BaseSettings):
         return f"{self.supabase_issuer}/.well-known/jwks.json"
 
 
+class MigrationSettings(BaseSettings):
+    """Settings for Alembic only: migrations need the direct connection and nothing else."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
+    database_url: str
+
+
+class AdminSettings(BaseSettings):
+    """Privileged settings for the reviewer CLI and ingestion only.
+
+    The API process never instantiates this class, so it starts without the
+    service-role key (D-28). `tests/test_service_role_boundary.py` enforces it.
+    """
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
+    supabase_url: str
+    supabase_service_role_key: str
+    database_url: str
+
+
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def get_migration_settings() -> MigrationSettings:
+    return MigrationSettings()
+
+
+def get_admin_settings() -> AdminSettings:
+    return AdminSettings()

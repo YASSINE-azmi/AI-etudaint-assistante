@@ -21,10 +21,10 @@ Browser tutor for Moroccan Tronc Commun Scientifique (MAXI Maths). French-first.
 | pydantic-settings | Env config (`app/config.py`) |
 | PydanticAI | Tutor agent (typed steps, tools, outputs) |
 | OpenAI SDK | LLM, vision/OCR, speech-to-text, text-to-speech, embeddings (behind server adapters) |
-| SymPy | Deterministic math checks in the safety gate |
+| SymPy | Deterministic math checks in the safety gate (AST-allowlist input, no LaTeX parser) |
 | PyJWT | Supabase JWKS access-token verification |
 | httpx | Outbound HTTP |
-| Supabase Python client | Server DB, auth, private storage |
+| Supabase Python client | Reviewer CLI and ingestion only (service role); not used by the API |
 | SQLAlchemy | Table models |
 | Alembic | Schema migrations |
 | psycopg | Postgres driver |

@@ -4,7 +4,7 @@ The **AI Mathematics Tutor** uses Supabase for:
 
 - **Auth:** Email sign-in only (students, mathematics reviewers, and admins).
 - **Postgres (`pgvector` + French full-text search):** Student profiles, TCS curriculum chapters/objectives, immutable **MAXI Maths** `source_revisions`, `document_chunks` (`vector(1536)` + `tsvector`), `tutoring_sessions`, `session_turns`, `turn_citations`, `media_assets`, `exercises`, `exercise_attempts`, and `study_plans`.
-- **Private Storage:** Student-uploaded exercise photos and restricted **MAXI Maths** source materials (accessed exclusively via short-lived signed URLs).
+- **Private Storage:** Student-uploaded exercise photos only, under per-user path prefixes. Raw **MAXI Maths** sources never leave the local `data/` folder.
 
 You need one hosted Supabase project before wiring up `backend/` and `frontend/`.
 
@@ -31,9 +31,9 @@ Configure these values in `backend/.env` and `frontend/.env` (validated in `back
 | ----- | ---------------- | ------- |
 | **Project URL** | Dashboard → **Project Settings** → **API** → Project URL | Frontend (`VITE_SUPABASE_URL`) + Backend (`SUPABASE_URL`) |
 | **anon (public) key** | Same page → `anon` `public` key | Frontend (`VITE_SUPABASE_ANON_KEY`) + Backend (`SUPABASE_ANON_KEY`) |
-| **service_role (secret) key** | Same page → `service_role` `secret` key | Backend only (`SUPABASE_SERVICE_ROLE_KEY`) — **never expose to the browser** |
+| **service_role (secret) key** | Same page → `service_role` `secret` key | Reviewer CLI and ingestion only (`SUPABASE_SERVICE_ROLE_KEY`). The API does not read it. **Never expose to the browser** |
 | **Project ref** | Dashboard URL `supabase.com/dashboard/project/<ref>` or `supabase projects list` | CLI commands |
-| **Direct database connection string** | Dashboard → **Project Settings** → **Database** → Connection string (Direct / Session) | Backend (`DATABASE_URL`) & Alembic migrations |
+| **Session-mode connection string** | Dashboard → **Connect** → **Session pooler** (IPv4) or **Direct connection** (IPv6 only on the free tier) | Backend (`DATABASE_URL`) & Alembic migrations |
 | **Database password** | What you set at project creation | Direct Postgres connection |
 
 From the CLI you can also print API keys:
@@ -52,13 +52,27 @@ This app uses email auth only — no Google/SSO.
 2. Leave **Email** enabled.
 3. For local dev, you may disable **Confirm email** under **Authentication** → **Email** so synthetic sign-up works without inbox access (re-enable for any future real-student use, which is out of scope for `v0.1.0`).
 
+## 4b. JWT signing keys (required)
+
+The API verifies access tokens against the project's JWKS and accepts only
+asymmetric algorithms (`ES256`/`RS256`, `backend/app/auth/dependencies.py`).
+Projects that still use the legacy shared HS256 secret publish no usable JWKS
+key, so every request would return `401`.
+
+1. Dashboard → **Project Settings** → **JWT Keys**.
+2. If the project still uses the legacy secret, migrate to **JWT signing keys**
+   and rotate so the new asymmetric key is the one in use.
+3. Check `https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json` lists a key.
+
 ## 5. Private Storage buckets
 
 Create private buckets for student media and copyrighted source files (never mark these buckets as public):
 
 1. Dashboard → **Storage** → **New bucket**.
-2. Create `exercise-photos` with **Public bucket** turned **OFF** (for student-uploaded exercise images after metadata stripping).
-3. Create `maxi-sources` with **Public bucket** turned **OFF** (for restricted **MAXI Maths** review assets, accessed only by reviewers/backend via signed URLs).
+2. Create `exercise-photos` with **Public bucket** turned **OFF** (student exercise images; re-encoded and stripped of metadata by the API).
+3. Add `storage.objects` policies so an authenticated user can insert and select only objects whose path starts with their own user ID (`{user_id}/{session_id}/{asset_id}`). The browser uploads directly; the API reads with the student's JWT (plan §13.3, ADR 0003).
+
+Do not upload raw **MAXI Maths** PDFs or scans to Storage: they stay local and gitignored under `data/` (plan §14.2). Only reviewed chunks live in Postgres.
 
 ## 6. Database schema management
 
@@ -74,7 +88,9 @@ Alembic migrations create and update:
 - `media_assets`, `exercises`, `exercise_attempts`, and `study_plans`
 - Row-Level Security (RLS) policies enforcing student ownership and cross-user isolation
 
-Use the **direct/session** database connection string for Alembic—never the transaction pooler connection string.
+Use a **session-mode** connection string for Alembic (Session pooler on IPv4 networks, or the direct host if you have IPv6), never the transaction pooler.
+
+Before the first migration, run `backend/scripts/bootstrap_runtime_role.sql` once in the SQL editor (replace both passwords). It creates `app_runtime` and `app_worker` and revokes the default `anon`/`authenticated` grants so PostgREST cannot read internal tables.
 
 From `backend/`:
 

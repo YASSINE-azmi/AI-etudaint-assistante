@@ -34,7 +34,7 @@ runtime model selection that silently invalidates the evaluation.
    cost, latency, or student tier; no A/B or canary split; no automatic
    multi-provider fallback for content generation.
 3. Retrieval routing is orthogonal and stays as specified in §10. The scoped
-   filters (`status = 'published'`, `track = 'TCS'`, `chapter_id`) select corpus
+   filters (`status = 'published'`, `chapter_id`, approved objectives) select corpus
    evidence, never a model.
 4. Provider adapters in `app/providers/` own provider-specific details. Callers
    request a role, not a model identifier string.

@@ -7,8 +7,8 @@
 | Product | AI Mathematics Tutor — Moroccan Tronc Commun Scientifique (TCS), Option Française |
 | Release | `v0.1.0` academic demo |
 | Status | Conditionally approved — pending Week-2 go/no-go and the written pilot waiver |
-| Version | 1.1 |
-| Date | 24 November 2026 |
+| Version | 1.2 (plan review corrections, §23) |
+| Date | 26 November 2026 |
 | Team | 3 developers, 25–30 hours/week each, 16-week horizon |
 | Source of truth | `docs/implementation-plan.md` |
 | Supersedes | `backend_implementation_plan.md` (desktop draft); the deleted `docs/architecture.md`; any 2BAC or two-track interpretation of `PFE_Detailed_Execution_Plan.pdf` |
@@ -101,11 +101,12 @@ Chapter IDs, objective IDs, page ranges, and the coverage matrix must be confirm
 If the 16-week schedule slips, reduce in this order. Never weaken authorization, provenance, scope control, or validation.
 
 1. Continuous listening — **already out of scope**.
-2. Simplify math notation and display formatting.
-3. Reduce planning to availability + simple tasks.
-4. Reduce exercise breadth to MCQ + numeric tolerance.
-5. Reduce photo conditions and ambiguity handling.
-6. Drop push-to-talk **last**.
+2. Guided multi-step exercises — **already deferred** (D-42).
+3. Simplify math notation and display formatting.
+4. Reduce planning to availability + simple tasks.
+5. Reduce exercise breadth to MCQ + numeric tolerance.
+6. Reduce photo conditions and ambiguity handling.
+7. Drop push-to-talk **last**.
 
 ### 2.6 Success criteria
 
@@ -191,6 +192,14 @@ Out of scope for `v0.1.0`: any code, schema, or evaluation work for chapters 4�
 | D-32 | Retrieval acceptance set of 40–60 labeled pairs; Recall@5 ≥ 0.90 | Sufficiency thresholds and reranker weights are calibrated, not guessed |
 | D-33 | Deterministic score reranker; cross-encoder deferred | Improves precision within the latency budget; a model reranker does not fit 2 s over 20 candidates |
 | D-34 | 3 of 15 chapters in `v0.1.0`; the other 12 are a post-release content path (§2.7) | The platform is chapter-agnostic; expansion is gated by review capacity and per-chapter evaluation, not by code |
+| D-35 | The API stays `app_runtime`; no `SET ROLE authenticated`; a separate `app_worker` role for the worker | `authenticated` grants are revoked for PostgREST, so switching to it would deny the API too; supersedes that part of D-22 and ADR 0002 |
+| D-36 | `MathClaim.expression` is restricted SymPy syntax parsed by an AST allowlist in a killable process | No LaTeX parser dependency, no `eval` on model output, real timeouts on Windows; display LaTeX is derived from the parsed expression |
+| D-37 | The model cites only `chunk_id` + verbatim quote; the server fills page, revision, hash, and claim spans | LLMs are unreliable at offsets and metadata; removes a whole class of false Gate-1 refusals |
+| D-38 | The browser uploads photos to Storage under a `{user_id}/` prefix; the API reads with the student's JWT | Media works without the service-role key in the API; Pillow re-encodes and strips metadata |
+| D-39 | TTS is fetched only through `POST /speech/synthesize`, after the text renders | One speech path instead of two; no `speech.ready` on the turn stream |
+| D-40 | Demo-scale schema: no `rate_limit_counters`, `jobs`, `budget_reservations`, or `hint_events` tables | Single-instance demo; the ledger row, process-local limits, and a periodic task cover the same guarantees with less work |
+| D-41 | Chapters publish one at a time, chapter 1 first by Week 5, each with its own ≥ 10-pair retrieval set | Breaks the circular wait between Week-6 teaching and the Week-8 retrieval label set |
+| D-42 | Guided multi-step exercises move to the reduction ladder; reviewer hours for exercises confirmed by Week 2 | The client brief asks for MCQ, numeric, and narrow expressions only; reviewer time is already fully allocated |
 
 ---
 
@@ -206,7 +215,7 @@ flowchart LR
     api -->|SQLAlchemy| db[(Supabase Postgres<br/>pgvector + French FTS)]
     api -->|LLM + embeddings| provider[AI provider]
     api -->|signed URLs| storage[Supabase private Storage]
-    worker[Worker / cron] --> db
+    worker[Periodic worker<br/>app_worker role] --> db
     reviewer[Reviewer CLI] --> db
     reviewer --> storage
 ```
@@ -217,7 +226,7 @@ flowchart LR
 | --- | --- |
 | Frontend SPA | Auth state, classroom UI, chat/SSE, citations, KaTeX math rendering, media, practice, planning |
 | FastAPI API | Auth, scope resolution, retrieval, agent orchestration, four gates, persistence, SSE |
-| Worker / cron | Stuck-turn recovery, budget reconciliation, cleanup, optional evaluation jobs |
+| Worker (periodic task) | Runs inside the API process for the demo, on its own `app_worker` connection: stuck-turn recovery, reservation release, idempotency/media cleanup, optional evaluation (§18.5) |
 | Supabase Auth | Email-only identity for synthetic demo users |
 | Supabase Postgres | Profiles, curriculum, revisions, chunks, sessions, turns, citations, practice, plans, usage |
 | Supabase Storage | Private source assets, student media (demo only) |
@@ -265,6 +274,7 @@ backend/
 │   │   ├── source_gate.py
 │   │   ├── scope_gate.py
 │   │   ├── grounding_gate.py
+│   │   ├── math_parser.py
 │   │   ├── math_gate.py
 │   │   ├── render_gate.py
 │   │   ├── refusal.py
@@ -278,12 +288,12 @@ backend/
 │   │   ├── llm.py
 │   │   ├── embeddings.py
 │   │   ├── vision.py
+│   │   ├── storage.py
 │   │   └── speech.py
 │   ├── budget/
-│   │   ├── reservation.py
-│   │   └── reconciliation.py
+│   │   └── ledger.py
 │   ├── jobs/
-│   │   ├── runner.py
+│   │   ├── periodic.py
 │   │   └── handlers.py
 │   └── database/
 │       ├── session.py
@@ -323,30 +333,28 @@ backend/
 | `objective_prerequisites` | Prerequisite graph | `objective_id`; `prerequisite_id`; both FKs; cycle check in app/CI |
 | `source_documents` | Source identity | `id`; `title`; `publisher`; `edition_year`; `provenance_notes`; `academic_use_basis`; `rights_status` |
 | `source_revisions` | Immutable chapter revisions | `id`; `source_document_id`; `chapter_id`; `revision_number`; `content_hash`; `reviewer_id`; `status`; `reviewed_at`; `published_at`; `supersedes_revision_id`; `withdrawn_at`; `withdrawal_reason` |
-| `document_chunks` | Retrieval units | `id`; `revision_id`; `chapter_id`; `chunk_index`; `unit_id`; `section_path`; `page_start`; `page_end`; `char_start`; `char_end`; `content_type`; `chunk_text`; `search_text`; `content_hash`; `token_count`; `embedding` `vector(1536)`; `status` |
+| `document_chunks` | Retrieval units | `id`; `revision_id`; `chapter_id`; `chunk_index`; `unit_id`; `section_path`; `page_start`; `page_end`; `char_start`; `char_end`; `content_type`; `chunk_text`; `search_text`; `search_vector` (generated `tsvector`, French); `content_hash`; `token_count`; `embedding` `vector(1536)`; `embedding_model`; `embedding_dimensions`; `status` |
 | `chunk_objectives` | Chunk ↔ objective | `chunk_id`; `objective_id`; both FKs |
 | `tutoring_sessions` | Conversation scope | `id`; `student_id`; `chapter_id`; `objective_id` (nullable current focus); `curriculum_revision_id`; `title`; `status` (`active`/`archived`/`deleted`); `turn_count` |
-| `session_turns` | One student turn | `id`; `session_id`; `turn_index`; `student_prompt`; `response_status` (`pending`/`processing`/`completed`/`failed`/`cancelled`); `educational_status`; `refusal_code`; `message_fr`; `final_payload` (`JSONB`); `model_name`; `prompt_version`; `retrieval_config`; `token_counts`; `latency_ms`; `validation_metadata` (`JSONB`); `created_at`; `processing_started_at`; `expires_at`; `locked_by` |
+| `session_turns` | One student turn | `id`; `session_id`; `turn_index`; `student_prompt`; `response_status` (`pending`/`processing`/`completed`/`failed`/`cancelled`); `educational_status`; `refusal_code`; `message_fr`; `final_payload` (`JSONB`); `model_name`; `prompt_version`; `retrieval_config`; `token_counts`; `latency_ms`; `validation_metadata` (`JSONB`); `created_at`; `processing_started_at`; `expires_at`; `locked_by`; `reserved_usd` |
 | `teaching_steps` | Validated output units | `id`; `turn_id`; `step_index`; `display_text_fr`; `spoken_text_fr`; `next_actions` (`JSONB`); `validation_status` |
 | `turn_citations` | Claim ↔ source | `id`; `turn_id`; `step_id`; `teaching_claim_id` (FK); `chunk_id`; `revision_id`; `content_hash`; `page_number`; `section_reference`; `quote_excerpt`; `quote_start`; `quote_end` |
-| `exercises` | Reviewed exercise bank | `id`; `chapter_id`; `objective_id`; `code`; `source_reference`; `exercise_type` (`mcq`/`numeric_tolerance`/`algebraic_expression`/`guided_multistep`); `answer_schema` (`JSONB`); `hints_fr` (`JSONB`); `difficulty_level`; `status` |
+| `exercises` | Reviewed exercise bank | `id`; `chapter_id`; `objective_id`; `code`; `source_reference`; `exercise_type` (`mcq`/`numeric_tolerance`/`algebraic_expression`); `answer_schema` (`JSONB`); `hints_fr` (`JSONB`); `difficulty_level`; `status` |
 | `exercise_revisions` | Immutable exercise versions | `id`; `exercise_id`; `revision_number`; `problem_statement_fr`; `answer_schema`; `reviewer_id`; `review_status`; `change_summary` |
 | `exercise_attempts` | Student attempts | `id`; `student_id`; `exercise_id`; `exercise_revision_id`; `session_id`; `submitted_answer` (`JSONB`); `evaluation_result` (`correct`/`incorrect`/`inconclusive`); `error_category`; `evaluation_details` (`JSONB`); `feedback_fr`; `hints_requested` |
-| `hint_events` | Hint usage | `id`; `attempt_id`; `hint_index`; `requested_at` |
 | `study_plans` | One active plan per student | `id`; `student_id`; `target_weekly_hours`; `timezone`; `is_active`; `version`; partial unique `(student_id) WHERE is_active` |
 | `availability_windows` | Study windows | `id`; `plan_id`; `day_of_week` (1–7); `start_time`; `end_time`; check `start < end` |
 | `study_tasks` | Scheduled tasks | `id`; `plan_id`; `objective_id`; `title_fr`; `scheduled_date`; `allocated_minutes`; `status` (`pending`/`completed`/`skipped`); `completed_at`; `order_index` |
-| `budget_reservations` | Pre-turn credit holds | `id`; `turn_id`; `student_id`; `reserved_usd`; `actual_usd`; `status` (`reserved`/`reconciled`/`released`); `expires_at`; unique active reservation per turn |
 | `usage_events` | Actual provider usage | `id`; `source` (`turn`/`ingestion`); `turn_id` (nullable); `student_id` (nullable); `model_name`; `input_tokens`; `output_tokens`; `cached_tokens`; `embedding_tokens`; `price_version`; `total_cost_usd`; `provider_request_id`; `created_at` |
-| `jobs` | Background work | `id`; `job_type`; `payload`; `status`; `run_after`; `attempts`; `locked_at`; `locked_by` |
 | `audit_events` | Administrative/security trail | `id`; `actor_id`; `action`; `entity_type`; `entity_id`; `payload` (`JSONB`); `created_at` |
 | `teaching_claims` | Persisted claim-level provenance | `id`; `turn_id`; `step_id`; `claim_id`; `claim_text_fr`; `claim_span_start`; `claim_span_end`; `objective_id`; `math_claim` (`JSONB`); `validation_status` |
 | `media_assets` | Photo/audio upload metadata | `id`; `student_id`; `session_id`; `turn_id` (nullable); `kind`; `storage_path`; `mime_type`; `byte_size`; `content_hash`; `status`; `created_at`; `expires_at` |
 | `turn_idempotency` | TTL idempotency keys | `id`; `session_id`; `idempotency_key`; `request_hash`; `turn_id`; `expires_at`; unique `(session_id, idempotency_key)` |
 | `budget_ledger` | Single global credit row | `id` (singleton); `budget_usd`; `reserved_usd`; `spent_usd`; `version`; `updated_at` |
-| `rate_limit_counters` | Postgres-backed rate limiting | `id`; `scope` (`user`/`ip`); `subject_id`; `window_start`; `count`; `expires_at` |
 
 `usage_events` carries `source` (`turn`/`ingestion`) and nullable `turn_id`/`student_id`; `turn_citations` references `teaching_claim_id`. See §22.2 for the normative schema and constraints.
+
+Not in `v0.1.0` (D-40): `rate_limit_counters` (process-local limits), `jobs` (periodic task), `budget_reservations` (`session_turns.reserved_usd` + the ledger row), and `hint_events` (`exercise_attempts.hints_requested`). Each is the documented upgrade if the API ever runs more than one instance.
 
 ### 5.2 Invariants
 
@@ -362,9 +370,9 @@ backend/
 - Retrieval may expand a unit by `(revision_id, unit_id)`; citations still pin the individual `chunk_id` and `content_hash`.
 - Exercise attempts pin `exercise_revision_id`.
 - One active `study_plan` per student; completed tasks survive plan regeneration.
-- One active `budget_reservation` per turn. Reservation and reconciliation lock the singleton `budget_ledger` row with `FOR UPDATE` so totals are atomic with the cap check.
+- A turn's credit hold is `session_turns.reserved_usd`, mirrored in `budget_ledger.reserved_usd`. Reservation and reconciliation lock the singleton `budget_ledger` row with `FOR UPDATE` so totals are atomic with the cap check.
 - `usage_events.source` distinguishes turn usage from ingestion embeddings; ingestion rows have null `turn_id`/`student_id`.
-- `jobs` are claimed with `FOR UPDATE SKIP LOCKED`; handlers are idempotent.
+- The periodic worker claims stuck turns with `FOR UPDATE SKIP LOCKED`; handlers are idempotent.
 
 ### 5.3 Indexes and RLS
 
@@ -374,10 +382,12 @@ backend/
 - B-tree index on `document_chunks (revision_id, unit_id, chunk_index)` for unit expansion.
 - GIN/JSONB indexes on `concept_tags` and validation metadata where queried.
 - Enable and `FORCE ROW LEVEL SECURITY` on every table in the `public` schema; deny by default.
-- `app_runtime` is a non-owner runtime role. Per transaction, the API sets `request.jwt.claims` from the verified JWT and `SET LOCAL ROLE authenticated` before queries; `auth.uid()` is otherwise null.
-- Grant `app_runtime` usage on the `auth` schema and execute on `auth.uid()`, or use `current_setting('request.jwt.claims', true)` policies.
+- `app_runtime` is a non-owner runtime role without `BYPASSRLS`, so RLS always applies to it. Per transaction, the API runs `select set_config('request.jwt.claims', :claims_json, true)` with the verified JWT claims. It **never** runs `SET ROLE authenticated` (D-35): that role's grants are revoked below, so switching to it would deny the API too.
+- Policies are written `TO app_runtime` and read the caller through `public.request_user_id()`, a `stable` SQL function over `current_setting('request.jwt.claims', true)::jsonb ->> 'sub'`, created in the first table migration. No dependency on the `auth` schema, so the same migrations run on the local and CI Postgres.
+- `app_worker` is the worker's login (no `BYPASSRLS`); it gets explicit `TO app_worker` policies only on the tables it recovers or cleans up. Global tables written on the request path (`budget_ledger`, `usage_events`, `audit_events`) get explicit `app_runtime` policies.
+- `backend/scripts/bootstrap_runtime_role.sql` creates both roles and revokes Supabase's default `anon`/`authenticated` grants, including default privileges for future tables.
 - Revoke direct `anon`/`authenticated` access to internal tables; `document_chunks.chunk_text`, `exercises.answer_schema`, and `profiles.role` are not directly readable by students. FastAPI is the only student data path.
-- Policies use `auth.uid()`/JWT claims and explicit role checks; `profiles.role` is not an authorization input.
+- Policies use `public.request_user_id()` (JWT claims) and explicit role checks; `profiles.role` is not an authorization input.
 - The service role is loaded only by `AdminSettings` in CLI/ingest and is excluded from the API process.
 
 ---
@@ -403,7 +413,7 @@ backend/
 | `student` | Own sessions, turns, attempts, plans; read published curriculum |
 | `reviewer` | Read drafts; run local review/publish CLI; no student data |
 | `admin` | Manage users, budgets, audit; no direct student impersonation |
-| `system` | Worker/jobs; scoped service operations |
+| `system` | Periodic worker via the `app_worker` DB role; explicit policies only |
 
 ### 6.3 Authorization matrix
 
@@ -423,7 +433,7 @@ backend/
 
 ### 6.4 Service-role isolation
 
-- `SUPABASE_SERVICE_ROLE_KEY` is loaded only by `AdminSettings` in `app/database/admin.py` and `ingest/`; it is not part of the API settings and the API process must start without it.
+- `SUPABASE_SERVICE_ROLE_KEY` is loaded only by `AdminSettings` (`app/config.py`), which only `ingest/` and the reviewer CLI instantiate; it is not part of the API settings and the API process starts without it.
 - Student request handlers import only the runtime engine.
 - A CI import test fails if `app.main`, `app/api`, or any request-path module imports `AdminSettings` or the admin client.
 - Admin HTTP routes are not exposed in `v0.1.0`; publication is CLI-only.
@@ -434,8 +444,8 @@ backend/
 - Max concurrent turns per user: 1.
 - Max turns per minute per user: 6.
 - Max turns per session: 30.
-- Max photo size: 10 MB; MIME allowlist; re-encode and strip metadata.
-- Rate-limit state stored in Postgres for multi-instance safety; single-instance demo may use a process-local fallback with a documented limitation.
+- Max photo size: 10 MB; MIME allowlist; re-encode and strip metadata server-side with Pillow after upload (D-38).
+- Rate-limit state is process-local for the single-instance demo (D-40). A Postgres counter table is the documented upgrade if the API ever runs more than one instance.
 
 ---
 
@@ -465,7 +475,7 @@ backend/
 | `GET` | `/api/v1/study-plan` | Active plan |
 | `PUT` | `/api/v1/study-plan` | Create/replace plan |
 | `PATCH` | `/api/v1/study-tasks/{id}` | Complete/skip task |
-| `POST` | `/api/v1/sessions/{id}/media` | Create a signed photo upload / register media asset |
+| `POST` | `/api/v1/sessions/{id}/media` | Register a media asset; returns its `{user_id}/{session_id}/{asset_id}` storage path for the browser upload (D-38) |
 | `POST` | `/api/v1/media/{id}/interpret` | OCR/symbol extraction; return ambiguity candidates |
 | `POST` | `/api/v1/media/{id}/confirm` | Store the confirmed expression or reject the asset |
 | `POST` | `/api/v1/speech/transcribe` | Push-to-talk French audio → editable transcript |
@@ -489,8 +499,9 @@ validation.started
 validation.completed      { gates, educationalStatus }
 message.final             { text, citations, spokenText }
 turn.completed
-speech.ready              { audioUrl, expiresAt }
 ```
+
+- Speech is not on the turn stream. After the validated text renders, the client calls `POST /speech/synthesize` (D-39).
 
 - On failure:
 
@@ -588,26 +599,20 @@ Authenticate
 
 ```python
 class MathClaim(BaseModel):
-    expression_latex: str
-    variables: dict[str, str] = {}
-    assumptions: list[str] = []
+    expression: str  # restricted SymPy syntax, e.g. "(x + 1)**2 - (x**2 + 2*x + 1)"
+    variables: dict[str, str] = {}  # name -> domain: "real", "integer", "natural", "vector2"
+    assumptions: list[str] = []  # same restricted syntax, e.g. "x > 0"
     expected_form: str | None = None
     check: Literal["simplify", "solve", "interval", "vector", "property"]
 
 class CitationDraft(BaseModel):
-    claim_id: str
     chunk_id: UUID
-    revision_id: UUID
-    quote: str
-    page_number: int
-    section: str | None = None
+    quote: str  # verbatim from the chunk
 
 class ClaimDraft(BaseModel):
     claim_id: str
     objective_id: str
-    text_fr: str
-    claim_span_start: int
-    claim_span_end: int
+    text_fr: str  # must appear verbatim inside the step's display_text_fr
     citations: list[CitationDraft] = []
     math: MathClaim | None = None
 
@@ -627,6 +632,8 @@ class AgentDraftOutput(BaseModel):
 - A turn is all-or-nothing in `v0.1.0`: if any step fails a gate, the turn is refused or clarified.
 - Parallel `cited_chunk_ids` / `quoted_excerpts` lists are prohibited.
 - Every claim carries `objective_id`; connective text outside claim spans is allowed and does not require a citation.
+- The server, not the model, fills each citation's `revision_id`, `content_hash`, `page_number`, section, and `quote_start/end` from the cited chunk, and computes `claim_span_start/end` by locating `text_fr` in `display_text_fr`. A claim not found verbatim fails Gate 3 (D-37).
+- Display LaTeX for a math claim is generated from the parsed expression (`sympy.latex`), so the rendered, checked, and spoken math come from one object (D-36).
 - `citations` is a list; one or more per claim. Each citation is resolved server-side to a `teaching_claim_id` on the same turn.
 - `math` is required for computation claims and absent for pure prose; Gate 4 uses its variables, assumptions, expected form, and check type.
 - `spoken_text_fr` is not free-form for math: when a step carries a `math` claim, the server replaces the model's spoken text with the deterministic French verbalization of the validated expression. The model's version is kept only for connective prose.
@@ -636,11 +643,9 @@ class AgentDraftOutput(BaseModel):
 Deterministic checks:
 
 - Every `chunk_id` exists.
-- The chunk belongs to the cited `revision_id`.
-- The revision is `published` and not withdrawn at validation time.
-- The chunk's `content_hash` matches the citation.
+- The chunk's revision is `published` and not withdrawn at validation time.
 - The quote is present in the chunk after normalization.
-- The page/section metadata matches the chunk.
+- Page, section, revision, and hash are copied from the chunk at validation time, never taken from the model (D-37).
 - The quote length is within the academic-use limit.
 
 Failure → `validation_failed` or `insufficient_evidence`; never a silent citation substitution.
@@ -685,7 +690,8 @@ Failure → `outside_scope` with a specific refusal code.
 - SymPy checks:
   - arithmetic, simplification, equation solving, interval/set operations, vector calculations, function properties.
   - Use `sympy.simplify(expr1 - expr2) == 0` with explicit assumptions; reject when assumptions are missing.
-  - Parse from the structured `MathClaim` (expression, variables, assumptions, expected form), never from free text; run in a sandbox with a short timeout and a banned-function allowlist.
+  - Parse `MathClaim.expression` with the AST allowlist parser in `validation/math_parser.py` (D-36): `ast.parse(..., mode="eval")`, then accept only numeric constants, declared variable names, `+ - * / **`, comparisons, and allowlisted SymPy constructors (`sqrt`, `Abs`, `Rational`, `Interval`, `Union`, `Intersection`, `Matrix`, …), building the SymPy object node by node. Never call `sympify` or `parse_expr` on model output: both use `eval`. No LaTeX parser dependency.
+  - Run each check in a worker process with a hard 2 s kill (`ProcessPoolExecutor`, recycled after a timeout). Threads cannot be killed and `signal.alarm` does not exist on Windows. Timeout → `MATH_UNVERIFIABLE`.
 - Rubric verifier:
   - Fixed prompt, fixed model/version, temperature 0.
   - Scores correctness, scope, notation, and age-appropriateness.
@@ -838,7 +844,7 @@ Publication gate:
 - Reviewer sign-off.
 - Objective mapping checked.
 - Math notation reviewed.
-- Representative retrieval tests pass (§10.5).
+- That chapter's retrieval set passes: ≥ 10 labeled pairs, Recall@5 ≥ 0.80 (§10.5). Chapters publish one at a time; chapter 1 first, by Week 5 (D-41).
 - Embeddings are non-null.
 - Content hash recorded.
 
@@ -918,7 +924,7 @@ If insufficient → `INSUFFICIENT_EVIDENCE` or `AMBIGUOUS_QUESTION`. Calibrate t
 - Targets: **Recall@5 ≥ 0.90** overall and ≥ 0.80 per chapter; **MRR ≥ 0.70**; false refusal rate ≤ 10%.
 - Track retrieval failures separately from answer failures, recording the query, expected chunk, retrieved chunks, and whether the miss was lexical, semantic, scoping, or chunking.
 - Run this set before publication (§9.6) and after any chunking, embedding, normalization, or reranker change.
-- Labels are built incrementally during corpus review (Weeks 5–8), not deferred to Week 13.
+- Labels are built per chapter during corpus review: chapter 1's ≥ 10 pairs before its Week-5 publication, the full 40–60 by Week 8, never deferred to Week 13. The overall Recall@5 ≥ 0.90 gate applies from Week 8; before that, each published chapter meets its own ≥ 0.80 (D-41).
 
 ### 10.6 Conversational query construction
 
@@ -973,7 +979,7 @@ This is an academic demo with trial credits only.
 
 - `TRIAL_CREDIT_BUDGET_USD`: global soft/hard budget.
 - `MAX_TURN_INPUT_TOKENS` and `MAX_TURN_OUTPUT_TOKENS`.
-- `BudgetReservation` reserves a worst-case estimate before dispatch.
+- Before dispatch, a worst-case estimate is added to `budget_ledger.reserved_usd` and stored on `session_turns.reserved_usd` in the same transaction (D-40).
 - `UsageEvent` records actual tokens and cost after completion.
 - Alert at 80% of credits; hard stop at 100%.
 - At hard stop, return `CREDIT_EXHAUSTED`; never fall back to an ungrounded answer.
@@ -1011,12 +1017,12 @@ This is an academic demo with trial credits only.
 | MCQ | Option IDs, single/multiple correct; no answer leakage |
 | Numeric tolerance | Absolute/relative tolerance; significant figures; units; interval support |
 | Algebraic expression | SymPy canonicalization; variable set; domain; equivalent forms; multiple solutions; `inconclusive` |
-| Guided multi-step | Step-level reviewer-defined answers; partial credit only where approved |
 
+- Guided multi-step exercises are deferred to the reduction ladder (D-42).
 - String comparison alone is prohibited.
 - Unsupported forms return `inconclusive`, not `incorrect`.
 - Attempts pin `exercise_revision_id`.
-- Record hints individually and error categories.
+- Record the hint count (`hints_requested`) and error categories on the attempt.
 - Feedback and hints are reviewer-approved templates or pass the same four gates; no free-form LLM feedback reaches the student. The `answer_schema` is never returned by `GET /exercises` or `GET /exercises/{id}`.
 
 ### 12.2 Progress
@@ -1080,7 +1086,7 @@ Edge cases:
 - Validated-content-before-speech: render the validated text and KaTeX math, then call `/speech/synthesize` and play TTS.
 - Speech plays only the validated `spoken_text_fr`; the model's pre-validation text is never spoken.
 - Interruption: stop local audio < 500 ms, abort the stream, call `/interrupt`, reject stale `turnId` events.
-- Photo: request a signed upload (`POST /sessions/{id}/media`) → preview → `POST /media/{id}/interpret` → confirm ambiguous symbols (`POST /media/{id}/confirm`) → submit `mediaAssetId` + confirmed expression with the turn.
+- Photo (D-38): `POST /sessions/{id}/media` registers the asset and returns its path `{user_id}/{session_id}/{asset_id}` → the browser uploads it with supabase-js to the private `exercise-photos` bucket (a `storage.objects` policy lets a user write only under their own `user_id/` prefix) → preview → `POST /media/{id}/interpret` (the API downloads with the student's forwarded JWT, re-encodes with Pillow, strips metadata, runs vision) → confirm ambiguous symbols (`POST /media/{id}/confirm`) → submit `mediaAssetId` + confirmed expression with the turn.
 - Speech: push-to-talk posts to `POST /speech/transcribe`; the transcript is editable before submission; raw audio is never stored.
 - Citations: display chapter, section, page, short excerpt; no full chunk.
 - Refusals: render the French message, code, and next actions.
@@ -1275,7 +1281,7 @@ Release gates:
 | 2 | Scope/feasibility gate | Coverage matrix, academic-use note, API/data contracts, go/no-go |
 | 3 | Identity + app shell + RLS | Two synthetic users cannot access each other's resources |
 | 4 | Persistent classroom sessions | Text classroom saves, reloads, and runs locally |
-| 5 | Ingestion + filtered retrieval | Published sample content retrieved with correct metadata |
+| 5 | Ingestion + filtered retrieval | Chapter 1 published with its ≥ 10-pair retrieval set; retrieved with correct metadata |
 | 6 | Grounded teaching + Gates 1–3 | Structured tutor passes initial evaluation |
 | 7 | Photos + push-to-talk + Gate 4 | Confirmed photo interpretation enters controlled tutoring; math and speech validated |
 | 8 | Streaming sync + interruption | Late events rejected; integrated math review |
@@ -1316,7 +1322,7 @@ Proceed only if:
 
 - the three chapters and objectives are confirmed;
 - the academic-use note is recorded;
-- the reviewer is active;
+- the reviewer is active and has confirmed in writing the hours for corpus, exercises, labels, and evaluation (§22.1);
 - the model benchmark is acceptable;
 - the SSE/turn contract is agreed;
 - the team confirms the 16-week scope.
@@ -1368,8 +1374,10 @@ No `os.getenv`, `load_dotenv`, or direct `import.meta.env` reads outside those m
 
 ### 18.3 Database connections
 
-- `DATABASE_URL` (direct/session) for Alembic and DDL.
-- `DATABASE_RUNTIME_URL` for the API, using the non-owner `app_runtime` role; use the pooler or a bounded direct pool. Per transaction, set `request.jwt.claims` from the verified JWT and `SET LOCAL ROLE authenticated` so `auth.uid()` is valid.
+- `DATABASE_URL` (session mode) for Alembic and DDL: the Supavisor session pooler on port 5432 works on IPv4 networks; the direct host `db.<ref>.supabase.co` is IPv6-only on the free tier. Never the transaction pooler (port 6543).
+- `DATABASE_RUNTIME_URL` for the API, using the non-owner `app_runtime` role; use the pooler or a bounded direct pool. Per transaction, `set_config('request.jwt.claims', …, true)` from the verified JWT; no role switch (§5.3, D-35).
+- `DATABASE_WORKER_URL` for the periodic worker, using `app_worker`.
+- Local and CI Postgres are owned by `postgres`; `backend/scripts/local_db_init.sh` adds the `anon`/`authenticated` shim and non-superuser runtime roles so RLS tests are real.
 - `AdminSettings` / service-role admin client only in CLI/ingest; the API process must start without `SUPABASE_SERVICE_ROLE_KEY`.
 - Health check verifies DB connectivity and pgvector availability.
 
@@ -1383,8 +1391,9 @@ No `os.getenv`, `load_dotenv`, or direct `import.meta.env` reads outside those m
 
 ### 18.5 Worker
 
-- Separate process or cron; `jobs` table with `FOR UPDATE SKIP LOCKED`.
-- Handlers: stuck turns, reservation release, cleanup, optional evaluation.
+- A periodic task started in the API lifespan for the single-instance demo, on its own `app_worker` connection pool (D-40).
+- Handlers: stuck turns (claimed with `FOR UPDATE SKIP LOCKED`), reservation release, idempotency and media cleanup, optional evaluation.
+- A separate process and a `jobs` table are the upgrade path if the API scales out.
 - Idempotent and observable.
 
 ### 18.6 Runbooks
@@ -1427,6 +1436,7 @@ These are recorded assumptions, not blockers. The plan proceeds with the default
 | Real-student walkthrough | Not part of this release; requires supervisor approval and no data retention |
 | Frontend test policy | Playwright allowed after `frontend/AGENTS.md` amendment |
 | Math dependency | SymPy added to backend dependencies with a written justification |
+| Math parsing | AST allowlist over restricted SymPy syntax; no LaTeX parser package (D-36) |
 
 ---
 
@@ -1438,15 +1448,16 @@ These are recorded assumptions, not blockers. The plan proceeds with the default
 | --- | --- |
 | `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_ANON_KEY` | Browser-safe key |
-| `SUPABASE_SERVICE_ROLE_KEY` | CLI/ingest/admin only |
+| `SUPABASE_SERVICE_ROLE_KEY` | CLI/ingest only (`AdminSettings`); the API never reads it |
 | `DATABASE_URL` | Alembic direct/session connection |
 | `DATABASE_RUNTIME_URL` | API runtime connection with `app_runtime` role |
+| `DATABASE_WORKER_URL` | Periodic worker connection with `app_worker` role (planned) |
 | `AI_PROVIDER_BASE_URL` | Provider base URL |
 | `AI_PROVIDER_API_KEY` | Server-side provider key |
 | `LLM_MODEL_NAME` | Chat model |
 | `EMBEDDING_MODEL_NAME` | Embedding model |
 | `EMBEDDING_DIMENSIONS` | `1536` |
-| `VISION_MODEL_NAME` | Admin extraction model |
+| `VISION_MODEL_NAME` | Photo/OCR model: student exercise photos and admin extraction |
 | `STT_MODEL_NAME` | Speech-to-text model |
 | `TTS_MODEL_NAME` | Text-to-speech model |
 | `ALLOWED_ORIGINS` | CORS origins |
@@ -1471,7 +1482,7 @@ Add missing variables to `backend/.env.example` and `frontend/.env.example`; do 
 
 Model settings are resolved per role at startup; there is no router or per-request model selection (§8.9, ADR 0008).
 
-`JUDGE_MODEL_NAME`, `MAX_PROMPT_CHARS`, `MAX_PHOTO_BYTES`, `MAX_AUDIO_SECONDS`, `MAX_TURNS_PER_MINUTE`, and `MAX_CONCURRENT_TURNS` are **planned**. Add each to `config.py` and `.env.example` in the PR that implements its feature; never read a setting before it exists.
+`DATABASE_WORKER_URL`, `JUDGE_MODEL_NAME`, `MAX_PROMPT_CHARS`, `MAX_PHOTO_BYTES`, `MAX_AUDIO_SECONDS`, `MAX_TURNS_PER_MINUTE`, and `MAX_CONCURRENT_TURNS` are **planned**. Add each to `config.py` and `.env.example` in the PR that implements its feature; never read a setting before it exists.
 
 ### B. Repository layout
 
@@ -1518,33 +1529,35 @@ TURN_LIMIT_REACHED
 
 ### D. Example SSE sequence
 
+The AI SDK UI message stream is plain SSE: every event is a `data:` line holding one JSON part, there are no `event:` names, and the response carries `x-vercel-ai-ui-message-stream: v1`. Custom parts use `data-*` types.
+
 ```text
-event: data-turn-started
-data: {"turnId":"...","sessionId":"..."}
+data: {"type":"start","messageId":"<turnId>"}
 
-event: data-retrieval-completed
-data: {"chunkIds":["..."],"scores":[0.82,0.77]}
+data: {"type":"data-turn-started","data":{"turnId":"...","sessionId":"..."}}
 
-event: data-validation-started
-data: {"gates":["source","scope","grounding","math_render"]}
+data: {"type":"data-retrieval-completed","data":{"chunkIds":["..."],"scores":[0.82,0.77]}}
 
-event: data-validation-completed
-data: {"educationalStatus":"accepted"}
+data: {"type":"data-validation-started","data":{"gates":["source","scope","grounding","math_render"]}}
 
-event: text-delta
-data: {"delta":"Voici la définition..."}
+data: {"type":"data-validation-completed","data":{"educationalStatus":"accepted"}}
 
-event: data-message-final
-data: {"citations":[...],"spokenTextFr":"..."}
+data: {"type":"text-start","id":"t1"}
 
-event: data-turn-completed
-data: {"turnId":"...","usage":{"inputTokens":0,"outputTokens":0,"costUsd":0.0}}
+data: {"type":"text-delta","id":"t1","delta":"Voici la définition..."}
 
-event: data-speech-ready
-data: {"audioUrl":"...","expiresAt":"..."}
+data: {"type":"text-end","id":"t1"}
+
+data: {"type":"data-message-final","data":{"citations":[...],"spokenTextFr":"..."}}
+
+data: {"type":"data-turn-completed","data":{"turnId":"...","usage":{"inputTokens":0,"outputTokens":0,"costUsd":0.0}}}
+
+data: {"type":"finish"}
+
+data: [DONE]
 ```
 
-Verify exact event names against the installed AI SDK version during the Week-1 spike.
+The single `text-delta` carries the whole validated text. Verify part names against the installed `ai` version during the Week-1 spike.
 
 ### E. Dependencies to add
 
@@ -1553,6 +1566,7 @@ Verify exact event names against the installed AI SDK version during the Week-1 
 | `sympy` | Backend runtime | Deterministic math checks for computable claims |
 | `pytest-asyncio` | Backend dev | Async route/engine tests |
 | `mypy` | Backend dev | Strict type checking promised by the plan |
+| `pillow` | Backend runtime | Re-encode uploaded photos and strip metadata (D-38) |
 | `playwright` | Frontend dev | Acceptance E2E for journeys/interruption |
 | `openapi-typescript` (optional) | Frontend dev | Shared API types, if manual types become error-prone |
 
@@ -1577,7 +1591,7 @@ Before adding any dependency, record the answers to the dependency-policy questi
 
 ## 21. Immediate Week-1 checklist
 
-Status on 26 November 2026: the backend foundation, CI, and the `master` protections are in place; CI is green on `grunt`. The remaining Week-1 items below are unchecked.
+Status on 26 November 2026: the backend foundation, CI workflows, and the `master` protections are in place. CI runs #20 (`grunt`) and #21 (`master`) failed in the integration job and the Deploy workflow; both are fixed by the plan-review corrections (§23). The remaining Week-1 items below are unchecked.
 
 - [x] Replace stale SEC content and the SEC download script.
 - [x] Update `README.md`, `Stack.md`, setup guides, and the Windows setup guide.
@@ -1587,10 +1601,11 @@ Status on 26 November 2026: the backend foundation, CI, and the `master` protect
 - [x] Reconcile `backend/.env.example` with `config.py`.
 - [x] Add the `app_runtime` bootstrap script and the service-role import-boundary test.
 - [x] Fix `.gitignore` (`lib/` matched `frontend/src/lib/`), commit `frontend/src/lib/env.ts`, and add a CI workflow running backend and frontend gates.
-- [ ] Split `AdminSettings` from `app/config.py`; remove `SUPABASE_SERVICE_ROLE_KEY` from the API settings.
-- [ ] Implement per-transaction `request.jwt.claims` + `SET LOCAL ROLE authenticated`, grant `auth.uid()`, and add a cross-user RLS isolation test.
+- [x] Split `AdminSettings` from the API settings; remove `SUPABASE_SERVICE_ROLE_KEY` from them; add an import-graph boundary test.
+- [x] Give Alembic its own `MigrationSettings`; run CI Postgres as `postgres` with a non-superuser `app_runtime`, the `anon`/`authenticated` shim, and a migration round-trip integration test; fix the Deploy workflow's job-level `secrets` check.
+- [ ] Implement per-transaction `set_config('request.jwt.claims', …, true)` (no role switch), add `public.request_user_id()`, and add a cross-user RLS isolation test.
 - [ ] Enable `FORCE ROW LEVEL SECURITY` in the first table migration.
-- [ ] Add the `teaching_claims`, `media_assets`, `turn_idempotency`, `budget_ledger`, and `rate_limit_counters` migrations.
+- [ ] Add the `teaching_claims`, `media_assets`, `turn_idempotency`, and `budget_ledger` migrations.
 - [ ] Benchmark 20 French math prompts for correctness, latency, cost, and JSON reliability.
 - [ ] Prototype the SSE transport against the installed AI SDK version.
 - [ ] Extract one chapter sample and run the retrieval/RRF spike.
@@ -1613,12 +1628,12 @@ This section records the decisions taken after the plan review and is the implem
 - **Pilot:** academic demo only. The client-brief 5-student pilot is waived in writing by the supervisor; record the waiver in `audit_events` and the final report.
 - **Evaluation:** 20 in-scope + 20 boundary tasks. Expand only if reviewer hours are confirmed. 20+20 is directional evidence; the report states the sample size and confidence limits.
 - **Release gates:** ≥ 90% (18/20) in-scope correct and scoped; 0 unsupported releases on the 20 boundary tasks, reported per category; 100% citation validity; math-gate catch rate ≥ 90% on at least 20 corrupted solutions; false refusals ≤ 10% on in-scope; 10/10 journeys; 20/20 interruptions; 100% cross-user denial; within trial credits with fallback.
-- **Reviewer time:** reserve 4–5 hours for 20+20, plus ~3–5 hours for the 40–60 retrieval labels and ~1–2 hours for the wrong-answer set. Labels are built during corpus review (Weeks 5–8). Week 13 alone needs 8–10 reviewer hours, so extra hours must be confirmed in writing before Week 12; do not schedule 60+60.
+- **Reviewer time:** reserve the corpus (~25 hours over Weeks 2–12), 4–5 hours for 20+20, plus ~3–5 hours for the 40–60 retrieval labels and ~1–2 hours for the wrong-answer set. Labels are built during corpus review (Weeks 5–8). Week 13 alone needs 8–10 reviewer hours, so extra hours must be confirmed in writing before Week 12; do not schedule 60+60. The exercise bank, hints, answer schemas, refusal templates, the out-of-scope lexicon, and the spoken-math map are not yet budgeted: they total roughly 8–12 hours and must be confirmed in writing at the Week-2 go/no-go (D-42).
 - **Whiteboard:** deferred beyond `v0.1.0`; the classroom delivers text, KaTeX math notation, photos, and voice only.
 
 ### 22.2 Schema (normative additions)
 
-New tables (also listed in §5.1):
+New tables (also listed in §5.1; `rate_limit_counters` was dropped by D-40):
 
 | Table | Key fields / constraints |
 | --- | --- |
@@ -1626,11 +1641,10 @@ New tables (also listed in §5.1):
 | `media_assets` | `id`; `student_id`; `session_id`; `turn_id` (nullable); `kind` (`exercise_photo`); `storage_path`; `mime_type`; `byte_size`; `content_hash`; `status` (`uploaded`/`interpreted`/`confirmed`/`deleted`); `created_at`; `expires_at` |
 | `turn_idempotency` | `id`; `session_id`; `idempotency_key`; `request_hash`; `turn_id`; `expires_at`; unique `(session_id, idempotency_key)` |
 | `budget_ledger` | singleton `id`; `budget_usd`; `reserved_usd`; `spent_usd`; `version`; `updated_at` |
-| `rate_limit_counters` | `id`; `scope` (`user`/`ip`); `subject_id`; `window_start`; `count`; `expires_at`; unique `(scope, subject_id, window_start)` |
 
 Column additions:
 
-- `session_turns`: add `refusal_code`, `message_fr`, `final_payload` (`JSONB`), `created_at`, `processing_started_at`, `expires_at`, `locked_by`. Remove `idempotency_key`/`request_hash` from this table (moved to `turn_idempotency`).
+- `session_turns`: add `refusal_code`, `message_fr`, `final_payload` (`JSONB`), `created_at`, `processing_started_at`, `expires_at`, `locked_by`, `reserved_usd`. Remove `idempotency_key`/`request_hash` from this table (moved to `turn_idempotency`).
 - `usage_events`: add `source` (`turn`/`ingestion`); make `turn_id` and `student_id` nullable for ingestion rows.
 - `turn_citations`: replace `claim_id` string with `teaching_claim_id` (FK to `teaching_claims`); keep `page_number`, `quote_excerpt`, `quote_start`, `quote_end`.
 
@@ -1639,22 +1653,22 @@ Column additions:
 Added endpoints (also in §7.1): `POST /sessions/{id}/media`, `POST /media/{id}/interpret`, `POST /media/{id}/confirm`, `POST /speech/transcribe`, `POST /speech/synthesize`, `GET /exercises/{id}`, `POST /exercises/{id}/hints`.
 
 - Turn request carries `mediaAssetId` and `confirmedExpression` alongside `prompt`, `chapterId`, `objectiveId`, and `options`; all are covered by `request_hash`.
-- `message.final` carries `spokenText`; the SSE sequence adds `speech.ready`.
+- `message.final` carries `spokenText`; audio is fetched separately through `POST /speech/synthesize` (D-39).
 - `GET /exercises` and `GET /exercises/{id}` never return `answer_schema`.
 
 ### 22.4 Auth, RLS, and service-role isolation
 
-- Direct SQLAlchemy runtime with the non-owner `app_runtime` role. Per transaction, the API sets `request.jwt.claims` from the verified JWT and `SET LOCAL ROLE authenticated` before queries.
-- Grant `app_runtime` usage on the `auth` schema and execute on `auth.uid()`; otherwise use `current_setting('request.jwt.claims', true)` policies.
+- Direct SQLAlchemy runtime with the non-owner `app_runtime` role. Per transaction, the API sets `request.jwt.claims` from the verified JWT with `set_config(..., true)`; it never switches role (D-35).
+- Policies target `app_runtime` (and `app_worker` where needed) and use `public.request_user_id()` over `current_setting('request.jwt.claims', true)`.
 - Enable and `FORCE ROW LEVEL SECURITY` on every `public` table; revoke direct `anon`/`authenticated` table grants so PostgREST cannot read `document_chunks.chunk_text`, `exercises.answer_schema`, or `profiles.role`.
 - Role source is JWT `app_metadata.role`; `profiles.role` is display-only and not an authorization input.
 - `AdminSettings` (with `SUPABASE_SERVICE_ROLE_KEY`) is separate from the API settings; the API process starts without the service key.
-- Tests: cross-user denial through the real DB role and a direct PostgREST attempt; role self-escalation denial; service-role import boundary for the whole request graph.
+- Tests: cross-user denial through the real non-superuser DB role and a direct PostgREST attempt; role self-escalation denial; service-role import boundary for the whole request graph.
 
 ### 22.5 Claims and math contracts
 
-- `ClaimDraft` carries `objective_id`, `claim_span_start/end`, a `citations` list, and an optional `MathClaim`; connective text outside claim spans is allowed without a citation.
-- `MathClaim` carries `expression_latex`, `variables`, `assumptions`, `expected_form`, and `check` (`simplify`/`solve`/`interval`/`vector`/`property`). SymPy parses from this structure, not free text, in a sandbox with a short timeout and a banned-function allowlist.
+- `ClaimDraft` carries `objective_id`, `text_fr`, a `citations` list of `{chunk_id, quote}`, and an optional `MathClaim`; the server computes claim spans and fills citation metadata (D-37). Connective text outside claim spans is allowed without a citation.
+- `MathClaim` carries `expression` (restricted SymPy syntax), `variables`, `assumptions`, `expected_form`, and `check` (`simplify`/`solve`/`interval`/`vector`/`property`). It is parsed by an AST allowlist, never `sympify`/`parse_expr`, in a worker process with a hard 2 s kill (D-36).
 - `next_actions` is a list (replaces the earlier `next_action` string).
 
 ### 22.6 Hosting, corpus, and copyright
@@ -1679,3 +1693,22 @@ Added endpoints (also in §7.1): `POST /sessions/{id}/media`, `POST /media/{id}/
 ### 22.9 Remaining open items
 
 - Actual reviewer hours for 20+20; supervisor pilot waiver; trial-credit amount/expiry; final chapter/objective IDs; Week-1 model benchmark; the AI SDK event-name verification.
+
+---
+
+## 23. Plan review corrections (26 November 2026)
+
+A review of the plan against the code and CI found one contradiction that would deny every API query, a red CI, and several gaps. This section records the corrections; where it conflicts with §22 or earlier text, this section wins. Rationale is in ADRs 0002, 0003, 0005, and 0009.
+
+| Decision | Change | Sections |
+| --- | --- | --- |
+| D-35 | API stays `app_runtime`; claims GUC only; `public.request_user_id()`; separate `app_worker` role | §5.3, §18.3, §22.4, ADR 0002 |
+| D-36 | `MathClaim.expression` in restricted SymPy syntax; AST allowlist parser; killable process | §8.2, §8.6, §22.5, ADR 0005 |
+| D-37 | Model cites `chunk_id` + quote only; server fills metadata and claim spans | §8.2, §8.3, ADR 0004 |
+| D-38 | Browser uploads to `{user_id}/` Storage prefix; API uses the student's JWT; Pillow | §6.5, §7.1, §13.3, ADR 0003 |
+| D-39 | TTS only via `POST /speech/synthesize`; no `speech.ready` | §7.2, §22.3, App. D, ADR 0003 |
+| D-40 | Drop `rate_limit_counters`, `jobs`, `budget_reservations`, `hint_events` | §5.1, §5.2, §6.5, §11.3, §18.5, ADR 0009 |
+| D-41 | Publish chapter by chapter; chapter 1 by Week 5 with ≥ 10 labels | §9.6, §10.5, §17.1 |
+| D-42 | Guided multi-step deferred; exercise reviewer hours confirmed at Week 2 | §2.5, §12.1, §17.4, §22.1 |
+
+Also corrected: the Appendix D SSE example now matches the AI SDK UI message stream format; `document_chunks` gains `search_vector`, `embedding_model`, and `embedding_dimensions`; the Week-1 status line no longer claims a green CI; `DATABASE_URL` guidance prefers the session pooler on IPv4 networks.
