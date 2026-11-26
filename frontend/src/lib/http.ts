@@ -38,6 +38,24 @@ export class ApiError extends Error {
   }
 }
 
+let onUnauthorized: (() => void) | undefined
+
+/** Called on every 401: the API rejected the token, so the session is over (set by auth). */
+export function setUnauthorizedHandler(handler: (() => void) | undefined): void {
+  onUnauthorized = handler
+}
+
+/** A request that never got a response (offline, DNS, CORS, or the client-side timeout). */
+export function networkError(timedOut = false): ApiError {
+  return new ApiError(0, timedOut ? TIMEOUT : NETWORK_ERROR, FALLBACK_MESSAGES_FR[0], null)
+}
+
+/** Turns a non-2xx response into an `ApiError`, ending the session on 401. */
+export async function failedResponseError(response: Response): Promise<ApiError> {
+  if (response.status === 401) onUnauthorized?.()
+  return toApiError(response)
+}
+
 export type RequestOptions = {
   body?: unknown
   headers?: Record<string, string>
@@ -83,11 +101,11 @@ export async function request<T>(
   } catch (error) {
     // A caller-initiated abort (e.g. Stop) is not an error to report.
     if (options.signal?.aborted) throw error
-    throw new ApiError(0, timeout.aborted ? TIMEOUT : NETWORK_ERROR, FALLBACK_MESSAGES_FR[0], null)
+    throw networkError(timeout.aborted)
   }
 
   if (!response.ok) {
-    throw await toApiError(response)
+    throw await failedResponseError(response)
   }
   if (response.status === 204) {
     return undefined as T

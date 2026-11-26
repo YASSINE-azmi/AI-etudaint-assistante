@@ -1,104 +1,44 @@
 import { DefaultChatTransport, type UIMessage } from 'ai'
 
-import { apiUrl, authHeaders } from '@/lib/http'
+import type {
+  Citation,
+  EducationalStatus,
+  GateName,
+  GateResult,
+  RefusalCode,
+  TurnFailure,
+  TurnFields,
+  Usage,
+} from '@/lib/api-types'
+import { apiUrl, authHeaders, failedResponseError, networkError } from '@/lib/http'
 
 /**
- * Turn stream types and transport (plan §7.2–§7.5, §13.3, Appendix C and D).
+ * Turn stream types and transport (plan §7.2–§7.5, §13.3, Appendix D,
+ * `docs/contracts/sse-turn-contract.md`).
  *
- * Week-1 skeleton: nothing renders it yet. The backend endpoint is not built, and the part
- * names must be checked against the installed `ai` version with Mohamed (§21).
+ * The backend endpoint is not built yet; the UI tier tests a stream stubbed to Appendix D.
+ * TODO(contract): Mohamed's transport must confirm the part names (`turn.started` →
+ * `data-turn-started`, …) against the installed `ai` version (contract, open questions).
  */
-
-/** §7.4 */
-export type EducationalStatus =
-  | 'accepted'
-  | 'outside_scope'
-  | 'insufficient_evidence'
-  | 'clarification_required'
-  | 'validation_failed'
-  | 'provider_unavailable'
-  | 'credit_exhausted'
-  | 'source_withdrawn'
-  | 'cancelled'
-
-/** Appendix C */
-export type RefusalCode =
-  | 'OUT_OF_SCOPE_LEVEL'
-  | 'OUT_OF_SCOPE_CHAPTER'
-  | 'INSUFFICIENT_EVIDENCE'
-  | 'AMBIGUOUS_QUESTION'
-  | 'MATH_UNVERIFIABLE'
-  | 'MATH_INCORRECT'
-  | 'RENDERING_UNSAFE'
-  | 'SOURCE_WITHDRAWN'
-  | 'PROVIDER_UNAVAILABLE'
-  | 'CREDIT_EXHAUSTED'
-  | 'RATE_LIMITED'
-  | 'TURN_LIMIT_REACHED'
-
-/** Appendix D */
-export type GateName = 'source' | 'scope' | 'grounding' | 'math_render'
-
-/** §7.3 */
-export type Citation = {
-  claimId: string
-  chunkId: string
-  revisionId: string
-  page: number
-  section: string
-  quote: string
-}
-
-/** §7.3 */
-export type Usage = {
-  inputTokens: number
-  outputTokens: number
-  costUsd: number
-}
 
 /** Custom `data-*` parts of the AI SDK UI message stream, keyed without the `data-` prefix. */
 export type TurnDataParts = {
   'turn-started': { turnId: string; sessionId: string }
   'retrieval-completed': { chunkIds: string[]; scores: number[] }
   'validation-started': { gates: GateName[] }
-  'validation-completed': {
-    educationalStatus: EducationalStatus
-    // TODO(contract): §7.2 lists `gates` here but defines no shape, and Appendix D omits it.
-    // Owner: Yassine (draft on `pin-deepseek-models`: `[{ gate, passed }]`, not merged).
-    gates?: unknown
-  }
+  'validation-completed': { gates: GateResult[]; educationalStatus: EducationalStatus }
+  /** The text itself arrives as one `text` part; this part carries the rest (contract step 2). */
   'message-final': {
     citations: Citation[]
-    // TODO(contract): §7.3 carries `refusalCode` and `nextActions` on the turn payload, but
-    // Appendix D shows only `citations` in this part. Confirm where they travel. Owner: Yassine.
-    refusalCode?: RefusalCode | null
-    nextActions?: string[]
+    refusalCode: RefusalCode | null
+    nextActions: string[]
   }
   'turn-completed': { turnId: string; usage: Usage }
   /** §7.2: ends a failed turn and replaces `message.final`, so it carries no answer text. */
-  // TODO(contract): the `data-turn-failed` part name is assumed by analogy; Appendix D does not
-  // show it. Owner: Mohamed.
-  'turn-failed': {
-    code: RefusalCode
-    educationalStatus: EducationalStatus
-    messageFr: string
-    retryable: boolean
-  }
+  'turn-failed': TurnFailure
 }
 
 export type TurnMessage = UIMessage<unknown, TurnDataParts>
-
-/** Turn request fields besides the prompt (§22.3). */
-export type TurnFields = {
-  // TODO(contract): which fields are required? The session's chapter is fixed at creation
-  // (§11.5), so `chapterId` may be redundant on each turn. Owner: Mohamed.
-  chapterId?: string
-  objectiveId?: string
-  // TODO(contract): `options` is covered by `request_hash` (§7.5) but has no defined shape.
-  options?: Record<string, unknown>
-  mediaAssetId?: string
-  confirmedExpression?: string
-}
 
 /** What a caller passes as `body` to `sendMessage` / `regenerate`. */
 export type TurnSubmission = TurnFields & {
@@ -126,6 +66,7 @@ function lastUserText(messages: TurnMessage[]): string {
 export function createTurnTransport(sessionId: string): DefaultChatTransport<TurnMessage> {
   return new DefaultChatTransport<TurnMessage>({
     api: apiUrl(`/api/v1/sessions/${encodeURIComponent(sessionId)}/turns`),
+    fetch: turnFetch,
     prepareSendMessagesRequest: async ({ messages, body, headers }) => {
       const { idempotencyKey, ...fields } = (body ?? {}) as Partial<TurnSubmission>
       if (!idempotencyKey) {
@@ -143,6 +84,83 @@ export function createTurnTransport(sessionId: string): DefaultChatTransport<Tur
       }
     },
   })
+}
+
+/**
+ * Same error handling as `http.ts`: 429/409 rejections before the stream (§7.4) become
+ * `ApiError`s, and a 401 ends the session. A caller abort (Stop) is rethrown untouched.
+ */
+async function turnFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  let response: Response
+  try {
+    response = await fetch(input, init)
+  } catch (error) {
+    if (init?.signal?.aborted) throw error
+    throw networkError()
+  }
+  if (!response.ok) throw await failedResponseError(response)
+  return response
+}
+
+/** Where a turn stands, from the stream parts received so far (§7.2 event sequence). */
+export type TurnPhase =
+  | 'submitted'
+  | 'retrieving'
+  | 'validating'
+  | 'final'
+  | 'completed'
+  | 'failed'
+
+export type TurnView = {
+  turnId: string | null
+  phase: TurnPhase
+  /** Null while validation runs; undefined before it starts. */
+  gates: GateResult[] | null | undefined
+  educationalStatus: EducationalStatus | null
+  /** Validated text only: null until `data-message-final` (§7.2). */
+  text: string | null
+  citations: Citation[]
+  refusalCode: RefusalCode | null
+  nextActions: string[]
+  failure: TurnFailure | null
+}
+
+function lastPart<K extends keyof TurnDataParts>(
+  message: TurnMessage,
+  name: K,
+): TurnDataParts[K] | undefined {
+  const part = message.parts.findLast((item) => item.type === `data-${name}`)
+  // The `type` check above is what ties this part to `TurnDataParts[K]`.
+  return part && 'data' in part ? (part.data as TurnDataParts[K]) : undefined
+}
+
+/** Reads an assistant message into what the classroom shows. Pure; no React. */
+export function readTurn(message: TurnMessage): TurnView {
+  const started = lastPart(message, 'turn-started')
+  const validationStarted = lastPart(message, 'validation-started')
+  const validation = lastPart(message, 'validation-completed')
+  const final = lastPart(message, 'message-final')
+  const completed = lastPart(message, 'turn-completed')
+  const failure = lastPart(message, 'turn-failed') ?? null
+
+  let phase: TurnPhase = 'submitted'
+  if (started) phase = 'retrieving'
+  if (validationStarted || validation) phase = 'validating'
+  if (final) phase = 'final'
+  if (completed) phase = 'completed'
+  if (failure) phase = 'failed'
+
+  return {
+    turnId: started?.turnId ?? completed?.turnId ?? null,
+    phase,
+    gates: validation ? validation.gates : validationStarted ? null : undefined,
+    educationalStatus: failure?.educationalStatus ?? validation?.educationalStatus ?? null,
+    text: failure ? null : validatedText(message),
+    citations: final?.citations ?? [],
+    refusalCode: final?.refusalCode ?? null,
+    nextActions: final?.nextActions ?? [],
+    failure,
+  }
 }
 
 /**
