@@ -202,6 +202,7 @@ Out of scope for `v0.1.0`: any code, schema, or evaluation work for chapters 4�
 | D-42 | Guided multi-step exercises move to the reduction ladder; reviewer hours for exercises confirmed by Week 2 | The client brief asks for MCQ, numeric, and narrow expressions only; reviewer time is already fully allocated |
 | D-43 | No text-to-speech in `v0.1.0`: modalities are text, exercise photos, and push-to-talk speech-to-text | Removes `/speech/synthesize`, `spoken_text_fr`, `SPEECH_UNSAFE`, and `TTS_MODEL_NAME`; one less provider call, gate check, and interruption source |
 | D-44 | Embeddings run locally: `intfloat/multilingual-e5-large`, `vector(1024)` | DeepSeek has no embedding model; the local model beat MiniLM (RRF 0.90 vs 0.85) and adds no API key or per-call cost |
+| D-45 | Yassine acts as the mathematics reviewer for the rubric, cases, and 20+20 grading | No separate external reviewer is available; the conflict of interest is recorded, and the supervisor checks a sample of the grades |
 
 ---
 
@@ -1713,6 +1714,7 @@ A review of the plan against the code and CI found one contradiction that would 
 | D-42 | Guided multi-step deferred; exercise reviewer hours confirmed at Week 2 | §2.5, §12.1, §17.4, §22.1 |
 | D-43 | Text-to-speech removed; text, photos, and speech-to-text only | §2.3, §7, §8, §13.3, App. D, ADR 0003, ADR 0008 |
 | D-44 | Local e5-large embeddings, `vector(1024)` | §10.1, App. C |
+| D-45 | Yassine is the mathematics reviewer; supervisor samples the grades | §16.2, `docs/evaluation/rubric.md` |
 
 **Second pass (26 November 2026).** Added: the Windows event-loop rule; the Ramadan 2027 calendar risk and the planner's Ramadan clock-change test; short per-stage transactions with no transaction open during provider calls (§11.4); lazy profile creation on `/me` (§6.1); client-side idempotency keys and a minimal turn body (§13.3); bucket-level upload limits (§6.5); the pooler login for custom roles; a manual migration step before deploys; the classroom copy fix.
 

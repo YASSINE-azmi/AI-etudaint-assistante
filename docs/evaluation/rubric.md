@@ -1,7 +1,8 @@
 # Evaluation rubric: 20+20 acceptance set
 
-- **Version:** `rubric-v0.1-draft`
-- **Status:** **Draft by Yassine, awaiting the mathematics reviewer's review and sign-off.** Do not grade with it until section 7 is signed.
+- **Version:** `rubric-v0.1`
+- **Status:** **Approved** on 2026-11-26 (section 8). Reviewer answers are recorded in section 7.
+- **Independence note (D-45):** the mathematics reviewer for this release is Yassine, who also builds the teaching, validation, and evaluation. The supervisor checks a sample of the grades.
 - **Plan:** §16.2 (evaluation design, release gates), §8.6 (rubric criteria), §8.7 (refusal codes), D-26 (20+20)
 - **Used in:** Week 13 demo evaluation. Grading budget: 4–5 reviewer hours.
 
@@ -36,7 +37,9 @@ Each released answer gets 0, 1 or 2 on four criteria.
 | --- | --- | --- |
 | 2 | Uses only notions from the approved chapter and objective | Finding the PGCD by prime factorization or successive divisions |
 | 1 | Mentions an outside notion without relying on it | Ends with "in later years you will see other methods" |
-| 0 | Relies on 1BAC, 2BAC or university content | Uses Gauss's theorem, Bézout's identity, or congruences modulo n |
+| 0 | Relies on anything above TCS (1BAC, 2BAC, university), **or** reaches the result with a method the chapter does not teach | Uses Gauss's theorem, Bézout's identity, congruences modulo n, or proof by induction |
+
+Out of scope (scope = 0), confirmed by the reviewer: **anything above TCS**, in particular Gauss's theorem, Bézout's identity, congruences modulo n, and proof by induction. A correct result reached with a method the chapter does not teach also scores 0: the tutor must teach the textbook's methods.
 
 ### 2.3 Notation: are symbols and terms the ones MAXI Maths uses?
 
@@ -90,6 +93,7 @@ Write this header once per run:
 ```text
 run date:            YYYY-MM-DD
 rubric version:      rubric-v0.1
+cases version:       cases-v0.1
 LLM model:           deepseek-flash          (LLM_MODEL_NAME)
 prompt version:      ...                     (PROMPT_VERSION)
 embedding model:     intfloat/multilingual-e5-large
@@ -112,7 +116,7 @@ Summary to report: in-scope passes /20 · false refusals /20 · unsupported rele
 
 The reviewer only grades. Everything before that is scripted.
 
-1. **Cases.** The 40 questions live in [cases.json](cases.json) (`cases-v0.1-draft`). Inside each set they go from vague (`detail_level` 1, "pgcd ?") to plain (2) to fully specified (3, with numbers, method and what to justify). Each case states the expected outcome and, where there is one, the correct result.
+1. **Cases.** The 40 questions live in [cases.json](cases.json) (`cases-v0.1`). Inside each set they go from vague (`detail_level` 1, "pgcd ?") to plain (2) to fully specified (3, with numbers, method and what to justify). Each case states the expected outcome and, where there is one, the correct result.
 2. **Sending.** `backend/scripts/run_evaluation.py` sends each question in a fresh session through the real tutor API (retrieval, draft, four gates), exactly as a student would. It never calls the model directly. It needs the tutor endpoints from Weeks 6–8, so it cannot run before then.
 
    ```powershell
@@ -131,21 +135,23 @@ What the version fields mean:
 | Gate version | The backend git commit at run time; the runner records it automatically. |
 | Grader | Who filled in the scores. |
 
-## 7. Questions for the mathematics reviewer
+## 7. Reviewer decisions
 
-Answer these during the review, then update the rubric and sign below.
+Answered by the reviewer on 2026-11-26.
 
-1. Is the 0 / 1 / 2 scale right, or should the criteria be simple pass / fail?
-2. Are the chapter-1 examples above correct and typical for TCS?
-3. **Out-of-scope list:** which topics must count as scope = 0 for the three chapters? Draft: Gauss's theorem, Bézout's identity, congruences, proof by induction, and anything from the 1BAC or 2BAC arithmetic chapters. Please confirm, add or remove.
-4. Should a right result reached by a method the chapter does not teach (for example the Euclidean algorithm before it is introduced) score scope 2 or 1?
-5. Notation: are there textbook conventions to add (decimal comma, `]a ; b[` intervals, `;` as the separator)?
-6. Time: do you confirm 4–5 hours for grading the 20+20 in Week 13?
-7. Cases: in [cases.json](cases.json), are the expected outcomes and correct results right? In particular, are the six missing-evidence topics (divisibility by 11 and 7, the sieve of Eratosthenes, infinitely many primes, base 2, Goldbach) really absent from the approved chapters?
+| # | Question | Decision |
+| --- | --- | --- |
+| 1 | 0 / 1 / 2 scale or pass / fail? | **0 / 1 / 2**, as drafted |
+| 2 | Are the chapter-1 examples right? | Accepted as drafted |
+| 3 | Out-of-scope list | **Anything above TCS**, including Gauss's theorem, Bézout's identity, congruences modulo n, and proof by induction |
+| 4 | Correct result by a method the chapter does not teach | **Scope 0** |
+| 5 | Notation conventions | Accepted as drafted: `PGCD(a ; b)`, `PPCM(a ; b)`, `ℕ*`, `;` as the separator |
+| 6 | Grading time in Week 13 | Reviewer is on the team (D-45); no separate hours needed |
+| 7 | Are the expected outcomes in cases.json right, and are the six missing-evidence topics absent from the chapters? | **Yes, all six are absent**; outcomes accepted |
 
 ## 8. Sign-off
 
 | Role | Name | Date | Version |
 | --- | --- | --- | --- |
 | Drafted by | Yassine | 2026-11-26 | `rubric-v0.1-draft` |
-| Reviewed and approved by (mathematics reviewer) | | | |
+| Reviewed and approved by (mathematics reviewer) | Yassine | 2026-11-26 | `rubric-v0.1` |
