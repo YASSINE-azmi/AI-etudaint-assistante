@@ -13,10 +13,10 @@
 | Item | Detail |
 | --- | --- |
 | Accountable for | Classroom/frontend/photos/Playwright |
-| Responsible for | The complete React classroom experience, KaTeX math rendering in the transcript, push-to-talk UI, photo-confirmation flow, and end-to-end acceptance tests |
+| Responsible for | The complete React classroom experience, KaTeX math rendering in the transcript, push-to-talk UI, photo-confirmation flow, the study planner end to end (tables, API, UI), the admin usage summary, and end-to-end acceptance tests |
 | Supports | Yassine on citations, refusals, practice, and planning UI; Mohamed on auth, session, SSE, and media integration |
-| Not responsible for | Retrieval, four-gate validation, prompt design, database schema, RLS, deployment, credit ledger |
-| Main paths | `frontend/src/`, `frontend/e2e/`, `frontend/playwright.config.ts`, `frontend/src/index.css`, `frontend/AGENTS.md` |
+| Not responsible for | Retrieval, four-gate validation, prompt design, schema and RLS outside the study planner, deployment, credit ledger |
+| Main paths | `frontend/src/`, `frontend/e2e/`, `backend/app/planning/` (API and persistence), `frontend/playwright.config.ts`, `frontend/src/index.css`, `frontend/AGENTS.md` |
 | Main interfaces | `/api/v1/me`, curriculum, sessions, turns/SSE, exercises, progress, study plan, media |
 
 **You own the user-visible contract.** If the backend returns an unvalidated or unsafe message, do not render it as a normal tutor answer. If a validated message or math expression cannot be rendered safely, do not display it as a normal tutor answer.
@@ -43,10 +43,10 @@
 | Week 3 | Imran | Mohamed | Auth/session integration notes and 401/403 behavior |
 | Week 4 | Mohamed | Imran | Session CRUD and persistence endpoints |
 | Week 6 | Mohamed + Yassine | Imran | SSE event sequence and final-message payload |
-| Week 7 | Mohamed | Imran | Photo upload, STT, and media limits |
+| Week 7 | Mohamed + Yassine | Imran | Photo upload and media limits (Mohamed); STT adapter (Yassine) |
 | Week 8 | Mohamed + Yassine | Imran | Interrupt endpoint, validated-content rendering contract, stale-turn behavior |
 | Week 9 | Yassine + Mohamed | Imran | Exercise types, evaluator results, attempt persistence |
-| Week 10 | Yassine + Mohamed | Imran | Planner rules and study-plan endpoints |
+| Week 10 | Yassine | Imran | Planner rules; Imran builds the study-plan tables and endpoints (D-47) |
 | Week 13 | Imran | Yassine | E2E failure list and frontend metrics |
 | Week 15 | Imran | All | Demo script, recorded fallback, frontend report section |
 
@@ -144,14 +144,16 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 - [ ] Hand evaluator assumptions to Yassine.
 
 **Week 10**
-- [ ] Build availability windows with `Africa/Casablanca` timezone handling.
+- [ ] Add `study_plans`, `availability_windows`, and `study_tasks` migrations with the partial unique active-plan constraint, `start < end` checks, and RLS (moved from Mohamed, D-47).
+- [ ] Implement `GET /api/v1/study-plan`, `PUT /api/v1/study-plan`, and `PATCH /api/v1/study-tasks/{id}`; call Yassine's planner rules and keep generation out of the route handler.
+- [ ] Implement transactional plan replacement that preserves completed tasks and never leaves two active plans.
+- [ ] Build availability windows with `Africa/Casablanca` timezone handling, enforced at the API boundary with bounded daily minutes.
 - [ ] Build the weekly plan view with 45-minute blocks, breaks, and editable tasks.
 - [ ] Add complete/skip task actions and regeneration behavior.
 - [ ] Show progress and revision indicators with cautious labels, not mastery percentages.
-- [ ] Add planner edge-case tests: no availability, overlapping windows, DST/midnight.
-- [ ] Hand planner UI assumptions to Yassine and Mohamed.
+- [ ] Add planner edge-case tests (API and UI): no availability, overlapping windows, DST/midnight, regeneration, concurrent plan updates.
 
-**Exit evidence:** practice attempts persist, and the study plan is editable and resumable.
+**Exit evidence:** practice attempts persist; the study plan is editable, resumable, timezone-safe, and concurrency-safe from table to screen.
 
 ### Weeks 11–12 — Integration and feature freeze
 
@@ -161,6 +163,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 - [ ] Review every French string with the team; remove technical jargon from student-facing text.
 - [ ] Run the full journey in the demo environment.
 - [ ] Add a demo-mode banner that clearly labels synthetic data and trial credits.
+- [ ] Build the admin read-only usage summary: an endpoint over Mohamed's usage/budget queries, plus the page (moved from Mohamed, D-47).
 - [ ] Fix integration defects found in the weekly demo.
 
 **Week 12**
@@ -214,6 +217,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 - Playwright smoke, auth, session, citation, refusal, SSE, math rendering, photo, voice, interruption, practice, planning, and resume journeys.
 - Accessibility checks: keyboard, focus, labels, contrast, reduced motion.
 - Contract checks: frontend types match the backend OpenAPI/SSE contract.
+- Backend integration: study-plan migrations up/down, RLS, endpoints, and concurrent plan replacement.
 - Regression: 10/10 journeys and 20/20 interruption cases at release.
 
 ## 6. Definition of done

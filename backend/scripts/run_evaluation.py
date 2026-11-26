@@ -27,6 +27,8 @@ from pathlib import Path
 
 import httpx
 
+from app.validation.refusal import REFUSAL_TEMPLATES_VERSION
+
 ROOT = Path(__file__).resolve().parents[2]
 CASES = ROOT / "docs" / "evaluation" / "cases.json"
 OUT_DIR = ROOT / "data" / "extracted" / "evaluation"
@@ -152,7 +154,7 @@ def main() -> None:
         "embedding_model": args.embedding_model,
         "corpus_revision": args.corpus_revision,
         "gate_version": git_commit(),
-        "refusal_templates": "refusal-fr-v0.1",
+        "refusal_templates": REFUSAL_TEMPLATES_VERSION,
         "grader": args.grader,
         "api": args.api,
     }

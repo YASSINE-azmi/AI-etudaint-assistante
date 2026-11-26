@@ -1,0 +1,253 @@
+{
+  "chapter_id": "tcs_ch03",
+  "chapter_title": "Chapitre 3 - L'ordre dans R",
+  "source": "03_Chapitre_3_L_ordre_dans_R.md",
+  "labeled_by": "Grades 0/1/2 by Claude (assistant) on 2026-11-26, at the reviewer's request; the reviewer (Yassine, D-45) delegated grading because the excerpts are raw LaTeX. Reviewer spot-check pending.",
+  "note": "grades: chunk ID -> 0/1/2 (2 = answers the query, 1 = related, 0 = not useful). A query is a hit at k if a grade-2 chunk is in the top k. split: tune (70%) is used while improving retrieval; holdout (30%) is only read to report results.",
+  "queries": [
+    {
+      "q": "définition de a inférieur ou égal à b",
+      "objective_id": "tcs_ch03_o01",
+      "split": "tune",
+      "grades": {
+        "tcs_ch03-c010": 2,
+        "tcs_ch03-c047": 0,
+        "tcs_ch03-c026": 0,
+        "tcs_ch03-c011": 1,
+        "tcs_ch03-c097": 0
+      }
+    },
+    {
+      "q": "comment comparer deux nombres réels",
+      "objective_id": "tcs_ch03_o01",
+      "split": "tune",
+      "grades": {
+        "tcs_ch03-c064": 0,
+        "tcs_ch03-c066": 0,
+        "tcs_ch03-c067": 0,
+        "tcs_ch03-c065": 0,
+        "tcs_ch03-c071": 0,
+        "tcs_ch03-c010": 2,
+        "tcs_ch03-c016": 2
+      }
+    },
+    {
+      "q": "si a ≤ b alors a + c ≤ b + c",
+      "objective_id": "tcs_ch03_o01",
+      "split": "holdout",
+      "grades": {
+        "tcs_ch03-c018": 2,
+        "tcs_ch03-c019": 1,
+        "tcs_ch03-c069": 0,
+        "tcs_ch03-c013": 1,
+        "tcs_ch03-c097": 0
+      }
+    },
+    {
+      "q": "multiplier une inégalité par un nombre négatif",
+      "objective_id": "tcs_ch03_o01",
+      "split": "tune",
+      "grades": {
+        "tcs_ch03-c080": 0,
+        "tcs_ch03-c081": 0,
+        "tcs_ch03-c023": 0,
+        "tcs_ch03-c019": 2,
+        "tcs_ch03-c066": 0
+      }
+    },
+    {
+      "q": "ordre et inverse : comparer 1/a et 1/b",
+      "objective_id": "tcs_ch03_o01",
+      "split": "tune",
+      "grades": {
+        "tcs_ch03-c020": 2,
+        "tcs_ch03-c011": 0,
+        "tcs_ch03-c014": 0,
+        "tcs_ch03-c066": 0,
+        "tcs_ch03-c010": 0
+      }
+    },
+    {
+      "q": "comparer les carrés de deux nombres positifs",
+      "objective_id": "tcs_ch03_o01",
+      "split": "holdout",
+      "grades": {
+        "tcs_ch03-c066": 0,
+        "tcs_ch03-c071": 0,
+        "tcs_ch03-c064": 0,
+        "tcs_ch03-c017": 0,
+        "tcs_ch03-c061": 0,
+        "tcs_ch03-c021": 2
+      }
+    },
+    {
+      "q": "c'est quoi un intervalle borné ]a;b]",
+      "objective_id": "tcs_ch03_o02",
+      "split": "tune",
+      "grades": {
+        "tcs_ch03-c026": 0,
+        "tcs_ch03-c024": 2,
+        "tcs_ch03-c003": 0,
+        "tcs_ch03-c078": 0,
+        "tcs_ch03-c041": 1
+      }
+    },
+    {
+      "q": "écrire R+ et R- sous forme d'intervalles",
+      "objective_id": "tcs_ch03_o02",
+      "split": "tune",
+      "grades": {
+        "tcs_ch03-c080": 0,
+        "tcs_ch03-c025": 2,
+        "tcs_ch03-c086": 0,
+        "tcs_ch03-c023": 0,
+        "tcs_ch03-c087": 0
+      }
+    },
+    {
+      "q": "c'est quoi encadrer un nombre et l'amplitude",
+      "objective_id": "tcs_ch03_o03",
+      "split": "holdout",
+      "grades": {
+        "tcs_ch03-c026": 2,
+        "tcs_ch03-c084": 0,
+        "tcs_ch03-c090": 0,
+        "tcs_ch03-c083": 0,
+        "tcs_ch03-c114": 0
+      }
+    },
+    {
+      "q": "trouver un encadrement de racine de 2",
+      "objective_id": "tcs_ch03_o03",
+      "split": "tune",
+      "grades": {
+        "tcs_ch03-c006": 0,
+        "tcs_ch03-c090": 0,
+        "tcs_ch03-c026": 1,
+        "tcs_ch03-c027": 2,
+        "tcs_ch03-c103": 0
+      }
+    },
+    {
+      "q": "définition de la valeur absolue",
+      "objective_id": "tcs_ch03_o04",
+      "split": "tune",
+      "grades": {
+        "tcs_ch03-c030": 2,
+        "tcs_ch03-c034": 1,
+        "tcs_ch03-c039": 1,
+        "tcs_ch03-c033": 1,
+        "tcs_ch03-c072": 0,
+        "tcs_ch03-c031": 2
+      }
+    },
+    {
+      "q": "propriétés de la valeur absolue |xy| = |x||y|",
+      "objective_id": "tcs_ch03_o04",
+      "split": "tune",
+      "grades": {
+        "tcs_ch03-c033": 1,
+        "tcs_ch03-c034": 2,
+        "tcs_ch03-c031": 0,
+        "tcs_ch03-c030": 0,
+        "tcs_ch03-c029": 0
+      }
+    },
+    {
+      "q": "racine de (a-b) au carré égale valeur absolue",
+      "objective_id": "tcs_ch03_o04",
+      "split": "holdout",
+      "grades": {
+        "tcs_ch03-c075": 0,
+        "tcs_ch03-c035": 1,
+        "tcs_ch03-c038": 2,
+        "tcs_ch03-c073": 0,
+        "tcs_ch03-c032": 0
+      }
+    },
+    {
+      "q": "distance entre deux réels x et y",
+      "objective_id": "tcs_ch03_o05",
+      "split": "tune",
+      "grades": {
+        "tcs_ch03-c039": 2,
+        "tcs_ch03-c067": 0,
+        "tcs_ch03-c030": 1,
+        "tcs_ch03-c070": 0,
+        "tcs_ch03-c116": 0
+      }
+    },
+    {
+      "q": "|x| ≤ r équivaut à quoi",
+      "objective_id": "tcs_ch03_o05",
+      "split": "tune",
+      "grades": {
+        "tcs_ch03-c043": 1,
+        "tcs_ch03-c040": 2,
+        "tcs_ch03-c041": 1,
+        "tcs_ch03-c044": 1,
+        "tcs_ch03-c034": 0
+      }
+    },
+    {
+      "q": "centre et rayon d'un intervalle",
+      "objective_id": "tcs_ch03_o05",
+      "split": "holdout",
+      "grades": {
+        "tcs_ch03-c041": 2,
+        "tcs_ch03-c003": 0,
+        "tcs_ch03-c052": 1,
+        "tcs_ch03-c042": 2,
+        "tcs_ch03-c045": 0
+      }
+    },
+    {
+      "q": "intersection et réunion de deux intervalles",
+      "objective_id": "tcs_ch03_o02",
+      "split": "tune",
+      "grades": {
+        "tcs_ch03-c082": 0,
+        "tcs_ch03-c045": 2,
+        "tcs_ch03-c056": 2,
+        "tcs_ch03-c041": 0,
+        "tcs_ch03-c086": 0
+      }
+    },
+    {
+      "q": "valeur approchée par défaut et par excès",
+      "objective_id": "tcs_ch03_o06",
+      "split": "tune",
+      "grades": {
+        "tcs_ch03-c048": 2,
+        "tcs_ch03-c049": 1,
+        "tcs_ch03-c053": 1,
+        "tcs_ch03-c047": 2,
+        "tcs_ch03-c114": 0
+      }
+    },
+    {
+      "q": "partie entière d'un nombre E(x)",
+      "objective_id": "tcs_ch03_o06",
+      "split": "holdout",
+      "grades": {
+        "tcs_ch03-c051": 1,
+        "tcs_ch03-c036": 0,
+        "tcs_ch03-c065": 0,
+        "tcs_ch03-c049": 2,
+        "tcs_ch03-c050": 2
+      }
+    },
+    {
+      "q": "approximation décimale à 10^-n près",
+      "objective_id": "tcs_ch03_o06",
+      "split": "tune",
+      "grades": {
+        "tcs_ch03-c051": 2,
+        "tcs_ch03-c053": 1,
+        "tcs_ch03-c049": 1,
+        "tcs_ch03-c091": 0,
+        "tcs_ch03-c046": 0
+      }
+    }
+  ]
+}

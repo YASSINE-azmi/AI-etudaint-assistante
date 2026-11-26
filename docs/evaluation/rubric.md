@@ -2,6 +2,7 @@
 
 - **Version:** `rubric-v0.1`
 - **Status:** **Approved** on 2026-11-26 (section 8). Reviewer answers are recorded in section 7.
+- **Cases:** `cases-v0.2-draft` waits for reviewer approval (question 8 in section 7); the rubric itself is unchanged.
 - **Independence note (D-45):** the mathematics reviewer for this release is Yassine, who also builds the teaching, validation, and evaluation. The supervisor checks a sample of the grades.
 - **Plan:** §16.2 (evaluation design, release gates), §8.6 (rubric criteria), §8.7 (refusal codes), D-26 (20+20)
 - **Used in:** Week 13 demo evaluation. Grading budget: 4–5 reviewer hours.
@@ -93,7 +94,7 @@ Write this header once per run:
 ```text
 run date:            YYYY-MM-DD
 rubric version:      rubric-v0.1
-cases version:       cases-v0.1
+cases version:       cases-v0.2
 LLM model:           deepseek-flash          (LLM_MODEL_NAME)
 prompt version:      ...                     (PROMPT_VERSION)
 embedding model:     intfloat/multilingual-e5-large
@@ -116,7 +117,7 @@ Summary to report: in-scope passes /20 · false refusals /20 · unsupported rele
 
 The reviewer only grades. Everything before that is scripted.
 
-1. **Cases.** The 40 questions live in [cases.json](cases.json) (`cases-v0.1`). Inside each set they go from vague (`detail_level` 1, "pgcd ?") to plain (2) to fully specified (3, with numbers, method and what to justify). Each case states the expected outcome and, where there is one, the correct result.
+1. **Cases.** The 40 questions live in [cases.json](cases.json) (`cases-v0.2`: 7 / 7 / 6 in-scope cases over the three chapters, D-46; it replaces `cases-v0.1`, which covered chapter 1 only). Inside each set they go from vague (`detail_level` 1, "pgcd ?") to plain (2) to fully specified (3, with numbers, method and what to justify). Each case states the expected outcome and, where there is one, the correct result.
 2. **Sending.** `backend/scripts/run_evaluation.py` sends each question in a fresh session through the real tutor API (retrieval, draft, four gates), exactly as a student would. It never calls the model directly. It needs the tutor endpoints from Weeks 6–8, so it cannot run before then.
 
    ```powershell
@@ -147,7 +148,8 @@ Answered by the reviewer on 2026-11-26.
 | 4 | Correct result by a method the chapter does not teach | **Scope 0** |
 | 5 | Notation conventions | Accepted as drafted: `PGCD(a ; b)`, `PPCM(a ; b)`, `ℕ*`, `;` as the separator |
 | 6 | Grading time in Week 13 | Reviewer is on the team (D-45); no separate hours needed |
-| 7 | Are the expected outcomes in cases.json right, and are the six missing-evidence topics absent from the chapters? | **Yes, all six are absent**; outcomes accepted |
+| 7 | Are the expected outcomes in cases.json right, and are the six missing-evidence topics absent from the chapters? | **Yes, all six are absent**; outcomes accepted (`cases-v0.1`) |
+| 8 | `cases-v0.2`: are the 13 new chapter-2/3 in-scope results right, and are "racine cubique", "nombre d'or" and Archimedes' method for π absent from chapters 2 and 3? | _open_ |
 
 ## 8. Sign-off
 

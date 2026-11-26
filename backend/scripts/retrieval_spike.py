@@ -1,12 +1,16 @@
-"""Week-1 retrieval/RRF spike: chunk one chapter, rank with lexical, semantic and RRF.
+"""Retrieval/RRF spike: chunk each chapter, rank with lexical, semantic and RRF.
 
 In memory only (no database): BM25 stands in for Postgres French full-text search and
 cosine stands in for pgvector. Embeddings run locally through fastembed (ONNX); model
 weights download once into data/models/ (gitignored).
 
-    uv run python -m scripts.retrieval_spike <chapter.md> --lexical-only
-    uv run python -m scripts.retrieval_spike <chapter.md> --model <hf-model> [--model ...]
+    uv run python -m scripts.retrieval_spike --lexical-only [tcs_ch01 ...]
+    uv run python -m scripts.retrieval_spike --model <hf-model> [--model ...] [tcs_ch01 ...]
     (add --models-dir <path> to keep weights outside a synced folder such as OneDrive)
+
+Each chapter has a labeled query file in scripts/retrieval_spike_queries/ naming its
+source file in data/sources/. With no chapter IDs, all labeled chapters run. Retrieval
+is scoped to one chapter, as a tutoring session is.
 
 Chunk text and embeddings are cached under data/extracted/ (gitignored); only metrics
 and chunk IDs are printed.
@@ -26,8 +30,9 @@ from app.retrieval.normalize import tokens
 from ingest.chunking import Chunk, chunk_chapter
 
 TOP_PER_CHANNEL = 20
-QUERIES = Path(__file__).with_name("retrieval_spike_queries.json")
+QUERIES_DIR = Path(__file__).with_name("retrieval_spike_queries")
 DATA = Path(__file__).resolve().parents[2] / "data"
+SOURCES = DATA / "sources"
 CACHE_DIR = DATA / "extracted"
 MODELS_DIR = DATA / "models"
 RRF_K = 60
@@ -90,22 +95,26 @@ def metrics(ranked: list[list[str]], relevant: list[set[str]], k: int = 5) -> tu
     return hits / len(ranked), rr / len(ranked)
 
 
-def main(source: Path, models: list[str], models_dir: Path) -> None:
-    spec = json.loads(QUERIES.read_text(encoding="utf-8"))
-    chunks = chunk_chapter(
-        source.read_text(encoding="utf-8"), spec["chapter_id"], "Chapitre 1 - Ensemble N"
-    )
+def relevant(query: dict) -> set[str]:
+    return {cid for cid, grade in query["grades"].items() if grade == 2}
+
+
+def rank_chapter(
+    chapter_id: str, models: list[TextEmbedding]
+) -> tuple[dict, list[Chunk], dict[str, list[list[str]]]]:
+    """Rank every labeled query of one chapter through each channel."""
+    spec = json.loads((QUERIES_DIR / f"{chapter_id}.json").read_text(encoding="utf-8"))
+    source = (SOURCES / spec["source"]).read_text(encoding="utf-8")
+    chunks = chunk_chapter(source, chapter_id, spec["chapter_title"])
     questions = [q["q"] for q in spec["queries"]]
-    relevant = [set(q["relevant"]) for q in spec["queries"]]
     lexical = [bm25(chunks, q) for q in questions]
     channels = {"lexical (BM25)": lexical}
-    for name in models:
+    for model in models:
         started = time.perf_counter()
-        model = TextEmbedding(model_name=name, cache_dir=str(models_dir))
         vectors = chunk_vectors(model, chunks)
         qvecs = embed(model, questions, "query")
         elapsed = time.perf_counter() - started
-        short = name.split("/")[-1]
+        short = model.model_name.split("/")[-1]
         semantic = [
             sorted(vectors, key=lambda cid: (-cosine(qv, vectors[cid]), cid))[:TOP_PER_CHANNEL]
             for qv in qvecs
@@ -116,25 +125,44 @@ def main(source: Path, models: list[str], models_dir: Path) -> None:
             for lx, sm in zip(lexical, semantic, strict=True)
         ]
         dims = len(next(iter(vectors.values())))
-        print(f"{short}: dims={dims} load+embed={elapsed:.1f}s")
+        print(f"{short}: dims={dims} embed={elapsed:.1f}s")
+    return spec, chunks, channels
 
-    print(f"chunks={len(chunks)} queries={len(questions)}")
+
+def run_chapter(chapter_id: str, models: list[TextEmbedding]) -> None:
+    spec, chunks, channels = rank_chapter(chapter_id, models)
+    queries = spec["queries"]
+    rel = [relevant(q) for q in queries]
+    holdout = [i for i, q in enumerate(queries) if q["split"] == "holdout"]
+    print(f"\n== {chapter_id}: chunks={len(chunks)} queries={len(queries)} holdout={len(holdout)}")
     for name, ranked in channels.items():
-        recall, mrr = metrics(ranked, relevant)
-        print(f"{name:40} Recall@5={recall:.2f}  MRR={mrr:.2f}")
+        recall, mrr = metrics(ranked, rel)
+        h_recall, h_mrr = metrics([ranked[i] for i in holdout], [rel[i] for i in holdout])
+        print(
+            f"{name:34} Recall@5={recall:.2f} MRR={mrr:.2f} | "
+            f"holdout Recall@5={h_recall:.2f} MRR={h_mrr:.2f}"
+        )
     print("\nrank of first relevant chunk per channel, in the order above; '-' = not in top 20")
-    for i, (q, rel) in enumerate(zip(questions, relevant, strict=True)):
+    for i, q in enumerate(queries):
         ranks = [
-            next((str(r) for r, c in enumerate(ranked[i], 1) if c in rel), "-")
+            next((str(r) for r, c in enumerate(ranked[i], 1) if c in rel[i]), "-")
             for ranked in channels.values()
         ]
-        print(f"{' / '.join(ranks):>22}  {q}")
+        print(f"{' / '.join(ranks):>22}  {q['q']}")
+
+
+def main(args: list[str]) -> None:
+    valued = {i + 1 for i, a in enumerate(args) if a in ("--model", "--models-dir")}
+    names = [args[i] for i in valued if args[i - 1] == "--model"]
+    if not names and "--lexical-only" not in args:
+        sys.exit("pass --lexical-only or at least one --model <hf-model>")
+    models_dir = next((args[i] for i in valued if args[i - 1] == "--models-dir"), MODELS_DIR)
+    chapters = [a for i, a in enumerate(args) if not a.startswith("--") and i not in valued]
+    chapters = chapters or sorted(p.stem for p in QUERIES_DIR.glob("*.json"))
+    models = [TextEmbedding(model_name=n, cache_dir=str(models_dir)) for n in names]
+    for chapter_id in chapters:
+        run_chapter(chapter_id, models)
 
 
 if __name__ == "__main__":
-    args = sys.argv[1:]
-    chosen = [args[i + 1] for i, a in enumerate(args) if a == "--model"]
-    if not chosen and "--lexical-only" not in args:
-        sys.exit("pass --lexical-only or at least one --model <hf-model>")
-    md = next((args[i + 1] for i, a in enumerate(args) if a == "--models-dir"), None)
-    main(Path(args[0]), chosen, Path(md) if md else MODELS_DIR)
+    main(sys.argv[1:])

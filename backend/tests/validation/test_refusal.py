@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from app.validation.refusal import REFUSALS, EducationalStatus, RefusalCode
 
 # Plan §7.4: refusals are completed turns, failures are failed turns, and the two
@@ -34,3 +36,18 @@ def test_delivery_status_and_retry_match_the_plan() -> None:
 def test_templates_are_non_empty_french_sentences() -> None:
     for template in REFUSALS.values():
         assert template.message_fr.strip().endswith((".", "?"))
+
+
+def test_the_contracts_doc_table_matches_the_templates() -> None:
+    doc = Path(__file__).resolve().parents[3] / "docs" / "contracts" / "teaching-contracts.md"
+    rows = {}
+    for line in doc.read_text(encoding="utf-8").splitlines():
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) == 5 and cells[0].startswith("`") and cells[0].strip("`") in REFUSALS:
+            rows[cells[0].strip("`")] = cells[1:]
+    assert rows.keys() == {c.value for c in REFUSALS}
+    for code, (status, delivery, retry, message) in rows.items():
+        t = REFUSALS[RefusalCode(code)]
+        assert status == (t.educational_status or "—")
+        assert (delivery, retry) == (t.delivery, "yes" if t.retryable else "no")
+        assert message == t.message_fr

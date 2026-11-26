@@ -1,14 +1,14 @@
 """Stable refusal codes and French templates (plan §7.4, §8.7).
 
 The model never writes refusal text: the server picks one of these templates by code.
-The French wording is a draft until the mathematics reviewer approves it.
+The French wording was approved by the mathematics reviewer on 2026-11-26 (D-45).
 """
 
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Literal
 
-REFUSAL_TEMPLATES_VERSION = "refusal-fr-v0.1-draft"
+REFUSAL_TEMPLATES_VERSION = "refusal-fr-v0.1"
 
 
 class EducationalStatus(StrEnum):

@@ -151,7 +151,7 @@ Use `python -m pytest` on Windows: some Application Control policies block the
 
 Raw **MAXI Maths — Tronc Commun Scientifique** PDFs/scans must stay local and gitignored (`data/`), and copyrighted source files must never be committed to the repository.
 
-Only the three approved TCS chapters (*Les ensembles de nombres*, *Calcul vectoriel*, and *Généralités sur les fonctions*, or the finalized reviewer-approved trio) are ingested through the certified pipeline:
+Only the three approved TCS chapters (*L'ensemble ℕ et notions d'arithmétique*, *Les ensembles des nombres*, and *L'ordre dans ℝ*; D-46, see `docs/curriculum/coverage-matrix.md`) are ingested through the certified pipeline:
 
 1. Extract and normalize textbook passages and exercises into clean Markdown/LaTeX.
 2. Obtain explicit Mathematics Reviewer verification (`status = 'reviewed'`).

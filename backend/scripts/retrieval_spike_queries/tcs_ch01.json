@@ -1,0 +1,250 @@
+{
+  "chapter_id": "tcs_ch01",
+  "chapter_title": "Chapitre 1 - Ensemble N",
+  "source": "01_Chapitre_1_L_ensemble_N.md",
+  "labeled_by": "Grades 0/1/2 by Claude (assistant) on 2026-11-26, at the reviewer's request; the reviewer (Yassine, D-45) delegated grading because the excerpts are raw LaTeX. Reviewer spot-check pending.",
+  "note": "grades: chunk ID -> 0/1/2 (2 = answers the query, 1 = related, 0 = not useful). A query is a hit at k if a grade-2 chunk is in the top k. split: tune (70%) is used while improving retrieval; holdout (30%) is only read to report results.",
+  "queries": [
+    {
+      "q": "c'est quoi un diviseur d'un nombre ?",
+      "objective_id": "tcs_ch01_o02",
+      "split": "tune",
+      "grades": {
+        "tcs_ch01-c011": 2,
+        "tcs_ch01-c013": 1,
+        "tcs_ch01-c012": 1,
+        "tcs_ch01-c017": 1,
+        "tcs_ch01-c054": 0
+      }
+    },
+    {
+      "q": "comment savoir si un nombre est divisible par 3",
+      "objective_id": "tcs_ch01_o04",
+      "split": "tune",
+      "grades": {
+        "tcs_ch01-c026": 1,
+        "tcs_ch01-c043": 0,
+        "tcs_ch01-c020": 1,
+        "tcs_ch01-c039": 0,
+        "tcs_ch01-c044": 0,
+        "tcs_ch01-c019": 2
+      }
+    },
+    {
+      "q": "c'est quoi un nombre premier",
+      "objective_id": "tcs_ch01_o05",
+      "split": "holdout",
+      "grades": {
+        "tcs_ch01-c021": 2,
+        "tcs_ch01-c022": 1,
+        "tcs_ch01-c008": 1,
+        "tcs_ch01-c023": 0,
+        "tcs_ch01-c025": 0
+      }
+    },
+    {
+      "q": "définition du PGCD",
+      "objective_id": "tcs_ch01_o07",
+      "split": "tune",
+      "grades": {
+        "tcs_ch01-c028": 2,
+        "tcs_ch01-c030": 1,
+        "tcs_ch01-c036": 1,
+        "tcs_ch01-c002": 0,
+        "tcs_ch01-c032": 0
+      }
+    },
+    {
+      "q": "deux nombres premiers entre eux c'est quoi",
+      "objective_id": "tcs_ch01_o07",
+      "split": "tune",
+      "grades": {
+        "tcs_ch01-c030": 2,
+        "tcs_ch01-c035": 1,
+        "tcs_ch01-c021": 0,
+        "tcs_ch01-c031": 2,
+        "tcs_ch01-c008": 0
+      }
+    },
+    {
+      "q": "comment calculer le plus petit commun multiple de deux nombres",
+      "objective_id": "tcs_ch01_o07",
+      "split": "holdout",
+      "grades": {
+        "tcs_ch01-c032": 2,
+        "tcs_ch01-c007": 1,
+        "tcs_ch01-c058": 0,
+        "tcs_ch01-c053": 0,
+        "tcs_ch01-c059": 0,
+        "tcs_ch01-c037": 2
+      }
+    },
+    {
+      "q": "un nombre pair et un nombre impair, définition",
+      "objective_id": "tcs_ch01_o03",
+      "split": "tune",
+      "grades": {
+        "tcs_ch01-c014": 2,
+        "tcs_ch01-c015": 1,
+        "tcs_ch01-c077": 0,
+        "tcs_ch01-c018": 1,
+        "tcs_ch01-c042": 0
+      }
+    },
+    {
+      "q": "algorithme d'Euclide pour trouver le pgcd",
+      "objective_id": "tcs_ch01_o08",
+      "split": "tune",
+      "grades": {
+        "tcs_ch01-c002": 0,
+        "tcs_ch01-c028": 1,
+        "tcs_ch01-c038": 2,
+        "tcs_ch01-c030": 0,
+        "tcs_ch01-c036": 0
+      }
+    },
+    {
+      "q": "décomposer un nombre en produit de facteurs premiers",
+      "objective_id": "tcs_ch01_o06",
+      "split": "holdout",
+      "grades": {
+        "tcs_ch01-c066": 0,
+        "tcs_ch01-c062": 0,
+        "tcs_ch01-c068": 0,
+        "tcs_ch01-c067": 0,
+        "tcs_ch01-c063": 0,
+        "tcs_ch01-c023": 2,
+        "tcs_ch01-c024": 2,
+        "tcs_ch01-c025": 2
+      }
+    },
+    {
+      "q": "écrire racine de a fois b sous la forme m racine de n",
+      "objective_id": "tcs_ch01_o06",
+      "split": "tune",
+      "grades": {
+        "tcs_ch01-c027": 2,
+        "tcs_ch01-c040": 0,
+        "tcs_ch01-c065": 0,
+        "tcs_ch01-c018": 0,
+        "tcs_ch01-c041": 0
+      }
+    },
+    {
+      "q": "pourquoi racine de 2 n'est pas un nombre rationnel",
+      "objective_id": "tcs_ch01_o07",
+      "split": "tune",
+      "grades": {
+        "tcs_ch01-c040": 2,
+        "tcs_ch01-c041": 2,
+        "tcs_ch01-c014": 1,
+        "tcs_ch01-c018": 0,
+        "tcs_ch01-c039": 0
+      }
+    },
+    {
+      "q": "critère de divisibilité par 4",
+      "objective_id": "tcs_ch01_o04",
+      "split": "tune",
+      "grades": {
+        "tcs_ch01-c019": 2,
+        "tcs_ch01-c026": 1,
+        "tcs_ch01-c020": 2,
+        "tcs_ch01-c044": 0,
+        "tcs_ch01-c039": 0
+      }
+    },
+    {
+      "q": "est-ce que 0 est un multiple de tous les nombres",
+      "objective_id": "tcs_ch01_o02",
+      "split": "holdout",
+      "grades": {
+        "tcs_ch01-c013": 2,
+        "tcs_ch01-c007": 0,
+        "tcs_ch01-c034": 1,
+        "tcs_ch01-c011": 1,
+        "tcs_ch01-c056": 0
+      }
+    },
+    {
+      "q": "trouver le chiffre x pour que 53x2 soit divisible par 9",
+      "objective_id": "tcs_ch01_o04",
+      "split": "tune",
+      "grades": {
+        "tcs_ch01-c039": 2,
+        "tcs_ch01-c020": 1,
+        "tcs_ch01-c019": 1,
+        "tcs_ch01-c047": 0,
+        "tcs_ch01-c045": 0
+      }
+    },
+    {
+      "q": "pgcd avec la décomposition, plus petit exposant des facteurs communs",
+      "objective_id": "tcs_ch01_o07",
+      "split": "tune",
+      "grades": {
+        "tcs_ch01-c037": 1,
+        "tcs_ch01-c035": 2,
+        "tcs_ch01-c069": 0,
+        "tcs_ch01-c002": 0,
+        "tcs_ch01-c056": 0,
+        "tcs_ch01-c036": 2
+      }
+    },
+    {
+      "q": "si p est pair est-ce que p au carré est pair",
+      "objective_id": "tcs_ch01_o03",
+      "split": "holdout",
+      "grades": {
+        "tcs_ch01-c040": 2,
+        "tcs_ch01-c041": 1,
+        "tcs_ch01-c072": 1,
+        "tcs_ch01-c014": 1,
+        "tcs_ch01-c078": 0
+      }
+    },
+    {
+      "q": "les multiples de 9 compris entre 23 et 59",
+      "objective_id": "tcs_ch01_o02",
+      "split": "tune",
+      "grades": {
+        "tcs_ch01-c016": 2,
+        "tcs_ch01-c049": 0,
+        "tcs_ch01-c039": 0,
+        "tcs_ch01-c050": 0,
+        "tcs_ch01-c020": 0
+      }
+    },
+    {
+      "q": "utiliser le ppcm pour additionner deux fractions",
+      "objective_id": "tcs_ch01_o07",
+      "split": "tune",
+      "grades": {
+        "tcs_ch01-c002": 0,
+        "tcs_ch01-c032": 1,
+        "tcs_ch01-c033": 0,
+        "tcs_ch01-c027": 1,
+        "tcs_ch01-c034": 1,
+        "tcs_ch01-c037": 2
+      }
+    },
+    {
+      "q": "que veut dire la notation N étoile",
+      "objective_id": "tcs_ch01_o01",
+      "split": "tune",
+      "grades": {
+        "tcs_ch01-c010": 2,
+        "tcs_ch01-c072": 0,
+        "tcs_ch01-c004": 0,
+        "tcs_ch01-c016": 0,
+        "tcs_ch01-c014": 0
+      }
+    }
+  ],
+  "dropped": [
+    {
+      "q": "liste des nombres premiers inférieurs à 100",
+      "reason": "answer exists only as an image (prime-number table); no text chunk answers it"
+    }
+  ]
+}

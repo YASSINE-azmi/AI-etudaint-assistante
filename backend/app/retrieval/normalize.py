@@ -9,9 +9,13 @@ import unicodedata
 
 # Spoken or written math -> one canonical word. Data, not branches: the reviewer extends it.
 MATH_WORDS: dict[str, str] = {
+    r"<br\s*/?>": " ",  # OCR line breaks, before "<" becomes a word
+    r"\\mathbb\{r\}\s*[_^]\s*\{?\+\}?|\br\s?\+": " reels positifs ",
+    r"\\mathbb\{r\}\s*[_^]\s*\{?-\}?|\br\s?-(?=\s|$)": " reels negatifs ",
     r"\\mathbb\{n\}\^?\{?\*\}?": " entiers naturels ",
     r"\\mathbb\{n\}": " entiers naturels ",
     r"\\mathbb\{z\}": " entiers relatifs ",
+    r"\\mathbb\{d\}": " decimaux ",
     r"\\mathbb\{q\}": " rationnels ",
     r"\\mathbb\{r\}": " reels ",
     r"\\operatorname\{(\w+)\}": r" \1 ",
@@ -22,6 +26,12 @@ MATH_WORDS: dict[str, str] = {
     r"\\times|\u00d7": " fois ",
     r"\\leqslant|\\leq|≤|inferieur ou egal a?": " inferieur egal ",
     r"\\geqslant|\\geq|≥|superieur ou egal a?": " superieur egal ",
+    # The book writes "c < 0" where a student says "c négatif".
+    r"<\s*0(?![0-9,.])": " negatif ",
+    r">\s*0(?![0-9,.])": " positif ",
+    r"<|inferieur a": " inferieur ",
+    r">|superieur a": " superieur ",
+    r"\\left\s*\||\\right\s*\||\\mid|\|": " valeur absolue ",
     r"\\in\b|∈|appartient a": " appartient ",
     r"\^\{?2\}?|²|au carre": " carre ",
     r"\^\{?3\}?|³|au cube": " cube ",

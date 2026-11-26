@@ -1,0 +1,217 @@
+{
+  "chapter_id": "tcs_ch02",
+  "chapter_title": "Chapitre 2 - Les ensembles des nombres",
+  "source": "02_Chapitre_2_Les_ensembles_des_nombres.md",
+  "labeled_by": "Grades 0/1/2 by Claude (assistant) on 2026-11-26, at the reviewer's request; the reviewer (Yassine, D-45) delegated grading because the excerpts are raw LaTeX. Reviewer spot-check pending.",
+  "note": "grades: chunk ID -> 0/1/2 (2 = answers the query, 1 = related, 0 = not useful). A query is a hit at k if a grade-2 chunk is in the top k. split: tune (70%) is used while improving retrieval; holdout (30%) is only read to report results.",
+  "queries": [
+    {
+      "q": "c'est quoi l'ensemble des nombres décimaux D",
+      "objective_id": "tcs_ch02_o01",
+      "split": "tune",
+      "grades": {
+        "tcs_ch02-c010": 2,
+        "tcs_ch02-c011": 1,
+        "tcs_ch02-c038": 1,
+        "tcs_ch02-c003": 1,
+        "tcs_ch02-c004": 0
+      }
+    },
+    {
+      "q": "différence entre un nombre rationnel et un nombre irrationnel",
+      "objective_id": "tcs_ch02_o02",
+      "split": "tune",
+      "grades": {
+        "tcs_ch02-c040": 1,
+        "tcs_ch02-c045": 0,
+        "tcs_ch02-c012": 2,
+        "tcs_ch02-c001": 0,
+        "tcs_ch02-c010": 2
+      }
+    },
+    {
+      "q": "comment utiliser les symboles appartient et inclus",
+      "objective_id": "tcs_ch02_o01",
+      "split": "holdout",
+      "grades": {
+        "tcs_ch02-c011": 2,
+        "tcs_ch02-c044": 0,
+        "tcs_ch02-c003": 0,
+        "tcs_ch02-c004": 0,
+        "tcs_ch02-c017": 0
+      }
+    },
+    {
+      "q": "est-ce que N est inclus dans Z",
+      "objective_id": "tcs_ch02_o01",
+      "split": "tune",
+      "grades": {
+        "tcs_ch02-c011": 2,
+        "tcs_ch02-c003": 0,
+        "tcs_ch02-c044": 0,
+        "tcs_ch02-c010": 2,
+        "tcs_ch02-c004": 1
+      }
+    },
+    {
+      "q": "comment placer racine de 2 sur la droite numérique",
+      "objective_id": "tcs_ch02_o02",
+      "split": "tune",
+      "grades": {
+        "tcs_ch02-c013": 2,
+        "tcs_ch02-c051": 0,
+        "tcs_ch02-c066": 0,
+        "tcs_ch02-c050": 0,
+        "tcs_ch02-c028": 0
+      }
+    },
+    {
+      "q": "règles de l'addition et de la multiplication dans R",
+      "objective_id": "tcs_ch02_o03",
+      "split": "holdout",
+      "grades": {
+        "tcs_ch02-c014": 2,
+        "tcs_ch02-c001": 0,
+        "tcs_ch02-c047": 0,
+        "tcs_ch02-c048": 0,
+        "tcs_ch02-c026": 0
+      }
+    },
+    {
+      "q": "une fraction a sur b existe quand ?",
+      "objective_id": "tcs_ch02_o03",
+      "split": "tune",
+      "grades": {
+        "tcs_ch02-c018": 2,
+        "tcs_ch02-c077": 0,
+        "tcs_ch02-c048": 0,
+        "tcs_ch02-c076": 0,
+        "tcs_ch02-c031": 0
+      }
+    },
+    {
+      "q": "définition de la racine carrée d'un nombre positif",
+      "objective_id": "tcs_ch02_o04",
+      "split": "tune",
+      "grades": {
+        "tcs_ch02-c022": 2,
+        "tcs_ch02-c021": 0,
+        "tcs_ch02-c023": 1,
+        "tcs_ch02-c050": 0,
+        "tcs_ch02-c051": 0
+      }
+    },
+    {
+      "q": "racine de a fois racine de b",
+      "objective_id": "tcs_ch02_o04",
+      "split": "holdout",
+      "grades": {
+        "tcs_ch02-c050": 0,
+        "tcs_ch02-c028": 1,
+        "tcs_ch02-c066": 0,
+        "tcs_ch02-c023": 1,
+        "tcs_ch02-c051": 0,
+        "tcs_ch02-c024": 2
+      }
+    },
+    {
+      "q": "simplifier une expression avec des racines carrées",
+      "objective_id": "tcs_ch02_o04",
+      "split": "tune",
+      "grades": {
+        "tcs_ch02-c050": 0,
+        "tcs_ch02-c028": 2,
+        "tcs_ch02-c023": 1,
+        "tcs_ch02-c051": 0,
+        "tcs_ch02-c022": 1,
+        "tcs_ch02-c029": 1,
+        "tcs_ch02-c030": 2
+      }
+    },
+    {
+      "q": "c'est quoi a puissance n quand n est négatif",
+      "objective_id": "tcs_ch02_o05",
+      "split": "tune",
+      "grades": {
+        "tcs_ch02-c025": 2,
+        "tcs_ch02-c026": 1,
+        "tcs_ch02-c032": 0,
+        "tcs_ch02-c027": 1,
+        "tcs_ch02-c006": 0
+      }
+    },
+    {
+      "q": "règles de calcul des puissances a^m × a^n",
+      "objective_id": "tcs_ch02_o05",
+      "split": "tune",
+      "grades": {
+        "tcs_ch02-c026": 2,
+        "tcs_ch02-c025": 1,
+        "tcs_ch02-c052": 0,
+        "tcs_ch02-c054": 0,
+        "tcs_ch02-c053": 0
+      }
+    },
+    {
+      "q": "puissances de 10 : 10 puissance moins 1",
+      "objective_id": "tcs_ch02_o05",
+      "split": "holdout",
+      "grades": {
+        "tcs_ch02-c027": 2,
+        "tcs_ch02-c025": 1,
+        "tcs_ch02-c052": 0,
+        "tcs_ch02-c053": 0,
+        "tcs_ch02-c055": 0
+      }
+    },
+    {
+      "q": "comment écrire un nombre en écriture scientifique",
+      "objective_id": "tcs_ch02_o06",
+      "split": "tune",
+      "grades": {
+        "tcs_ch02-c032": 2,
+        "tcs_ch02-c035": 1,
+        "tcs_ch02-c055": 0,
+        "tcs_ch02-c025": 0,
+        "tcs_ch02-c036": 2
+      }
+    },
+    {
+      "q": "identité remarquable (a+b) au carré",
+      "objective_id": "tcs_ch02_o07",
+      "split": "tune",
+      "grades": {
+        "tcs_ch02-c033": 2,
+        "tcs_ch02-c056": 0,
+        "tcs_ch02-c034": 1,
+        "tcs_ch02-c037": 1,
+        "tcs_ch02-c009": 0
+      }
+    },
+    {
+      "q": "factoriser a au cube moins b au cube",
+      "objective_id": "tcs_ch02_o08",
+      "split": "holdout",
+      "grades": {
+        "tcs_ch02-c009": 2,
+        "tcs_ch02-c061": 0,
+        "tcs_ch02-c008": 0,
+        "tcs_ch02-c062": 0,
+        "tcs_ch02-c085": 0,
+        "tcs_ch02-c033": 2
+      }
+    },
+    {
+      "q": "la somme d'un rationnel et d'un irrationnel est-elle rationnelle",
+      "objective_id": "tcs_ch02_o02",
+      "split": "tune",
+      "grades": {
+        "tcs_ch02-c040": 2,
+        "tcs_ch02-c045": 0,
+        "tcs_ch02-c086": 0,
+        "tcs_ch02-c001": 0,
+        "tcs_ch02-c010": 1
+      }
+    }
+  ]
+}

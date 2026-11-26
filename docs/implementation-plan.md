@@ -64,9 +64,11 @@ The academic demo is done when:
 
 Exactly three of the fifteen chapters from **MAXI Maths — Tronc Commun Scientifique** (expansion path in §2.7):
 
-1. **Les ensembles de nombres**
-2. **Calcul vectoriel**
-3. **Généralités sur les fonctions**
+1. **L'ensemble ℕ et notions d'arithmétique** (`tcs_ch01`)
+2. **Les ensembles des nombres** (`tcs_ch02`)
+3. **L'ordre dans ℝ** (`tcs_ch03`)
+
+These are the book's first three chapters (D-46, superseding the client-brief trio of D-04). Objectives, concept tags, and prerequisites live in the coverage matrix: `docs/curriculum/coverage-matrix.json`.
 
 Chapter IDs, objective IDs, page ranges, and the coverage matrix must be confirmed by the Mathematics reviewer before corpus publication.
 
@@ -161,7 +163,7 @@ Out of scope for `v0.1.0`: any code, schema, or evaluation work for chapters 4�
 | D-01 | TCS, one track | Matches `AGENTS.md`, client brief, and the approved scope |
 | D-02 | Single project plan at `docs/implementation-plan.md` | One source of truth for scope, backend, frontend, demo, and delivery |
 | D-03 | 16-week full `v0.1.0` academic demo | Includes text, push-to-talk, photos, practice, planning; whiteboard deferred |
-| D-04 | Three of fifteen chapters: client-brief trio | Les ensembles de nombres; Calcul vectoriel; Généralités sur les fonctions; expansion path in §2.7 |
+| D-04 | Superseded by D-46 (was: client-brief trio: ensembles de nombres, calcul vectoriel, généralités sur les fonctions) | — |
 | D-05 | Continuous listening out; push-to-talk stays | Matches the client-brief baseline and the reduction ladder |
 | D-06 | Four gates: Source, Scope, Grounding, Mathematical & Rendering Safety | Matches `AGENTS.md` and the client brief; removes the plan's structural-only gate |
 | D-07 | SymPy CAS + rubric verifier | Deterministic checks for computable claims; LLM rubric only as supporting evidence |
@@ -203,6 +205,8 @@ Out of scope for `v0.1.0`: any code, schema, or evaluation work for chapters 4�
 | D-43 | No text-to-speech in `v0.1.0`: modalities are text, exercise photos, and push-to-talk speech-to-text | Removes `/speech/synthesize`, `spoken_text_fr`, `SPEECH_UNSAFE`, and `TTS_MODEL_NAME`; one less provider call, gate check, and interruption source |
 | D-44 | Embeddings run locally: `intfloat/multilingual-e5-large`, `vector(1024)` | DeepSeek has no embedding model; the local model beat MiniLM (RRF 0.90 vs 0.85) and adds no API key or per-call cost |
 | D-45 | Yassine acts as the mathematics reviewer for the rubric, cases, and 20+20 grading | No separate external reviewer is available; the conflict of interest is recorded, and the supervisor checks a sample of the grades |
+| D-46 | Approved chapters are MAXI TCS chapters 1–3: L'ensemble ℕ et notions d'arithmétique; Les ensembles des nombres; L'ordre dans ℝ | These are the verified chapter sources the team has; they form one prerequisite chain (ℕ → ℝ → ordre). Supersedes D-04; confirmed by the reviewer on 2026-11-26 with `coverage-v0.1` (`docs/curriculum/coverage-matrix.md`) |
+| D-47 | Rebalance Weeks 3–16 by whole feature: practice persistence + progress API and the STT adapter → Yassine; study-plan backend and admin usage summary → Imran | Mohamed had ~99 tasks vs ~80; every member now writes backend code, and handoffs inside one feature disappear. Weeks 1–2 unchanged |
 
 ---
 
@@ -1297,8 +1301,10 @@ Release gates:
 | Workstream | Accountable | Responsible |
 | --- | --- | --- |
 | Classroom/frontend/photos/Playwright | Imran | Imran |
+| Study planner (tables, API, UI) and admin usage summary | Imran | Imran; planner rules by Yassine |
 | Teaching/retrieval/validation/evaluation | Yassine | Yassine |
-| Platform/auth/backend/DB/jobs/deployment/planning | Mohamed | Mohamed |
+| Practice persistence, progress API, STT adapter | Yassine | Yassine |
+| Platform/auth/backend/DB/jobs/deployment | Mohamed | Mohamed |
 | Curriculum/math/exercises/grading | Mathematics reviewer | Reviewer + Yassine |
 | Academic/institutional/rights acknowledgment | Academic supervisor | Team lead |
 
@@ -1306,7 +1312,7 @@ Per-member execution plans (weekly tasks, handoffs, tests, report sections, and 
 
 - [Imran — frontend, classroom, photos, Playwright](team/member-a.md)
 - [Yassine — teaching, retrieval, validation, evaluation](team/member-b.md)
-- [Mohamed — platform, auth, backend, database, jobs, deployment, planning](team/member-c.md)
+- [Mohamed — platform, auth, backend, database, jobs, deployment](team/member-c.md)
 
 ### 17.3 Critical path
 
@@ -1715,6 +1721,8 @@ A review of the plan against the code and CI found one contradiction that would 
 | D-43 | Text-to-speech removed; text, photos, and speech-to-text only | §2.3, §7, §8, §13.3, App. D, ADR 0003, ADR 0008 |
 | D-44 | Local e5-large embeddings, `vector(1024)` | §10.1, App. C |
 | D-45 | Yassine is the mathematics reviewer; supervisor samples the grades | §16.2, `docs/evaluation/rubric.md` |
+| D-46 | Approved chapters become TCS chapters 1–3 (ℕ, ensembles des nombres, ordre dans ℝ) | §2.2, `docs/curriculum/coverage-matrix.md`, README, backend setup guide |
+| D-47 | Feature-based rebalance of Weeks 3–16 | §17.2, `docs/team/member-a.md`, `member-b.md`, `member-c.md` |
 
 **Second pass (26 November 2026).** Added: the Windows event-loop rule; the Ramadan 2027 calendar risk and the planner's Ramadan clock-change test; short per-stage transactions with no transaction open during provider calls (§11.4); lazy profile creation on `/me` (§6.1); client-side idempotency keys and a minimal turn body (§13.3); bucket-level upload limits (§6.5); the pooler login for custom roles; a manual migration step before deploys; the classroom copy fix.
 

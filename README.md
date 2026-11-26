@@ -19,7 +19,7 @@ If any document conflicts with `docs/implementation-plan.md`, the implementation
 
 ## Scope in one paragraph
 
-The tutor answers strictly from three approved TCS chapters — *Les ensembles de nombres*, *Calcul vectoriel*, and *Généralités sur les fonctions*. Every teaching step is checked server-side for source validity, scope validity, grounding, and mathematical/rendering safety before it reaches the student. Missing evidence or failed validation produces a refusal or clarification, never an ungrounded answer.
+The tutor answers strictly from three approved TCS chapters — *L'ensemble ℕ et notions d'arithmétique*, *Les ensembles des nombres*, and *L'ordre dans ℝ* (D-46). Every teaching step is checked server-side for source validity, scope validity, grounding, and mathematical/rendering safety before it reaches the student. Missing evidence or failed validation produces a refusal or clarification, never an ungrounded answer.
 
 ## Repo layout
 
