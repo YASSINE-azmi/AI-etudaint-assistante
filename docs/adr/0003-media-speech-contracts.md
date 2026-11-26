@@ -15,7 +15,7 @@ Add dedicated endpoints and tables for media and speech:
 
 - `POST /sessions/{id}/media` (signed upload / register asset),
   `POST /media/{id}/interpret`, `POST /media/{id}/confirm`.
-- `POST /speech/transcribe`, `POST /speech/synthesize`.
+- `POST /speech/transcribe` (push-to-talk speech-to-text only).
 - Table: `media_assets`.
 - The turn request carries `mediaAssetId` and `confirmedExpression`.
 - **Upload path (D-38).** `POST /sessions/{id}/media` registers the asset and
@@ -24,10 +24,9 @@ Add dedicated endpoints and tables for media and speech:
   policy lets a user write and read only under their own `user_id/` prefix. The
   API downloads with the student's forwarded JWT, re-encodes with Pillow, and
   strips metadata before vision. The API never needs the service-role key.
-- **One speech path (D-39).** Audio is fetched only through
-  `POST /speech/synthesize`, called by the client after the validated text
-  renders. The turn stream carries no `speech.ready` event, so interruption has
-  one audio source to stop.
+- **No text-to-speech (D-43, supersedes D-39).** Answers are text and KaTeX
+  only. There is no `/speech/synthesize` endpoint and no audio output, so
+  interruption only has to stop recording and the turn stream.
 
 ## Consequences
 

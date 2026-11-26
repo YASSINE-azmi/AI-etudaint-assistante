@@ -36,7 +36,6 @@ class Settings(BaseSettings):
     embedding_model_name: str = "text-embedding-3-small"
     embedding_dimensions: int = 1536
     stt_model_name: str = "gpt-4o-mini-transcribe"
-    tts_model_name: str = "gpt-4o-mini-tts"
 
     allowed_origins: str = "http://localhost:5173"
 

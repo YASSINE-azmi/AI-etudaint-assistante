@@ -29,7 +29,7 @@ Revision (D-36):
 - Each check runs in a worker process with a hard 2 s kill. Threads cannot be
   stopped and `signal.alarm` does not exist on Windows.
 - The displayed LaTeX is generated from the parsed expression with
-  `sympy.latex`, so the rendered, checked, and spoken math are one object.
+  `sympy.latex`, so the rendered and checked math are one object.
 
 ## Consequences
 

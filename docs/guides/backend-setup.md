@@ -9,7 +9,7 @@ New to the project on Windows 11? Start with [Agent onboarding](agent-onboarding
 - Python `3.12+`
 - [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
 - A configured Supabase project (see [Supabase setup](supabase-setup.md))
-- An OpenAI-compatible API key for LLM, Vision/OCR, STT, TTS, and embeddings
+- An OpenAI-compatible API key for embeddings and STT (plus a DeepSeek key for LLM and Vision/OCR)
 
 ## Init (from `backend/`)
 
@@ -38,7 +38,7 @@ Copy `backend/.env.example` to `backend/.env` and set:
 | `LLM_MODEL_NAME` | Teaching model (`deepseek-flash`, pinned from `docs/Benchmark.md`) |
 | `VISION_MODEL_NAME` | Photo/OCR model (`deepseek-flash`) |
 | `AI_PROVIDER_BASE_URL` | OpenAI-compatible base URL for embeddings and speech |
-| `AI_PROVIDER_API_KEY` | Server-side API key for embeddings, STT, and TTS |
+| `AI_PROVIDER_API_KEY` | Server-side API key for embeddings and STT |
 | `EMBEDDING_MODEL_NAME` | Embedding model identifier (`vector(1536)`) |
 | `EMBEDDING_DIMENSIONS` | Must match the pgvector column (`1536`) |
 | `ALLOWED_ORIGINS` | Comma-separated CORS origins (e.g. `http://localhost:5173`) |
@@ -51,7 +51,7 @@ Copy `backend/.env.example` to `backend/.env` and set:
 
 `backend/.env.example` is the canonical list. Keep it in sync with `app/config.py`.
 
-Model settings are **per role**, not routed per request: `LLM_MODEL_NAME` answers, `EMBEDDING_MODEL_NAME` embeds, `VISION_MODEL_NAME` reads photos, and the STT/TTS names drive speech. There is no router, no dynamic model selection, and no automatic provider failover (plan §8.9, ADR 0008).
+Model settings are **per role**, not routed per request: `LLM_MODEL_NAME` answers, `EMBEDDING_MODEL_NAME` embeds, `VISION_MODEL_NAME` reads photos, and `STT_MODEL_NAME` transcribes push-to-talk. There is no text-to-speech (D-43). There is no router, no dynamic model selection, and no automatic provider failover (plan §8.9, ADR 0008).
 
 ## Database migrations
 
