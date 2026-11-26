@@ -101,6 +101,9 @@ uv run alembic upgrade head
 uv run uvicorn app.main:app --reload
 ```
 
+> [!NOTE]
+> **Windows:** keep `--reload` on, or start without it as `uv run uvicorn app.main:app --loop asyncio:SelectorEventLoop`. Without either, uvicorn uses Windows' `ProactorEventLoop`, which psycopg's async driver refuses.
+
 ### 5. Lint & Test
 
 ```powershell

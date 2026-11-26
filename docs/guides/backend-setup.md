@@ -94,6 +94,8 @@ uv run alembic upgrade head
 uv run uvicorn app.main:app --reload
 ```
 
+On Windows, keep `--reload` on or start with `--loop asyncio:SelectorEventLoop`: without either, uvicorn picks the `ProactorEventLoop`, which psycopg's async driver refuses. The test suite sets the selector policy itself in `tests/conftest.py`.
+
 ## Imports (`from app...`)
 
 `backend/app` is installed as an editable package by `uv sync`, so `from app...` imports work from `uvicorn`, direct Python execution, `pytest`, and Jupyter kernels that use the backend venv.

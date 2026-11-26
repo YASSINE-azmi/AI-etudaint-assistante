@@ -69,7 +69,7 @@ key, so every request would return `401`.
 Create private buckets for student media and copyrighted source files (never mark these buckets as public):
 
 1. Dashboard → **Storage** → **New bucket**.
-2. Create `exercise-photos` with **Public bucket** turned **OFF** (student exercise images; re-encoded and stripped of metadata by the API).
+2. Create `exercise-photos` with **Public bucket** turned **OFF** (student exercise images; re-encoded and stripped of metadata by the API). In the bucket settings, set **Restrict file upload size** to `10 MB` and **Allowed MIME types** to `image/jpeg, image/png, image/webp`, so bad files are refused before they are stored.
 3. Add `storage.objects` policies so an authenticated user can insert and select only objects whose path starts with their own user ID (`{user_id}/{session_id}/{asset_id}`). The browser uploads directly; the API reads with the student's JWT (plan §13.3, ADR 0003).
 
 Do not upload raw **MAXI Maths** PDFs or scans to Storage: they stay local and gitignored under `data/` (plan §14.2). Only reviewed chunks live in Postgres.
@@ -89,6 +89,8 @@ Alembic migrations create and update:
 - Row-Level Security (RLS) policies enforcing student ownership and cross-user isolation
 
 Use a **session-mode** connection string for Alembic (Session pooler on IPv4 networks, or the direct host if you have IPv6), never the transaction pooler.
+
+Through the Session pooler, a custom role logs in as `<role>.<project-ref>`: for example `postgresql+psycopg://app_runtime.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres` for `DATABASE_RUNTIME_URL`, and `postgres.<project-ref>` for `DATABASE_URL`.
 
 Before the first migration, run `backend/scripts/bootstrap_runtime_role.sql` once in the SQL editor (replace both passwords). It creates `app_runtime` and `app_worker` and revokes the default `anon`/`authenticated` grants so PostgREST cannot read internal tables.
 

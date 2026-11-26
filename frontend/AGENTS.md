@@ -84,6 +84,7 @@ Keep imports consistent with the `@/*` alias (e.g. `@/lib/api`, `@/components/ui
 - Talks to the FastAPI backend over JSON/streaming. URL comes from `VITE_API_BASE_URL`.
 - Always use `api.get/post/put/patch/delete` from `@/lib/api` — it handles base URL, JSON, Supabase bearer token, `AbortController` timeouts/cancellation, and typed `ApiError`s (including `isNetworkError`).
 - Auth is Supabase email. The bearer token is injected automatically via `src/lib/http.ts` and the AI SDK `DefaultChatTransport`; never thread tokens through component props.
+- **Turn requests:** generate one `Idempotency-Key` UUID per student submission and reuse it on retry. Send only the new prompt (plus `mediaAssetId` / `confirmedExpression`) through `DefaultChatTransport.prepareSendMessagesRequest`, not the full `useChat` message list (plan §13.3).
 - **Validated-content-before-speech:** Render the validated message and KaTeX math before playing French TTS audio. Never narrate content that is not visible.
 - **Immediate interruption:** Clicking **Stop / Interrupt** must cancel local audio in `< 500 ms`, abort the active stream, and call `POST /sessions/{id}/interrupt` so stale `turnId` events are rejected.
 - **Photo symbol confirmation:** Uploaded exercise photos must pass through the ambiguous-symbol confirmation dialog before tutoring begins.

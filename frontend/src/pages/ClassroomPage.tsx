@@ -37,7 +37,7 @@ export function ClassroomPage() {
       <PageHeader
         eyebrow="Semestre 1 · TCS"
         title="Votre espace de mathématiques"
-        description="Un tuteur qui répond uniquement à partir des chapitres validés de MAXI Maths — et qui refuse clairement quand le corpus ne permet pas de répondre."
+        description="Un tuteur conçu pour répondre uniquement à partir des chapitres de MAXI Maths relus par le relecteur de mathématiques — et pour refuser clairement quand le corpus ne permet pas de répondre."
       />
 
       <section aria-labelledby="chapters-title" className="mt-10">

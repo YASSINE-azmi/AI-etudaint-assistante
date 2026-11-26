@@ -133,6 +133,8 @@ uv run alembic upgrade head
 uv run uvicorn app.main:app --reload
 ```
 
+Keep `--reload` on Windows, or use `--loop asyncio:SelectorEventLoop` instead: psycopg's async driver refuses the default Windows event loop.
+
 Notes:
 
 - `uv sync --frozen` installs the locked environment and uses Python 3.12.
