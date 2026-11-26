@@ -1,0 +1,27 @@
+{
+  "chapter_id": "tcs_ch01",
+  "labeled_by": "Yassine (provisional, Week 1 spike) - must be re-labeled by the mathematics reviewer against a curriculum_revision_id (plan 10.5)",
+  "note": "relevant = chunk IDs that directly answer the query (grade 2). A query is a hit at k if any relevant chunk is in the top k.",
+  "queries": [
+    {"q": "c'est quoi un diviseur d'un nombre ?", "relevant": ["tcs_ch01-c011"]},
+    {"q": "comment savoir si un nombre est divisible par 3", "relevant": ["tcs_ch01-c019", "tcs_ch01-c020"]},
+    {"q": "c'est quoi un nombre premier", "relevant": ["tcs_ch01-c021"]},
+    {"q": "définition du PGCD", "relevant": ["tcs_ch01-c028"]},
+    {"q": "deux nombres premiers entre eux c'est quoi", "relevant": ["tcs_ch01-c030", "tcs_ch01-c031"]},
+    {"q": "comment calculer le plus petit commun multiple de deux nombres", "relevant": ["tcs_ch01-c032", "tcs_ch01-c037"]},
+    {"q": "un nombre pair et un nombre impair, définition", "relevant": ["tcs_ch01-c014"]},
+    {"q": "algorithme d'Euclide pour trouver le pgcd", "relevant": ["tcs_ch01-c038"]},
+    {"q": "décomposer un nombre en produit de facteurs premiers", "relevant": ["tcs_ch01-c023", "tcs_ch01-c024", "tcs_ch01-c025"]},
+    {"q": "écrire racine de a fois b sous la forme m racine de n", "relevant": ["tcs_ch01-c027"]},
+    {"q": "pourquoi racine de 2 n'est pas un nombre rationnel", "relevant": ["tcs_ch01-c040", "tcs_ch01-c041"]},
+    {"q": "critère de divisibilité par 4", "relevant": ["tcs_ch01-c019"]},
+    {"q": "est-ce que 0 est un multiple de tous les nombres", "relevant": ["tcs_ch01-c013"]},
+    {"q": "trouver le chiffre x pour que 53x2 soit divisible par 9", "relevant": ["tcs_ch01-c039"]},
+    {"q": "pgcd avec la décomposition, plus petit exposant des facteurs communs", "relevant": ["tcs_ch01-c035", "tcs_ch01-c036"]},
+    {"q": "si p est pair est-ce que p au carré est pair", "relevant": ["tcs_ch01-c040"]},
+    {"q": "les multiples de 9 compris entre 23 et 59", "relevant": ["tcs_ch01-c016"]},
+    {"q": "utiliser le ppcm pour additionner deux fractions", "relevant": ["tcs_ch01-c037"]},
+    {"q": "liste des nombres premiers inférieurs à 100", "relevant": ["tcs_ch01-c022", "tcs_ch01-c024"]},
+    {"q": "que veut dire la notation N étoile", "relevant": ["tcs_ch01-c010"]}
+  ]
+}
