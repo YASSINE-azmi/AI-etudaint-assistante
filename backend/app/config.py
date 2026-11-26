@@ -24,12 +24,17 @@ class Settings(BaseSettings):
     database_url: str
     database_runtime_url: str
 
+    # Teaching and vision run on DeepSeek, which has no embedding or speech models,
+    # so those roles keep their own provider (Benchmark.md, ADR 0008).
+    chat_provider_base_url: str
+    chat_provider_api_key: str
+    llm_model_name: str = "deepseek-flash"
+    vision_model_name: str = "deepseek-flash"
+
     ai_provider_base_url: str
     ai_provider_api_key: str
-    llm_model_name: str = "gpt-4.1-mini"
     embedding_model_name: str = "text-embedding-3-small"
     embedding_dimensions: int = 1536
-    vision_model_name: str = "gpt-4.1-mini"
     stt_model_name: str = "gpt-4o-mini-transcribe"
     tts_model_name: str = "gpt-4o-mini-tts"
 

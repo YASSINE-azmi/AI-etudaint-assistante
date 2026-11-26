@@ -115,7 +115,7 @@ backend/
 - `app.config.get_settings()` is the single source of truth. Import settings where needed; never call `os.getenv` in app code, never call `load_dotenv`.
 - If a third-party SDK reads `os.environ` directly, add the mirror in `config.py` — don't sprinkle `setdefault` elsewhere.
 - Fail fast on startup when required env vars are missing.
-- Keep `SUPABASE_SERVICE_ROLE_KEY` and `AI_PROVIDER_API_KEY` strictly on the backend.
+- Keep `SUPABASE_SERVICE_ROLE_KEY`, `CHAT_PROVIDER_API_KEY`, and `AI_PROVIDER_API_KEY` strictly on the backend.
 
 ## Database migrations
 

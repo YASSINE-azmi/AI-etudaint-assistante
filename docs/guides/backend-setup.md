@@ -33,9 +33,12 @@ Copy `backend/.env.example` to `backend/.env` and set:
 | `SUPABASE_SERVICE_ROLE_KEY` | Reviewer CLI and ingestion only (`AdminSettings`). The API does not read it and starts without it; never expose it to the frontend |
 | `DATABASE_URL` | Session-mode Postgres connection (pooler port 5432, or the direct host if your network has IPv6) for Alembic |
 | `DATABASE_RUNTIME_URL` | API connection using the non-owner `app_runtime` role |
-| `AI_PROVIDER_BASE_URL` | OpenAI-compatible base URL |
-| `AI_PROVIDER_API_KEY` | Server-side API key for LLM, Vision/OCR, STT, TTS, and embeddings |
-| `LLM_MODEL_NAME` | Chat/reasoning model identifier |
+| `CHAT_PROVIDER_BASE_URL` | OpenAI-compatible base URL for teaching and vision (`https://api.deepseek.com`) |
+| `CHAT_PROVIDER_API_KEY` | Server-side API key for teaching and vision |
+| `LLM_MODEL_NAME` | Teaching model (`deepseek-flash`, pinned from `docs/Benchmark.md`) |
+| `VISION_MODEL_NAME` | Photo/OCR model (`deepseek-flash`) |
+| `AI_PROVIDER_BASE_URL` | OpenAI-compatible base URL for embeddings and speech |
+| `AI_PROVIDER_API_KEY` | Server-side API key for embeddings, STT, and TTS |
 | `EMBEDDING_MODEL_NAME` | Embedding model identifier (`vector(1536)`) |
 | `EMBEDDING_DIMENSIONS` | Must match the pgvector column (`1536`) |
 | `ALLOWED_ORIGINS` | Comma-separated CORS origins (e.g. `http://localhost:5173`) |
