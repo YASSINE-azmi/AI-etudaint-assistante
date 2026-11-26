@@ -73,7 +73,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 - [ ] Review request IDs, structured logging, CORS, and the error envelope; make them consistent across `/health`, `/ready`, and `/api/v1/me`.
 - [ ] Create or confirm the Supabase project; run `backend/scripts/bootstrap_runtime_role.sql`; verify `app_runtime` is not the table owner and cannot bypass RLS.
 - [ ] Record the environment matrix: who holds which secret, where it lives, and how it rotates.
-- [ ] Prototype the turn SSE transport with Yassine using a fixture response; do not connect a model or claim tutoring works.
+- [ ] Prototype the turn SSE transport with Yassine using a fixture response; do not connect a model or claim tutoring works. Yassine's content side (events, payloads, refusal codes, fixtures) is done; your steps are in [docs/contracts/sse-turn-contract.md](../contracts/sse-turn-contract.md#mohameds-part-start-here).
 - [ ] Draft the schema and RLS policy matrix with Yassine from plan §5.
 
 **Week 2**

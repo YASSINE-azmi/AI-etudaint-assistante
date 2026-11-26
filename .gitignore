@@ -30,6 +30,8 @@
 !/data/scans/.gitkeep
 /data/extracted/*
 !/data/extracted/.gitkeep
+/data/models/*
+!/data/models/.gitkeep
 /data/**/*.pdf
 /data/**/*.png
 /data/**/*.jpg

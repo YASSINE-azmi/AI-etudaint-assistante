@@ -201,6 +201,7 @@ Out of scope for `v0.1.0`: any code, schema, or evaluation work for chapters 4�
 | D-41 | Chapters publish one at a time, chapter 1 first by Week 5, each with its own ≥ 10-pair retrieval set | Breaks the circular wait between Week-6 teaching and the Week-8 retrieval label set |
 | D-42 | Guided multi-step exercises move to the reduction ladder; reviewer hours for exercises confirmed by Week 2 | The client brief asks for MCQ, numeric, and narrow expressions only; reviewer time is already fully allocated |
 | D-43 | No text-to-speech in `v0.1.0`: modalities are text, exercise photos, and push-to-talk speech-to-text | Removes `/speech/synthesize`, `spoken_text_fr`, `SPEECH_UNSAFE`, and `TTS_MODEL_NAME`; one less provider call, gate check, and interruption source |
+| D-44 | Embeddings run locally: `intfloat/multilingual-e5-large`, `vector(1024)` | DeepSeek has no embedding model; the local model beat MiniLM (RRF 0.90 vs 0.85) and adds no API key or per-call cost |
 
 ---
 
@@ -334,7 +335,7 @@ backend/
 | `objective_prerequisites` | Prerequisite graph | `objective_id`; `prerequisite_id`; both FKs; cycle check in app/CI |
 | `source_documents` | Source identity | `id`; `title`; `publisher`; `edition_year`; `provenance_notes`; `academic_use_basis`; `rights_status` |
 | `source_revisions` | Immutable chapter revisions | `id`; `source_document_id`; `chapter_id`; `revision_number`; `content_hash`; `reviewer_id`; `status`; `reviewed_at`; `published_at`; `supersedes_revision_id`; `withdrawn_at`; `withdrawal_reason` |
-| `document_chunks` | Retrieval units | `id`; `revision_id`; `chapter_id`; `chunk_index`; `unit_id`; `section_path`; `page_start`; `page_end`; `char_start`; `char_end`; `content_type`; `chunk_text`; `search_text`; `search_vector` (generated `tsvector`, French); `content_hash`; `token_count`; `embedding` `vector(1536)`; `embedding_model`; `embedding_dimensions`; `status` |
+| `document_chunks` | Retrieval units | `id`; `revision_id`; `chapter_id`; `chunk_index`; `unit_id`; `section_path`; `page_start`; `page_end`; `char_start`; `char_end`; `content_type`; `chunk_text`; `search_text`; `search_vector` (generated `tsvector`, French); `content_hash`; `token_count`; `embedding` `vector(1024)`; `embedding_model`; `embedding_dimensions`; `status` |
 | `chunk_objectives` | Chunk ↔ objective | `chunk_id`; `objective_id`; both FKs |
 | `tutoring_sessions` | Conversation scope | `id`; `student_id`; `chapter_id`; `objective_id` (nullable current focus); `curriculum_revision_id`; `title`; `status` (`active`/`archived`/`deleted`); `turn_count` |
 | `session_turns` | One student turn | `id`; `session_id`; `turn_index`; `student_prompt`; `response_status` (`pending`/`processing`/`completed`/`failed`/`cancelled`); `educational_status`; `refusal_code`; `message_fr`; `final_payload` (`JSONB`); `model_name`; `prompt_version`; `retrieval_config`; `token_counts`; `latency_ms`; `validation_metadata` (`JSONB`); `created_at`; `processing_started_at`; `expires_at`; `locked_by`; `reserved_usd` |
@@ -864,7 +865,7 @@ Withdrawal:
 ### 10.1 Embeddings
 
 - Benchmark candidate embedding models during Week 1. The benchmark must include French math queries, not prose only: verbalized notation ("x au carré"), interval notation, and symbol-heavy prompts. The default is kept only if it wins or ties on Recall@5 over the reviewer-labeled set (§10.5).
-- Default: `text-embedding-3-small`, 1536 dimensions.
+- Pinned (D-44): `intfloat/multilingual-e5-large`, 1024 dimensions, run locally with fastembed (ONNX); no provider call or API key. E5 needs the `query: ` / `passage: ` prefixes. Week-1 spike: semantic Recall@5 0.85, RRF 0.90 / MRR 0.79 on chapter 1; about 45 ms per query on CPU (`docs/spikes/retrieval-rrf-ch01.md`).
 - Store the model name and dimensions with each chunk.
 - Changing the model requires a new revision and re-embedding job. Model and dimension are effectively a one-way door once chapters are published: decide in Week 1, not Week 8.
 - Batch embeddings, retry with backoff, and log cost.
@@ -1455,7 +1456,8 @@ These are recorded assumptions, not blockers. The plan proceeds with the default
 | `AI_PROVIDER_API_KEY` | Server-side provider key |
 | `LLM_MODEL_NAME` | Chat model |
 | `EMBEDDING_MODEL_NAME` | Embedding model |
-| `EMBEDDING_DIMENSIONS` | `1536` |
+| `EMBEDDING_DIMENSIONS` | `1024` |
+| `EMBEDDING_CACHE_DIR` | Local model weights (outside synced folders) |
 | `VISION_MODEL_NAME` | Photo/OCR model: student exercise photos and admin extraction |
 | `STT_MODEL_NAME` | Speech-to-text model |
 | `ALLOWED_ORIGINS` | CORS origins |
@@ -1710,6 +1712,7 @@ A review of the plan against the code and CI found one contradiction that would 
 | D-41 | Publish chapter by chapter; chapter 1 by Week 5 with ≥ 10 labels | §9.6, §10.5, §17.1 |
 | D-42 | Guided multi-step deferred; exercise reviewer hours confirmed at Week 2 | §2.5, §12.1, §17.4, §22.1 |
 | D-43 | Text-to-speech removed; text, photos, and speech-to-text only | §2.3, §7, §8, §13.3, App. D, ADR 0003, ADR 0008 |
+| D-44 | Local e5-large embeddings, `vector(1024)` | §10.1, App. C |
 
 **Second pass (26 November 2026).** Added: the Windows event-loop rule; the Ramadan 2027 calendar risk and the planner's Ramadan clock-change test; short per-stage transactions with no transaction open during provider calls (§11.4); lazy profile creation on `/me` (§6.1); client-side idempotency keys and a minimal turn body (§13.3); bucket-level upload limits (§6.5); the pooler login for custom roles; a manual migration step before deploys; the classroom copy fix.
 

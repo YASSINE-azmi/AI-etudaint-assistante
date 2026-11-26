@@ -39,8 +39,9 @@ Copy `backend/.env.example` to `backend/.env` and set:
 | `VISION_MODEL_NAME` | Photo/OCR model (`deepseek-flash`) |
 | `AI_PROVIDER_BASE_URL` | OpenAI-compatible base URL for embeddings and speech |
 | `AI_PROVIDER_API_KEY` | Server-side API key for embeddings and STT |
-| `EMBEDDING_MODEL_NAME` | Embedding model identifier (`vector(1536)`) |
-| `EMBEDDING_DIMENSIONS` | Must match the pgvector column (`1536`) |
+| `EMBEDDING_MODEL_NAME` | Local embedding model (`intfloat/multilingual-e5-large`, run with fastembed; no API key) |
+| `EMBEDDING_DIMENSIONS` | Must match the pgvector column (`1024`) |
+| `EMBEDDING_CACHE_DIR` | Where model weights (~2.2 GB) are stored; keep it outside OneDrive |
 | `ALLOWED_ORIGINS` | Comma-separated CORS origins (e.g. `http://localhost:5173`) |
 | `TRIAL_CREDIT_BUDGET_USD` | Global trial-credit budget; hard stop when exhausted |
 | `MAX_TURN_INPUT_TOKENS` / `MAX_TURN_OUTPUT_TOKENS` | Per-turn token limits |
@@ -71,7 +72,7 @@ uv run alembic revision --autogenerate -m "add tutor and curriculum tables"
 Always review the generated migration in `backend/alembic/versions/` and add explicit `op.execute(...)` operations for Postgres/Supabase features that autogenerate cannot reliably infer:
 
 - `create extension if not exists vector`
-- `vector(1536)` embedding columns on `document_chunks`
+- `vector(1024)` embedding columns on `document_chunks`
 - Generated French full-text search `tsvector` columns (`to_tsvector('french', chunk_text)`)
 - HNSW and GIN indexes for hybrid retrieval
 - Row-Level Security (RLS) enablement, `FORCE ROW LEVEL SECURITY`, and ownership policies on `tutoring_sessions`, `session_turns`, `teaching_steps`, `turn_citations`, `exercise_attempts`, `study_plans`, and `study_tasks`. Policies target `app_runtime` (and `app_worker` where the worker needs it) and read the caller through `public.request_user_id()`; never `SET ROLE authenticated` (plan §5.3, ADR 0002)
@@ -154,4 +155,4 @@ Only the three approved TCS chapters (*Les ensembles de nombres*, *Calcul vector
 
 1. Extract and normalize textbook passages and exercises into clean Markdown/LaTeX.
 2. Obtain explicit Mathematics Reviewer verification (`status = 'reviewed'`).
-3. Publish immutable `source_revisions` (`status = 'published'`), generate `vector(1536)` embeddings, and populate `document_chunks` in Supabase Postgres.
+3. Publish immutable `source_revisions` (`status = 'published'`), generate `vector(1024)` embeddings, and populate `document_chunks` in Supabase Postgres.

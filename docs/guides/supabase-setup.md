@@ -3,7 +3,7 @@
 The **AI Mathematics Tutor** uses Supabase for:
 
 - **Auth:** Email sign-in only (students, mathematics reviewers, and admins).
-- **Postgres (`pgvector` + French full-text search):** Student profiles, TCS curriculum chapters/objectives, immutable **MAXI Maths** `source_revisions`, `document_chunks` (`vector(1536)` + `tsvector`), `tutoring_sessions`, `session_turns`, `turn_citations`, `media_assets`, `exercises`, `exercise_attempts`, and `study_plans`.
+- **Postgres (`pgvector` + French full-text search):** Student profiles, TCS curriculum chapters/objectives, immutable **MAXI Maths** `source_revisions`, `document_chunks` (`vector(1024)` + `tsvector`), `tutoring_sessions`, `session_turns`, `turn_citations`, `media_assets`, `exercises`, `exercise_attempts`, and `study_plans`.
 - **Private Storage:** Student-uploaded exercise photos only, under per-user path prefixes. Raw **MAXI Maths** sources never leave the local `data/` folder.
 
 You need one hosted Supabase project before wiring up `backend/` and `frontend/`.
@@ -82,7 +82,7 @@ Alembic migrations create and update:
 
 - The `vector` extension for `pgvector`
 - `profiles`, `curriculum_chapters`, and `curriculum_objectives` (TCS scope)
-- `source_documents`, `source_revisions`, and `document_chunks` (`vector(1536)` + generated `to_tsvector('french', chunk_text)`)
+- `source_documents`, `source_revisions`, and `document_chunks` (`vector(1024)` + generated `to_tsvector('french', chunk_text)`)
 - HNSW and GIN indexes for scoped hybrid retrieval
 - `tutoring_sessions`, `session_turns`, and `turn_citations`
 - `media_assets`, `exercises`, `exercise_attempts`, and `study_plans`

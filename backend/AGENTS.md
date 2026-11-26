@@ -121,7 +121,7 @@ backend/
 
 - Alembic is the source of truth for schema changes. Do not change production tables manually in the Supabase dashboard.
 - SQLAlchemy models describe normal tables and columns. Alembic autogenerate creates candidate migrations, but every generated migration must be reviewed before applying.
-- Supabase/Postgres-specific features belong in explicit migration operations: `create extension if not exists vector`, `vector(1536)` columns, generated French `tsvector` columns (`to_tsvector('french', chunk_text)`), HNSW/GIN indexes, RLS enablement, and RLS policies.
+- Supabase/Postgres-specific features belong in explicit migration operations: `create extension if not exists vector`, `vector(1024)` columns, generated French `tsvector` columns (`to_tsvector('french', chunk_text)`), HNSW/GIN indexes, RLS enablement, and RLS policies.
 - Alembic must use a session-mode connection (Supavisor session pooler on port 5432, or the IPv6-only direct host), never the transaction pooler. `alembic/env.py` reads only `DATABASE_URL` via `get_migration_settings()`.
 - The API never runs `SET ROLE`. Policies target `app_runtime` / `app_worker` and use `public.request_user_id()` (plan §5.3, ADR 0002).
 - Run migrations from `backend/` with `uv run alembic upgrade head`.

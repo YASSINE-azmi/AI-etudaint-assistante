@@ -31,10 +31,15 @@ class Settings(BaseSettings):
     llm_model_name: str = "deepseek-flash"
     vision_model_name: str = "deepseek-flash"
 
+    # Embeddings run locally (fastembed/ONNX), no provider call (docs/spikes/retrieval-rrf-ch01.md).
+    # Keep the cache outside synced folders such as OneDrive: large downloads stall there.
+    embedding_model_name: str = "intfloat/multilingual-e5-large"
+    embedding_dimensions: int = 1024
+    embedding_cache_dir: str = "../data/models"
+
+    # Speech-to-text only: DeepSeek has no STT model.
     ai_provider_base_url: str
     ai_provider_api_key: str
-    embedding_model_name: str = "text-embedding-3-small"
-    embedding_dimensions: int = 1536
     stt_model_name: str = "gpt-4o-mini-transcribe"
 
     allowed_origins: str = "http://localhost:5173"
