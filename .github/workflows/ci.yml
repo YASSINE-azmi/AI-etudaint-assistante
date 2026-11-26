@@ -121,3 +121,62 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  backend-integration:
+    name: Backend integration (migrations, RLS, SSE)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: app_runtime
+          POSTGRES_PASSWORD: app_runtime_password
+          POSTGRES_DB: ai_math_tutor
+        options: >-
+          --health-cmd "pg_isready -U app_runtime -d ai_math_tutor"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Run migrations
+        run: uv run alembic upgrade head
+        env:
+          DATABASE_URL: postgresql+psycopg://app_runtime:app_runtime_password@localhost:5432/ai_math_tutor
+
+      - name: Integration tests
+        run: uv run python -m pytest -m "integration"
+        env:
+          DATABASE_URL: postgresql+psycopg://app_runtime:app_runtime_password@localhost:5432/ai_math_tutor
+
+  docker-build:
+    name: Build Docker images
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build -t ai-math-tutor-backend ./backend
+
+      - name: Build frontend image
+        run: docker build -t ai-math-tutor-frontend ./frontend

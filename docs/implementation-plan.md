@@ -62,7 +62,7 @@ The academic demo is done when:
 
 ### 2.2 Approved chapters
 
-Exactly three chapters from **MAXI Maths — Tronc Commun Scientifique**:
+Exactly three of the fifteen chapters from **MAXI Maths — Tronc Commun Scientifique** (expansion path in §2.7):
 
 1. **Les ensembles de nombres**
 2. **Calcul vectoriel**
@@ -85,7 +85,7 @@ Chapter IDs, objective IDs, page ranges, and the coverage matrix must be confirm
 ### 2.4 Out of scope
 
 - 1BAC, 2BAC, Collège, or university content.
-- Full MAXI Maths textbook ingestion.
+- Full MAXI Maths textbook ingestion (chapters 4–15; expansion path in §2.7).
 - Two-track support.
 - Simultaneous Arabic/Darija/French teaching.
 - Payments, subscriptions, social features, marketplaces.
@@ -120,6 +120,36 @@ If the 16-week schedule slips, reduce in this order. Never weaken authorization,
 | Cost | Within available trial credits; hard stop and fallback defined |
 | Latency | Best effort: p50 ≤ 5 s, p95 ≤ 12 s to first accepted output on the demo machine |
 | Documentation | Plan, architecture, contracts, evaluation, runbooks, demo script, known issues |
+| Accessibility | Keyboard-only journey completes; visible focus; text contrast ≥ 4.5:1; no status conveyed by color alone. Baseline only, not a full WCAG audit |
+
+### 2.7 Expansion path (post-`v0.1.0`)
+
+MAXI Maths — TCS has **15 chapters**. This release publishes and evaluates **3**; the other **12** are deferred, not rejected. Nothing in the schema, retrieval, or validation design depends on the chapter count:
+
+- `curriculum_chapters` is a table row per chapter, with a stable slug ID.
+- Retrieval, objectives, revisions, chunks, exercises, and citations are all `chapter_id`-scoped.
+- Publishing a new chapter creates a new `source_revision`; chapters already published are not re-embedded.
+- Sessions are chapter-scoped, so a new chapter does not disturb existing sessions.
+
+Adding one chapter requires all of:
+
+1. The academic-use note still covering the added content.
+2. A coverage matrix (objectives, concept tags, prerequisites) confirmed by the reviewer.
+3. Extraction, normalization, and chunking with math-block atomicity (§9.4).
+4. Reviewer sign-off; raw OCR is never published.
+5. A chapter-specific retrieval set: ≥ 10 labeled pairs and Recall@5 ≥ 0.80 for that chapter (§10.5).
+6. A chapter-specific answer set for the new objectives. The global evaluation is re-run, but acceptance is reported **per chapter**, so one weak chapter cannot hide behind the average.
+7. Reviewed exercises before practice is enabled for that chapter.
+
+Constraints:
+
+- **Review throughput is the binding constraint.** Three chapters take roughly 10 weeks at 2–3 h/week; twelve more at that rate is 40+ weeks. Expansion needs a second reviewer or a batch review model — it is a staffing decision, not a schedule assumption.
+- **Freeze the embedding model before scaling.** Changing `EMBEDDING_MODEL_NAME` or dimensions after 15 chapters are published means re-embedding every chunk and issuing 15 new revisions.
+- **The evaluation baseline grows.** 20+20 is the acceptance sample for the 3-chapter release. Each added chapter brings its own labeled set, and the boundary set is extended with the new out-of-scope surface.
+- **Copyright exposure grows linearly.** More chapters means a larger corpus under the same academic-use assumption; public or commercial use requires rights review before publication.
+- Per-turn cost stays bounded by top-k, not corpus size. Storage and ingestion embedding cost grow linearly.
+
+Out of scope for `v0.1.0`: any code, schema, or evaluation work for chapters 4–15. The 3-chapter contract and the 20+20 evaluation remain the release gate.
 
 ---
 
@@ -130,7 +160,7 @@ If the 16-week schedule slips, reduce in this order. Never weaken authorization,
 | D-01 | TCS, one track | Matches `AGENTS.md`, client brief, and the approved scope |
 | D-02 | Single project plan at `docs/implementation-plan.md` | One source of truth for scope, backend, frontend, demo, and delivery |
 | D-03 | 16-week full `v0.1.0` academic demo | Includes text, push-to-talk, photos, practice, planning; whiteboard deferred |
-| D-04 | Three chapters: client-brief trio | Les ensembles de nombres; Calcul vectoriel; Généralités sur les fonctions |
+| D-04 | Three of fifteen chapters: client-brief trio | Les ensembles de nombres; Calcul vectoriel; Généralités sur les fonctions; expansion path in §2.7 |
 | D-05 | Continuous listening out; push-to-talk stays | Matches the client-brief baseline and the reduction ladder |
 | D-06 | Four gates: Source, Scope, Grounding, Mathematical & Rendering Safety | Matches `AGENTS.md` and the client brief; removes the plan's structural-only gate |
 | D-07 | SymPy CAS + rubric verifier | Deterministic checks for computable claims; LLM rubric only as supporting evidence |
@@ -156,6 +186,11 @@ If the 16-week schedule slips, reduce in this order. Never weaken authorization,
 | D-27 | Hosted app DB with private chunks; no public distribution | Private Supabase, PostgREST deny rules, supervisor rights note |
 | D-28 | API never holds the service-role key; split admin/ingest settings | Service role only in CLI/ingest; API starts without it |
 | D-29 | Role source is JWT `app_metadata.role` | No self-escalation; `profiles.role` is display-only or removed |
+| D-30 | Model routing is static by role (ADR 0008) | One model per role from settings; no dynamic selection or failover; keeps 20+20 evaluation reproducible |
+| D-31 | Retrieval is one fused pass plus ≤ 3 bounded agent reads | Prevents unbounded tool loops; keeps retrieval inside the 2 s stage budget; every read is cited and validated |
+| D-32 | Retrieval acceptance set of 40–60 labeled pairs; Recall@5 ≥ 0.90 | Sufficiency thresholds and reranker weights are calibrated, not guessed |
+| D-33 | Deterministic score reranker; cross-encoder deferred | Improves precision within the latency budget; a model reranker does not fit 2 s over 20 candidates |
+| D-34 | 3 of 15 chapters in `v0.1.0`; the other 12 are a post-release content path (§2.7) | The platform is chapter-agnostic; expansion is gated by review capacity and per-chapter evaluation, not by code |
 
 ---
 
@@ -186,7 +221,7 @@ flowchart LR
 | Supabase Auth | Email-only identity for synthetic demo users |
 | Supabase Postgres | Profiles, curriculum, revisions, chunks, sessions, turns, citations, practice, plans, usage |
 | Supabase Storage | Private source assets, student media (demo only) |
-| AI provider | LLM, embeddings, vision/OCR, STT, TTS behind server-side adapters |
+| AI provider | LLM, embeddings, vision/OCR, STT, TTS behind server-side adapters; one model per role (§8.9) |
 | Reviewer CLI | Local extraction, review, publication, withdrawal, embedding |
 
 ### 4.3 Backend module layout
@@ -288,11 +323,11 @@ backend/
 | `objective_prerequisites` | Prerequisite graph | `objective_id`; `prerequisite_id`; both FKs; cycle check in app/CI |
 | `source_documents` | Source identity | `id`; `title`; `publisher`; `edition_year`; `provenance_notes`; `academic_use_basis`; `rights_status` |
 | `source_revisions` | Immutable chapter revisions | `id`; `source_document_id`; `chapter_id`; `revision_number`; `content_hash`; `reviewer_id`; `status`; `reviewed_at`; `published_at`; `supersedes_revision_id`; `withdrawn_at`; `withdrawal_reason` |
-| `document_chunks` | Retrieval units | `id`; `revision_id`; `chapter_id`; `chunk_index`; `section_path`; `page_start`; `page_end`; `char_start`; `char_end`; `content_type`; `chunk_text`; `search_text`; `content_hash`; `token_count`; `embedding` `vector(1536)`; `status` |
+| `document_chunks` | Retrieval units | `id`; `revision_id`; `chapter_id`; `chunk_index`; `unit_id`; `section_path`; `page_start`; `page_end`; `char_start`; `char_end`; `content_type`; `chunk_text`; `search_text`; `content_hash`; `token_count`; `embedding` `vector(1536)`; `status` |
 | `chunk_objectives` | Chunk ↔ objective | `chunk_id`; `objective_id`; both FKs |
 | `tutoring_sessions` | Conversation scope | `id`; `student_id`; `chapter_id`; `objective_id` (nullable current focus); `curriculum_revision_id`; `title`; `status` (`active`/`archived`/`deleted`); `turn_count` |
 | `session_turns` | One student turn | `id`; `session_id`; `turn_index`; `student_prompt`; `response_status` (`pending`/`processing`/`completed`/`failed`/`cancelled`); `educational_status`; `refusal_code`; `message_fr`; `final_payload` (`JSONB`); `model_name`; `prompt_version`; `retrieval_config`; `token_counts`; `latency_ms`; `validation_metadata` (`JSONB`); `created_at`; `processing_started_at`; `expires_at`; `locked_by` |
-| `teaching_steps` | Validated output units | `id`; `turn_id`; `step_index`; `display_text_fr`; `spoken_text_fr`; `next_action`; `validation_status` |
+| `teaching_steps` | Validated output units | `id`; `turn_id`; `step_index`; `display_text_fr`; `spoken_text_fr`; `next_actions` (`JSONB`); `validation_status` |
 | `turn_citations` | Claim ↔ source | `id`; `turn_id`; `step_id`; `teaching_claim_id` (FK); `chunk_id`; `revision_id`; `content_hash`; `page_number`; `section_reference`; `quote_excerpt`; `quote_start`; `quote_end` |
 | `exercises` | Reviewed exercise bank | `id`; `chapter_id`; `objective_id`; `code`; `source_reference`; `exercise_type` (`mcq`/`numeric_tolerance`/`algebraic_expression`/`guided_multistep`); `answer_schema` (`JSONB`); `hints_fr` (`JSONB`); `difficulty_level`; `status` |
 | `exercise_revisions` | Immutable exercise versions | `id`; `exercise_id`; `revision_number`; `problem_statement_fr`; `answer_schema`; `reviewer_id`; `review_status`; `change_summary` |
@@ -323,6 +358,8 @@ backend/
 - `source_revisions` content is immutable after publication. Status transitions are append-only.
 - Citations pin `revision_id` and `content_hash`, not a mutable chunk row.
 - `document_chunks.status` is derived from its revision; only `published` revisions participate in retrieval.
+- Chunks sharing a `unit_id` are one pedagogical unit: contiguous `chunk_index`, same `section_path` and `content_type`. A unit is never split across revisions.
+- Retrieval may expand a unit by `(revision_id, unit_id)`; citations still pin the individual `chunk_id` and `content_hash`.
 - Exercise attempts pin `exercise_revision_id`.
 - One active `study_plan` per student; completed tasks survive plan regeneration.
 - One active `budget_reservation` per turn. Reservation and reconciliation lock the singleton `budget_ledger` row with `FOR UPDATE` so totals are atomic with the cap check.
@@ -334,6 +371,7 @@ backend/
 - B-tree indexes on `student_id`, `session_id`, `chapter_id`, `status`, `created_at`, `(session_id, turn_index)`.
 - HNSW index on `document_chunks.embedding` with `vector_cosine_ops`.
 - GIN index on `document_chunks.search_vector`.
+- B-tree index on `document_chunks (revision_id, unit_id, chunk_index)` for unit expansion.
 - GIN/JSONB indexes on `concept_tags` and validation metadata where queried.
 - Enable and `FORCE ROW LEVEL SECURITY` on every table in the `public` schema; deny by default.
 - `app_runtime` is a non-owner runtime role. Per transaction, the API sets `request.jwt.claims` from the verified JWT and `SET LOCAL ROLE authenticated` before queries; `auth.uid()` is otherwise null.
@@ -500,7 +538,10 @@ turn.failed { code, educationalStatus, messageFr, retryable }
 | Math/render gate refusal | `completed` | `validation_failed` |
 | Provider/infra failure | `failed` | `provider_unavailable` |
 | Credits exhausted | `failed` | `credit_exhausted` |
+| Source withdrawn | `completed` | `source_withdrawn` |
 | Timeout / client abort | `cancelled` | `cancelled` |
+
+`RATE_LIMITED` and `TURN_LIMIT_REACHED` are rejected before a turn row is created (`429`/`409`), so they carry no `educational_status`.
 
 ### 7.5 Idempotency
 
@@ -530,9 +571,10 @@ turn.failed { code, educationalStatus, messageFr, retryable }
 Authenticate
   → resolve session, chapter, objective, curriculum revision
   → pre-scope check
-  → hybrid retrieval
-  → evidence sufficiency check
-  → PydanticAI draft (claims + steps)
+  → hybrid retrieval (one fused pass)
+  → initial evidence sufficiency check
+  → PydanticAI draft (claims + steps), with at most 3 bounded retrieval reads for evidence gaps
+  → evidence sufficiency re-check over every chunk read
   → Gate 1: Source validity
   → Gate 2: Scope validity
   → Gate 3: Grounding
@@ -587,6 +629,7 @@ class AgentDraftOutput(BaseModel):
 - Every claim carries `objective_id`; connective text outside claim spans is allowed and does not require a citation.
 - `citations` is a list; one or more per claim. Each citation is resolved server-side to a `teaching_claim_id` on the same turn.
 - `math` is required for computation claims and absent for pure prose; Gate 4 uses its variables, assumptions, expected form, and check type.
+- `spoken_text_fr` is not free-form for math: when a step carries a `math` claim, the server replaces the model's spoken text with the deterministic French verbalization of the validated expression. The model's version is kept only for connective prose.
 
 ### 8.3 Gate 1 — Source validity
 
@@ -609,8 +652,9 @@ Failure → `validation_failed` or `insufficient_evidence`; never a silent citat
 - Concept tags are allowed for the active objective.
 - Prerequisite concepts are allowed only through the reviewed prerequisite graph.
 - Cross-chapter citations are allowed only for approved prerequisites.
-- A pre-retrieval classifier blocks obvious 1BAC/2BAC questions before spending credits.
-- Keyword detection (derivatives, integrals, limits, complex numbers) is a secondary signal only; the objective matrix is authoritative.
+- A pre-retrieval check blocks obvious 1BAC/2BAC questions before spending credits. It is **deterministic and fail-open**: exact matches against a reviewed French lexicon of out-of-scope markers (dérivée, intégrale, limite, nombres complexes, logarithme, exponentielle, suites) combined with the active chapter. No model call, no cost, < 5 ms.
+- A lexicon match returns `OUT_OF_SCOPE_LEVEL` only when the matched term is outside every published objective of the active chapter. Ambiguous or partial matches pass through to retrieval, where the objective matrix is authoritative.
+- Keyword detection is never the sole basis for a scope refusal after retrieval.
 
 Failure → `outside_scope` with a specific refusal code.
 
@@ -655,6 +699,7 @@ Failure → `outside_scope` with a specific refusal code.
 - Balanced delimiters and supported commands; parser/allowlist, not regex-only.
 - Max display text length and max math expression length.
 - If the validated math cannot be rendered safely, refuse rather than narrate it as visible.
+- **Speech safety.** The spoken form is generated deterministically from `MathClaim` (numbers, operators, intervals, vectors) and must cover every validated expression. A mismatch between displayed and spoken math returns `SPEECH_UNSAFE`; the model's free-form spoken text is never played for a math step.
 
 ### 8.7 Refusal and clarification
 
@@ -667,6 +712,7 @@ Failure → `outside_scope` with a specific refusal code.
 | `MATH_UNVERIFIABLE` | Cannot verify the computation | Ask for clarification or refuse |
 | `MATH_INCORRECT` | Draft contradicts CAS/rubric | Refuse; log for review |
 | `RENDERING_UNSAFE` | Invalid/unsafe math or rendering payload | Refuse; log |
+| `SPEECH_UNSAFE` | Spoken form contradicts the validated expression | Refuse; log |
 | `SOURCE_WITHDRAWN` | Pinned source revision was withdrawn | Keep history read-only; suggest a new session or a replacement revision |
 | `PROVIDER_UNAVAILABLE` | Provider failure | Explain temporary unavailability; preserve session |
 | `CREDIT_EXHAUSTED` | Trial credits exhausted | Explain demo limitation; show fallback |
@@ -687,6 +733,27 @@ Every turn stores:
 - judge model/prompt version, if used.
 
 Prompts live in `assistant/prompts.py` and `assistant/instructions.md` with explicit version constants. A prompt change requires regression evaluation.
+
+### 8.9 Model routing
+
+Model routing is **static by role** (ADR 0008). One model per role, resolved from settings at startup:
+
+| Role | Setting | Caller |
+| --- | --- | --- |
+| Teaching answer | `LLM_MODEL_NAME` | `assistant/agent.py` |
+| Query and chunk embeddings | `EMBEDDING_MODEL_NAME` | `retrieval/retriever.py`, ingestion |
+| Photo / OCR extraction | `VISION_MODEL_NAME` | `providers/vision.py` |
+| Speech-to-text | `STT_MODEL_NAME` | `providers/speech.py` |
+| Text-to-speech | `TTS_MODEL_NAME` | `providers/speech.py` |
+| Entailment judge (optional) | `JUDGE_MODEL_NAME` | Gate 3/4 supporting evidence |
+
+- Callers request a **role**, never a model identifier; provider adapters in `app/providers/` own the model string and provider-specific request shape.
+- No dynamic routing in `v0.1.0`: no per-request selection by difficulty, cost, or latency, and no automatic failover to a different model mid-turn. A failed provider call fails the turn with a stable error; the demo fallback is the pre-validated cached answer set.
+- The model used is recorded per turn and per usage row (`model_name`) with `prompt_version`, so any change is attributable.
+- Changing a model is a configuration change: update the setting, benchmark, rerun the 20+20 regression evaluation, and record it in the decision log.
+- Retrieval scoping (§10.2) is **not** model routing: it selects corpus evidence, not a model.
+
+Dynamic routing is deferred. Revisit when measured outages, cost, or latency justify it, or when the optional judge becomes mandatory.
 
 ---
 
@@ -742,7 +809,11 @@ Each chapter is imported as a manifest plus structured units:
 - Normalize accents and whitespace for search, but preserve display text.
 - Keep the original page/section/character offsets.
 - Split by pedagogical units: definition, property, theorem, method, example, exercise.
-- Max chunk size: ~500 tokens; overlap: ~50 tokens.
+- Max chunk size: ~500 tokens; overlap: ~50 tokens (prose only).
+- Never split inside a math block (`$...$`, `$$...$$`, `\(...\)`, `\[...\]`). Split at step or paragraph boundaries instead; a single math block larger than the cap becomes its own chunk.
+- Overlap repeats prose only; a math block is never duplicated by overlap.
+- Chunks of one pedagogical unit share `unit_id` and a contiguous `chunk_index`, and keep `section_path` and `content_type`, so the unit can be read back whole.
+- Retrieval ranks child chunks; `read_neighboring_chunks` expands to `(revision_id, unit_id)` when evidence or a citation span crosses a chunk boundary.
 - Tables and figures stay with their caption and section.
 - Stable chunk IDs and content hashes; re-chunking creates a new revision.
 
@@ -767,7 +838,7 @@ Publication gate:
 - Reviewer sign-off.
 - Objective mapping checked.
 - Math notation reviewed.
-- Representative retrieval tests pass.
+- Representative retrieval tests pass (§10.5).
 - Embeddings are non-null.
 - Content hash recorded.
 
@@ -791,10 +862,10 @@ Withdrawal:
 
 ### 10.1 Embeddings
 
-- Benchmark candidate embedding models during Week 1.
+- Benchmark candidate embedding models during Week 1. The benchmark must include French math queries, not prose only: verbalized notation ("x au carré"), interval notation, and symbol-heavy prompts. The default is kept only if it wins or ties on Recall@5 over the reviewer-labeled set (§10.5).
 - Default: `text-embedding-3-small`, 1536 dimensions.
 - Store the model name and dimensions with each chunk.
-- Changing the model requires a new revision and re-embedding job.
+- Changing the model requires a new revision and re-embedding job. Model and dimension are effectively a one-way door once chapters are published: decide in Week 1, not Week 8.
 - Batch embeddings, retry with backoff, and log cost.
 
 ### 10.2 Hybrid search
@@ -805,6 +876,7 @@ Withdrawal:
 - Normalize the query:
   - accents, case, LaTeX delimiters;
   - math symbols (`≤`, `√`, `x²`, `x^2`);
+  - spoken math: "au carré"/"au cube" → `²`/`³`, "racine de" → `√`, "inférieur ou égal" → `≤`, "valeur absolue" → `|·|`, "appartient à" → `∈`, "union"/"inter" → `∪`/`∩`. The map is data the reviewer can extend, not hard-coded branches;
   - French synonyms and chapter/objective titles.
 - Add a normalized `search_text` column:
   - lowercased, unaccented, LaTeX-stripped/transliterated;
@@ -818,10 +890,13 @@ Withdrawal:
 - RRF `k = 60`, 1-based ranks.
 - Deduplicate by chunk/revision.
 - Deterministic tie-break by chunk ID.
+- Rerank the fused candidates with the deterministic score in §10.7.
 - Select top 5–8 chunks.
-- Diversity: max 2 chunks per section; optional MMR.
+- Diversity: max 2 chunks per section, raised to 3 when one section supplies both a definition and its worked example for the objective; optional MMR.
 - Neighbor expansion: `read_neighboring_chunks` for definitions that span boundaries.
 - Context token budget: cap total evidence tokens; drop lowest-ranked chunks first.
+
+**Retrieval shape (normative).** Each turn gets one fused pass; the agent does not control retrieval start. During drafting it may make at most **3 bounded reads** (`read_chunk`, `read_neighboring_chunks`, `search_maxi_chapter`) to fill an evidence gap. Every chunk read joins the evidence set, is recorded in `retrieval_config`, and is subject to the same sufficiency re-check and citation validation. The budget is per turn, not per attempt; exhausting it routes to `INSUFFICIENT_EVIDENCE`.
 
 ### 10.4 Sufficiency
 
@@ -833,14 +908,39 @@ The sufficiency check is not a single RRF threshold. It combines:
 - section/objective match;
 - a calibrated minimum evidence set for the question type.
 
-If insufficient → `INSUFFICIENT_EVIDENCE` or `AMBIGUOUS_QUESTION`. Calibrate thresholds on the evaluation set.
+If insufficient → `INSUFFICIENT_EVIDENCE` or `AMBIGUOUS_QUESTION`. Calibrate thresholds on the 70% tuning split of §10.5 and confirm the false refusal rate on the holdout. Start permissive and tighten: an early strict threshold hides real retrieval bugs behind clean-looking refusals.
 
 ### 10.5 Retrieval evaluation
 
-- Recall@5 and MRR on a reviewer-labeled retrieval set.
-- Per-objective coverage.
-- False refusal rate.
-- Track retrieval failures separately from answer failures.
+- Reviewer-labeled set: **40–60 query → chunk pairs** across the three chapters, graded relevance (0 = not relevant, 1 = related, 2 = directly answers), with at least 10 pairs per chapter and every published objective represented.
+- Labels are produced against a specific `curriculum_revision_id`; a new revision invalidates the set and it must be relabeled before the gate can be claimed.
+- Split 70/30: tuning (RRF weights, reranker weights, sufficiency thresholds) on 70%, holdout on 30%. The holdout is never used for tuning.
+- Targets: **Recall@5 ≥ 0.90** overall and ≥ 0.80 per chapter; **MRR ≥ 0.70**; false refusal rate ≤ 10%.
+- Track retrieval failures separately from answer failures, recording the query, expected chunk, retrieved chunks, and whether the miss was lexical, semantic, scoping, or chunking.
+- Run this set before publication (§9.6) and after any chunking, embedding, normalization, or reranker change.
+- Labels are built incrementally during corpus review (Weeks 5–8), not deferred to Week 13.
+
+### 10.6 Conversational query construction
+
+Retrieval never embeds the latest message alone. The query is composed deterministically from:
+
+1. the active chapter and objective titles;
+2. the last validated topic of the session (the primary objective of the last `completed` turn);
+3. the normalized new message.
+
+A follow-up such as "et si x est négatif ?" is therefore embedded with its subject. An explicit objective change resets the prefix; a chapter change starts a new session (§11.5); a self-contained first message has no prefix.
+
+Model-based query rewriting (condensation, HyDE, multi-query) is out of scope for `v0.1.0`: it adds latency inside the 2 s retrieval budget and a second failure mode. Add it only if deterministic construction misses the Recall@5 target in §10.5, and then behind the same evaluation.
+
+### 10.7 Reranking
+
+RRF is rank-only and carries no relevance magnitude. After fusion and before the top-5–8 cut, candidates are reranked by a deterministic score:
+
+- normalized cosine similarity and normalized `ts_rank_cd`, weighted (default 0.7 / 0.3, tuned on the 70% split);
+- section and objective match bonus;
+- `content_type` match against the question type (definition question → definition chunk).
+
+A cross-encoder or LLM reranker is deferred: it does not fit the 2 s retrieval stage target over 20 candidates. Revisit when Recall@5 passes but answer accuracy stalls — that pattern means the right chunk is retrieved and ranked too low.
 
 ---
 
@@ -890,6 +990,7 @@ This is an academic demo with trial credits only.
 - Cancellation checks between stages; best-effort provider cancellation.
 - Client abort marks the turn `cancelled` when detected; release the reservation.
 - Stuck turns are recovered by a worker after `session_turns.expires_at`; workers fence with `processing_started_at`/`locked_by` and never overwrite a completed turn.
+- Prompt caching: order the prompt stable-first (instructions, objective metadata, retrieved evidence) and volatile-last (history, new message) so provider prefix caching can hit. `usage_events.cached_tokens` records hits; a week at zero is a prompt-ordering bug, not a provider issue.
 
 ### 11.5 Context and history
 
@@ -897,7 +998,7 @@ This is an academic demo with trial credits only.
 - Token budget for history; truncate or summarize old turns.
 - Never include unvalidated assistant text or raw refusals as evidence.
 - Delimit retrieved passages as untrusted data; never treat them as instructions.
-- Reset context when the session changes chapter/objective.
+- A session's chapter is fixed at creation. Changing chapter starts a new session; changing objective within the chapter resets the retrieval history prefix (§10.6).
 
 ---
 
@@ -977,6 +1078,7 @@ Edge cases:
 ### 13.3 Classroom contracts
 
 - Validated-content-before-speech: render the validated text and KaTeX math, then call `/speech/synthesize` and play TTS.
+- Speech plays only the validated `spoken_text_fr`; the model's pre-validation text is never spoken.
 - Interruption: stop local audio < 500 ms, abort the stream, call `/interrupt`, reject stale `turnId` events.
 - Photo: request a signed upload (`POST /sessions/{id}/media`) → preview → `POST /media/{id}/interpret` → confirm ambiguous symbols (`POST /media/{id}/confirm`) → submit `mediaAssetId` + confirmed expression with the turn.
 - Speech: push-to-talk posts to `POST /speech/transcribe`; the transcript is editable before submission; raw audio is never stored.
@@ -987,14 +1089,10 @@ Edge cases:
 
 - Add Playwright as a frontend dev dependency.
 - Amend `frontend/AGENTS.md` to allow Playwright and define the test layout.
-- E2E suites:
-  - 10 scripted journeys;
-  - 20 interruption cases;
-  - photo confirmation;
-  - practice attempt;
-  - session save/resume;
-  - refusal rendering;
-  - credit-exhausted fallback.
+- Two tiers, both required:
+  - **UI tier (every PR, no backend):** Playwright route interception stubs the API; covers layout, env gate, refusal rendering, keyboard-only navigation, and interruption of a stubbed stream.
+  - **Full-stack tier (integration job, seeded backend):** the scripted journeys, photo confirmation, practice attempt, save/resume, and credit-exhausted fallback run against a seeded Postgres and a fake provider adapter.
+- Suites: 10 scripted journeys, 20 interruption cases, photo confirmation, practice attempt, save/resume, refusal rendering, credit fallback, one keyboard-only accessibility pass.
 - Run locally and in CI; capture traces on failure.
 
 ---
@@ -1113,6 +1211,7 @@ Controls:
 | Reliability | Idempotency, concurrency, timeout, cancellation, worker recovery |
 | Contract | OpenAPI, SSE events, frontend types |
 | E2E | Playwright journeys and interruption |
+| Accessibility | Keyboard-only journey, focus visibility, contrast spot-check |
 | Human | Reviewer math/pedagogy review |
 
 ### 16.2 Evaluation design
@@ -1124,9 +1223,9 @@ Controls:
 Datasets (D-26):
 
 - 20 in-scope tasks (expand to 30 only if the reviewer confirms extra hours).
-- 20 boundary tasks: out-of-scope, missing evidence, prompt injection (expand to 30 only with reviewer confirmation).
-- Wrong-answer set: deliberately corrupted solutions to measure the math gate.
-- Retrieval set: labeled chunks for Recall@5/MRR.
+- 20 boundary tasks with fixed quotas: 8 out-of-scope, 6 missing-evidence, 6 prompt-injection. Results are reported **per category**, not only as a total.
+- Wrong-answer set: **at least 20** corrupted solutions, balanced across the five `MathClaim.check` types (`simplify`, `solve`, `interval`, `vector`, `property`), so the 90% catch-rate target has a meaningful denominator.
+- Retrieval set: 40–60 labeled pairs per §10.5, built incrementally during corpus review in Weeks 5–8 — not in Week 13.
 
 20+20 is directional evidence, not a statistical estimate; the report states the sample size and confidence limits and does not claim population-level accuracy.
 
@@ -1177,14 +1276,14 @@ Release gates:
 | 3 | Identity + app shell + RLS | Two synthetic users cannot access each other's resources |
 | 4 | Persistent classroom sessions | Text classroom saves, reloads, and runs locally |
 | 5 | Ingestion + filtered retrieval | Published sample content retrieved with correct metadata |
-| 6 | Grounded teaching + gates | Structured tutor passes initial evaluation |
-| 7 | Photos + push-to-talk | Confirmed photo interpretation enters controlled tutoring |
+| 6 | Grounded teaching + Gates 1–3 | Structured tutor passes initial evaluation |
+| 7 | Photos + push-to-talk + Gate 4 | Confirmed photo interpretation enters controlled tutoring; math and speech validated |
 | 8 | Streaming sync + interruption | Late events rejected; integrated math review |
 | 9 | Reviewed practice | Attempts and supported feedback persist |
 | 10 | Progress + planning | Editable schedule and revision indicators work |
 | 11 | Admin CLI + summaries + reconnect | Complete journey works in the demo environment |
 | 12 | Feature freeze | Three-chapter coverage and integrated features reviewed |
-| 13 | Demo evaluation | 20+20 cases run; failures triaged; reviewer capacity confirmed |
+| 13 | Demo evaluation | 20+20 and retrieval labels run; failures triaged; extra reviewer hours confirmed in writing |
 | 14 | Regression + release candidate | No known release blockers |
 | 15 | Restore, report, rehearsal | Backup restore, rollback, and demo rehearsal |
 | 16 | Submission and demo | Tagged release, report, live demo, fallback recording |
@@ -1370,6 +1469,10 @@ These are recorded assumptions, not blockers. The plan proceeds with the default
 
 Add missing variables to `backend/.env.example` and `frontend/.env.example`; do not let `.env.example` drift from `config.py`.
 
+Model settings are resolved per role at startup; there is no router or per-request model selection (§8.9, ADR 0008).
+
+`JUDGE_MODEL_NAME`, `MAX_PROMPT_CHARS`, `MAX_PHOTO_BYTES`, `MAX_AUDIO_SECONDS`, `MAX_TURNS_PER_MINUTE`, and `MAX_CONCURRENT_TURNS` are **planned**. Add each to `config.py` and `.env.example` in the PR that implements its feature; never read a setting before it exists.
+
 ### B. Repository layout
 
 ```text
@@ -1405,6 +1508,7 @@ AMBIGUOUS_QUESTION
 MATH_UNVERIFIABLE
 MATH_INCORRECT
 RENDERING_UNSAFE
+SPEECH_UNSAFE
 SOURCE_WITHDRAWN
 PROVIDER_UNAVAILABLE
 CREDIT_EXHAUSTED
@@ -1473,7 +1577,7 @@ Before adding any dependency, record the answers to the dependency-policy questi
 
 ## 21. Immediate Week-1 checklist
 
-Status on 24 November 2026: the backend foundation is in place. The earlier shell-build blocker (`.gitignore` ignoring `frontend/src/lib/`, missing `env.ts`) is fixed and a CI workflow was added, but the checks have not been run here; do not mark the foundation complete until CI is green.
+Status on 26 November 2026: the backend foundation, CI, and the `master` protections are in place; CI is green on `grunt`. The remaining Week-1 items below are unchecked.
 
 - [x] Replace stale SEC content and the SEC download script.
 - [x] Update `README.md`, `Stack.md`, setup guides, and the Windows setup guide.
@@ -1508,8 +1612,8 @@ This section records the decisions taken after the plan review and is the implem
 
 - **Pilot:** academic demo only. The client-brief 5-student pilot is waived in writing by the supervisor; record the waiver in `audit_events` and the final report.
 - **Evaluation:** 20 in-scope + 20 boundary tasks. Expand only if reviewer hours are confirmed. 20+20 is directional evidence; the report states the sample size and confidence limits.
-- **Release gates:** ≥ 90% (18/20) in-scope correct and scoped; 0 unsupported releases on the 20 boundary tasks; 100% citation validity; math-gate catch rate ≥ 90% on the wrong-answer set; false refusals ≤ 10% on in-scope; 10/10 journeys; 20/20 interruptions; 100% cross-user denial; within trial credits with fallback.
-- **Reviewer time:** reserve 4–5 hours for 20+20; do not schedule 60+60 unless extra hours are confirmed.
+- **Release gates:** ≥ 90% (18/20) in-scope correct and scoped; 0 unsupported releases on the 20 boundary tasks, reported per category; 100% citation validity; math-gate catch rate ≥ 90% on at least 20 corrupted solutions; false refusals ≤ 10% on in-scope; 10/10 journeys; 20/20 interruptions; 100% cross-user denial; within trial credits with fallback.
+- **Reviewer time:** reserve 4–5 hours for 20+20, plus ~3–5 hours for the 40–60 retrieval labels and ~1–2 hours for the wrong-answer set. Labels are built during corpus review (Weeks 5–8). Week 13 alone needs 8–10 reviewer hours, so extra hours must be confirmed in writing before Week 12; do not schedule 60+60.
 - **Whiteboard:** deferred beyond `v0.1.0`; the classroom delivers text, KaTeX math notation, photos, and voice only.
 
 ### 22.2 Schema (normative additions)

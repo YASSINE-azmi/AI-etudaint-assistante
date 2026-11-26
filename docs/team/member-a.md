@@ -68,7 +68,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 - [ ] Convert the API contract into TypeScript types for profile, curriculum, sessions, turns, citations, refusals, exercises, and study plans.
 - [ ] Build the login screen with Supabase email auth; no Google/SSO.
 - [ ] Build reusable `RefusalBanner`, `CitationList`, `EvidenceExcerpt`, and `GateStatus` components with fixtures.
-- [ ] Write the Playwright plan for the 10 scripted journeys and the 20 interruption cases.
+- [ ] Write the Playwright plan for the 10 scripted journeys and the 20 interruption cases, split into a stubbed-UI tier (every PR) and a seeded full-stack tier (integration job).
 - [ ] Review keyboard navigation, focus order, labels, and contrast on the shell.
 - [ ] Hand the API type map to Mohamed and the SSE expectations to Yassine/Mohamed.
 
@@ -126,6 +126,7 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 
 **Week 8**
 - [ ] Implement validated-content-before-speech: render the validated text and math, then play TTS.
+- [ ] Play only the server-provided validated `spokenTextFr`; never speak a client-side interpretation of the math.
 - [ ] Implement interruption: stop audio, abort the SSE stream, call `/interrupt`, and reject stale `turnId` events.
 - [ ] Test that TTS does not play before the validated message is rendered.
 - [ ] Build the 20 interruption cases from the plan.

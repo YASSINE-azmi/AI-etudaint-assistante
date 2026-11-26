@@ -57,7 +57,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 
 **Week 1**
 - [ ] Benchmark 20 French math prompts for correctness, latency, cost, and JSON reliability.
-- [ ] Record the candidate model, provider, prompt version, and failure modes.
+- [ ] Record the candidate model, provider, prompt version, and failure modes. Model choice is static per role (ADR 0008): benchmark first, then pin it in settings — no runtime routing.
 - [ ] Prototype the SSE turn contract with Mohamed; agree on final-only text and failure events.
 - [ ] Extract one chapter sample and run the retrieval/RRF spike.
 - [ ] Draft the evaluation rubric with the mathematics reviewer.
@@ -68,7 +68,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 - [ ] Confirm chapter IDs, objective IDs, page ranges, and coverage with the reviewer.
 - [ ] Record the academic-use note input with the team lead and supervisor.
 - [ ] Freeze the draft output contract, citation contract, refusal codes, and status mapping.
-- [ ] Build the first reviewer-labeled retrieval set.
+- [ ] Build the first reviewer-labeled retrieval set: 40–60 query → chunk pairs, graded 0/1/2, ≥ 10 per chapter, every published objective represented; 70/30 tune/holdout split.
 - [ ] Produce the Week-2 go/no-go evidence: benchmark, coverage, contracts, and risks.
 
 **Exit evidence:** benchmark report, sample RRF result, reviewer-confirmed coverage matrix, and signed-off contracts.
@@ -76,18 +76,21 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 ### Weeks 3–4 — Retrieval and sufficiency
 
 **Week 3**
-- [ ] Specify the retrieval schema: `document_chunks`, `chunk_objectives`, `search_text`, embeddings, and indexes.
+- [ ] Specify the retrieval schema: `document_chunks` with `unit_id`, `chunk_objectives`, `search_text`, embeddings, and indexes.
 - [ ] Create the seed corpus with synthetic/open-licensed content; never commit textbook text.
-- [ ] Benchmark embedding models; default to `text-embedding-3-small` with 1536 dimensions.
-- [ ] Implement query normalization: accents, case, LaTeX delimiters, math symbols, French synonyms.
+- [ ] Benchmark embedding models on math queries, not prose only; keep `text-embedding-3-small` at 1536 only if it wins or ties on Recall@5.
+- [ ] Implement query normalization: accents, case, LaTeX delimiters, math symbols, spoken math ("x au carré", "racine de"), French synonyms.
+- [ ] Implement chunking with math-block atomicity and `unit_id` grouping.
 - [ ] Add unit tests for normalization and scope filters.
 
 **Week 4**
 - [ ] Implement scoped hybrid retrieval: pgvector cosine + French full-text search.
 - [ ] Implement RRF with `k = 60`, deterministic tie-break, deduplication, and top-k selection.
-- [ ] Add neighbor expansion and context token budget.
+- [ ] Implement the deterministic reranker (§10.7) before the top-5–8 cut.
+- [ ] Build the retrieval query from chapter/objective titles plus the last validated topic (§10.6); no model rewrite.
+- [ ] Add neighbor expansion by `(revision_id, unit_id)` and the context token budget.
 - [ ] Implement the sufficiency check using raw cosine, lexical coverage, objective match, and citable evidence.
-- [ ] Measure Recall@5 and MRR on the reviewer-labeled set.
+- [ ] Measure Recall@5 and MRR on the reviewer-labeled set and confirm on the 30% holdout (Recall@5 ≥ 0.90, MRR ≥ 0.70).
 - [ ] Add retrieval failure cases: missing evidence, wrong chapter, ambiguous question.
 
 **Exit evidence:** retrieval module with unit tests, RRF output, sufficiency behavior, and a baseline retrieval report.
@@ -100,14 +103,15 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 - [ ] Implement publication checks: academic-use note, reviewer sign-off, objective mapping, math notation, retrieval tests, embeddings, content hash.
 - [ ] Implement withdrawal semantics: exclude future retrieval, preserve historical citations, flag dependent exercises.
 - [ ] Publish one sample chapter and run retrieval against it.
+- [ ] Label 10–15 retrieval pairs while reviewing each chapter (§10.5); store them against the revision ID. Do not defer labeling to Week 13.
 - [ ] Add ingestion and publication tests.
 
 **Week 6**
-- [ ] Build the PydanticAI tutor agent with bounded tools: `search_maxi_chapter`, `read_chunk`, `read_neighboring_chunks`.
+- [ ] Build the PydanticAI tutor agent with bounded tools: `search_maxi_chapter`, `read_chunk`, `read_neighboring_chunks`; at most 3 extra reads per turn, then re-check sufficiency (§10.3).
 - [ ] Write `assistant/instructions.md` and versioned prompts.
-- [ ] Implement Gate 1 (source validity), Gate 2 (scope validity), Gate 3 (grounding), and Gate 4 (math/rendering safety).
+- [ ] Implement Gate 1 (source validity), Gate 2 (scope validity), and Gate 3 (grounding). Gate 4 lands in Week 7.
 - [ ] Implement French refusal templates and stable refusal codes.
-- [ ] Add the wrong-answer set for the math gate.
+- [ ] Add the wrong-answer set: at least 20 corrupted solutions, balanced across simplify, solve, interval, vector, and property.
 - [ ] Run an initial evaluation and fix the highest-impact failures.
 
 **Exit evidence:** published sample content, grounded draft, four gates, refusal templates, and initial evaluation report.
@@ -116,6 +120,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 
 **Week 7**
 - [ ] Define the photo symbol-confirmation contract with Imran: raw image → extracted symbols → confirmed expression.
+- [ ] Implement Gate 4: SymPy math checks, KaTeX rendering allowlist, and the deterministic speech form (`SPEECH_UNSAFE`).
 - [ ] Add math-gate checks for the confirmed expression.
 - [ ] Test ambiguous symbols, unsupported notation, and unsafe input.
 - [ ] Review the STT/TTS behavior with Mohamed; keep voice push-to-talk only.
@@ -155,7 +160,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 
 **Week 11**
 - [ ] Build the evaluation harness with development and held-out acceptance sets.
-- [ ] Prepare 20 in-scope and 20 boundary tasks (D-26); expand only if reviewer hours are confirmed.
+- [ ] Prepare 20 in-scope and 20 boundary tasks with fixed quotas: 8 out-of-scope, 6 missing-evidence, 6 prompt-injection (D-26); expand only if reviewer hours are confirmed.
 - [ ] Include out-of-scope, missing-evidence, prompt-injection, and ambiguity cases.
 - [ ] Run the reviewer grading workflow with a written rubric.
 - [ ] Record application, model, prompt, corpus, and gate versions for every run.
@@ -165,6 +170,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 - [ ] **Feature freeze for prompts, corpus, gates, and evaluation.** No changes without a regression run.
 - [ ] Review three-chapter coverage with the reviewer.
 - [ ] Freeze the evaluation dataset and rubric version.
+- [ ] Secure written confirmation of extra reviewer hours for Week 13 (8–10 hours: 20+20 grading, retrieval labels, wrong-answer set).
 - [ ] Produce the freeze note: known failures, accepted risks, and release blockers.
 - [ ] Hand the frozen contracts to Imran and Mohamed.
 
@@ -173,7 +179,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 ### Weeks 13–14 — Full evaluation and release candidate
 
 **Week 13**
-- [ ] Run the full evaluation against the release candidate.
+- [ ] Run the full evaluation against the release candidate: 20 in-scope, 20 boundary (per category), and the retrieval set.
 - [ ] Triage failures into retrieval, scope, grounding, math, rendering, provider, or UI.
 - [ ] Fix teaching/retrieval defects; rerun affected cases.
 - [ ] Record false refusals and unsupported releases separately.
@@ -191,7 +197,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 ### Weeks 15–16 — Report, rehearsal, submission
 
 **Week 15**
-- [ ] Write the teaching/validation/evaluation report sections: corpus, retrieval, four gates, math verification, metrics, limitations.
+- [ ] Write the teaching/validation/evaluation report sections: corpus, retrieval, four gates, math verification, metrics, limitations — including why this release covers 3 of the 15 chapters and what each added chapter requires (§2.7).
 - [ ] Prepare the demo evidence: accepted answer, citation, refusal, insufficient evidence, math refusal, practice evaluation.
 - [ ] Rehearse the live demo with Imran and Mohamed.
 - [ ] Prepare the fallback evidence for provider failure or credit exhaustion.
