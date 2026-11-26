@@ -16,10 +16,14 @@
 
 ## Failure-mode notes
 
-- Copied output repeats each equation and flattens fractions (`2511` for 25/11). Check whether this is the raw model output or a copy artifact from the chat UI; if raw, it is a LaTeX rendering risk for KaTeX (Gate 4b).
-- Thinking mode is the API default: measure its effect on latency against `TURN_TIMEOUT_SECONDS = 20`.
-- Vision is not benchmarked yet: run a few exercise photos before relying on it.
-- Latency, token counts, and cost are not measured yet (section 4 is empty).
+API re-run on 26 November 2026, 17:58 UTC (off-peak), all 15 prompts, raw API output, default thinking mode:
+
+- **Correctness: 15/15.** Every final answer is right; every JSON answer parses with no markdown fences.
+- **Fractions are clean.** The raw API returns `\frac{25}{11}`; the `2511` in the responses below came from copying out of the chat UI, not from the model.
+- **LaTeX delimiters are `\( … \)` and `\[ … \]`**, not `$ … $`. The KaTeX renderer (Gate 4b) must accept these delimiters, or the prompt must ask for another form.
+- **Format drift:** prompt 12 returns `u_n = 2 × 3^(n-1)` (Unicode `×`, not LaTeX) inside a JSON string. Harmless here, but structured math must come from the typed `MathClaim` contract, not free text.
+- **Thinking mode dominates tokens:** 2,478 of 3,420 output tokens (72%) are reasoning. Worst latency is 5.9 s, well under `TURN_TIMEOUT_SECONDS = 20`.
+- **Not covered yet:** vision (no exercise photos tested) and the 5 prompts missing to reach 20.
 
 1. Correctness (Multi-Step Reasoning & Nuance)
 1 . Prompt: « Un train part de Paris à 14h25 et roule à une vitesse moyenne de 120 km/h pendant 2 heures et 45 minutes. Il s'arrête ensuite 18 minutes, puis parcourt encore 95 km à 114 km/h. À quelle heure exacte arrive-t-il à destination ? Donne uniquement l'heure au format HH:MM. »
@@ -149,3 +153,27 @@ Responce : «[
 Responce : «{"moyenne":18.00,"mediane":15.00,"ecart_type":5.62}»
 
 4. Cost (Token Efficiency & Reasoning Budget Control)
+
+Measured with streaming against `https://api.deepseek.com`, `deepseek-flash`, default thinking mode. TTFT counts the first reasoning or answer token. Cost uses peak prices ($0.30 / 1M input cache-miss, $1.20 / 1M output); the run was off-peak, so the real bill is half.
+
+| # | TTFT (s) | Total (s) | Input tok | Output tok | Of which reasoning | Cost (USD, peak) |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | 1.45 | 2.13 | 108 | 136 | 132 | 0.000196 |
+| 2 | 1.04 | 2.98 | 88 | 503 | 231 | 0.000630 |
+| 3 | 1.03 | 1.83 | 75 | 150 | 38 | 0.000202 |
+| 4 | 0.90 | 2.29 | 64 | 292 | 177 | 0.000370 |
+| 5 | 1.18 | 2.05 | 99 | 189 | 99 | 0.000257 |
+| 6 | 1.02 | 1.30 | 57 | 34 | 32 | 0.000058 |
+| 7 | 1.05 | 1.39 | 56 | 52 | 50 | 0.000079 |
+| 8 | 0.90 | 1.30 | 47 | 47 | 45 | 0.000070 |
+| 9 | 1.08 | 1.47 | 70 | 41 | 39 | 0.000070 |
+| 10 | 0.93 | 1.46 | 58 | 61 | 59 | 0.000091 |
+| 11 | 1.16 | 4.18 | 121 | 229 | 203 | 0.000311 |
+| 12 | 1.33 | 4.20 | 109 | 572 | 523 | 0.000719 |
+| 13 | 0.89 | 1.89 | 138 | 174 | 133 | 0.000250 |
+| 14 | 0.98 | 5.85 | 119 | 681 | 483 | 0.000853 |
+| 15 | 0.51 | 1.89 | 114 | 259 | 234 | 0.000345 |
+
+**Summary:** median TTFT 1.03 s (max 1.45 s); median total 1.89 s (max 5.85 s); 1,323 input + 3,420 output tokens; **$0.0045 for all 15 prompts at peak price** (about $0.0003 per prompt).
+
+These prompts are short. A real teaching turn sends up to `MAX_TURN_INPUT_TOKENS = 8000` (retrieved chunks + instructions) and up to 1,500 output tokens, which is at most about $0.0042 per turn at peak, or roughly 1,200 turns for the $5 trial budget.
