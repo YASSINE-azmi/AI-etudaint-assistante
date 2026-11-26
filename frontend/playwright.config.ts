@@ -7,7 +7,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
-  reporter: process.env.CI ? 'github' : 'list',
+  // CI: inline annotations plus an HTML report (opens the traces) uploaded on failure.
+  reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: 'http://127.0.0.1:5173',
     trace: 'retain-on-failure',
@@ -30,6 +31,10 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         ...(channel ? { channel: channel as 'chrome' } : {}),
+        // Push-to-talk tests: Chromium's synthetic microphone, permission granted without a prompt.
+        launchOptions: {
+          args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
+        },
       },
     },
   ],

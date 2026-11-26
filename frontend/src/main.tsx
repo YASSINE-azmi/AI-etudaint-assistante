@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 
 import App from './App'
+import { AuthProvider } from './components/auth/AuthProvider'
 import { missingEnvVars } from './lib/env'
 import { SetupRequiredPage } from './pages/SetupRequiredPage'
 import './index.css'
@@ -21,7 +22,9 @@ createRoot(root).render(
       <SetupRequiredPage missing={missing} />
     ) : (
       <BrowserRouter>
-        <App />
+        <AuthProvider>
+          <App />
+        </AuthProvider>
       </BrowserRouter>
     )}
   </StrictMode>,

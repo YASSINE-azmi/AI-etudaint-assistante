@@ -20,6 +20,8 @@ export function missingEnvVars(): EnvVarName[] {
 }
 
 export const env = {
+  /** True under `pnpm dev` (and Playwright); false in `pnpm build` output. */
+  isDev: import.meta.env.DEV,
   apiBaseUrl: readEnv('VITE_API_BASE_URL'),
   supabaseUrl: readEnv('VITE_SUPABASE_URL'),
   supabaseAnonKey: readEnv('VITE_SUPABASE_ANON_KEY'),
