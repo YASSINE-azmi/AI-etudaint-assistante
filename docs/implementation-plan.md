@@ -156,6 +156,7 @@ If the 16-week schedule slips, reduce in this order. Never weaken authorization,
 | D-27 | Hosted app DB with private chunks; no public distribution | Private Supabase, PostgREST deny rules, supervisor rights note |
 | D-28 | API never holds the service-role key; split admin/ingest settings | Service role only in CLI/ingest; API starts without it |
 | D-29 | Role source is JWT `app_metadata.role` | No self-escalation; `profiles.role` is display-only or removed |
+| D-30 | Model routing is static by role (ADR 0008) | One model per role from settings; no dynamic selection or failover; keeps 20+20 evaluation reproducible |
 
 ---
 
@@ -186,7 +187,7 @@ flowchart LR
 | Supabase Auth | Email-only identity for synthetic demo users |
 | Supabase Postgres | Profiles, curriculum, revisions, chunks, sessions, turns, citations, practice, plans, usage |
 | Supabase Storage | Private source assets, student media (demo only) |
-| AI provider | LLM, embeddings, vision/OCR, STT, TTS behind server-side adapters |
+| AI provider | LLM, embeddings, vision/OCR, STT, TTS behind server-side adapters; one model per role (§8.9) |
 | Reviewer CLI | Local extraction, review, publication, withdrawal, embedding |
 
 ### 4.3 Backend module layout
@@ -687,6 +688,27 @@ Every turn stores:
 - judge model/prompt version, if used.
 
 Prompts live in `assistant/prompts.py` and `assistant/instructions.md` with explicit version constants. A prompt change requires regression evaluation.
+
+### 8.9 Model routing
+
+Model routing is **static by role** (ADR 0008). One model per role, resolved from settings at startup:
+
+| Role | Setting | Caller |
+| --- | --- | --- |
+| Teaching answer | `LLM_MODEL_NAME` | `assistant/agent.py` |
+| Query and chunk embeddings | `EMBEDDING_MODEL_NAME` | `retrieval/retriever.py`, ingestion |
+| Photo / OCR extraction | `VISION_MODEL_NAME` | `providers/vision.py` |
+| Speech-to-text | `STT_MODEL_NAME` | `providers/speech.py` |
+| Text-to-speech | `TTS_MODEL_NAME` | `providers/speech.py` |
+| Entailment judge (optional) | `JUDGE_MODEL_NAME` | Gate 3/4 supporting evidence |
+
+- Callers request a **role**, never a model identifier; provider adapters in `app/providers/` own the model string and provider-specific request shape.
+- No dynamic routing in `v0.1.0`: no per-request selection by difficulty, cost, or latency, and no automatic failover to a different model mid-turn. A failed provider call fails the turn with a stable error; the demo fallback is the pre-validated cached answer set.
+- The model used is recorded per turn and per usage row (`model_name`) with `prompt_version`, so any change is attributable.
+- Changing a model is a configuration change: update the setting, benchmark, rerun the 20+20 regression evaluation, and record it in the decision log.
+- Retrieval scoping (§10.2) is **not** model routing: it selects corpus evidence, not a model.
+
+Dynamic routing is deferred. Revisit when measured outages, cost, or latency justify it, or when the optional judge becomes mandatory.
 
 ---
 
@@ -1369,6 +1391,8 @@ These are recorded assumptions, not blockers. The plan proceeds with the default
 | `ENVIRONMENT` | `development`, `test`, `demo` |
 
 Add missing variables to `backend/.env.example` and `frontend/.env.example`; do not let `.env.example` drift from `config.py`.
+
+Model settings are resolved per role at startup; there is no router or per-request model selection (§8.9, ADR 0008).
 
 ### B. Repository layout
 

@@ -13,3 +13,4 @@ capture the rationale.
 | 0005 | [Structured math contract + SymPy](0005-structured-math-contract.md) | Accepted |
 | 0006 | [Evaluation size 20+20](0006-evaluation-size.md) | Accepted |
 | 0007 | [Hosted private corpus](0007-hosted-private-corpus.md) | Accepted |
+| 0008 | [Model routing is static by role](0008-model-routing.md) | Accepted |

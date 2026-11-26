@@ -48,6 +48,8 @@ Copy `backend/.env.example` to `backend/.env` and set:
 
 `backend/.env.example` is the canonical list. Keep it in sync with `app/config.py`.
 
+Model settings are **per role**, not routed per request: `LLM_MODEL_NAME` answers, `EMBEDDING_MODEL_NAME` embeds, `VISION_MODEL_NAME` reads photos, and the STT/TTS names drive speech. There is no router, no dynamic model selection, and no automatic provider failover (plan §8.9, ADR 0008).
+
 ## Database migrations
 
 Alembic owns database schema changes. SQLAlchemy models live in `backend/app/database/models/`, and Alembic migrations apply them to Supabase Postgres.

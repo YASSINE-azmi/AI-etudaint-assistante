@@ -57,7 +57,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 
 **Week 1**
 - [ ] Benchmark 20 French math prompts for correctness, latency, cost, and JSON reliability.
-- [ ] Record the candidate model, provider, prompt version, and failure modes.
+- [ ] Record the candidate model, provider, prompt version, and failure modes. Model choice is static per role (ADR 0008): benchmark first, then pin it in settings — no runtime routing.
 - [ ] Prototype the SSE turn contract with Mohamed; agree on final-only text and failure events.
 - [ ] Extract one chapter sample and run the retrieval/RRF spike.
 - [ ] Draft the evaluation rubric with the mathematics reviewer.
