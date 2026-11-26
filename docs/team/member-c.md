@@ -67,8 +67,9 @@ If a contract is missing, do not guess silently. Add a typed placeholder, mark i
 **Week 1**
 - [ ] Run `uv sync --frozen`, `ruff check`, `ruff format --check`, `mypy app`, and `uv run python -m pytest`; confirm the 4 foundation tests.
 - [ ] Read plan §5 (data model), §6 (identity), §7 (API/SSE), §11 (engine/budget), §14 (security), §16 (testing), and §18 (operations).
-- [ ] Add CI: backend lint/format/type/unit tests and frontend typecheck/lint/build/Playwright smoke.
-- [ ] Harden the settings module: fail fast on missing required values, document every variable from plan Appendix A, and keep `.env.example` in sync.
+- [ ] Add CI: backend lint/format/type/unit tests, frontend typecheck/lint/build/Playwright smoke, a Postgres+pgvector integration job (migrations, RLS, SSE), and a build-only Docker job for both images.
+- [ ] Commit `docker-compose.yml` for local Postgres + pgvector, matching the CI service image.
+- [ ] Harden the settings module: fail fast on missing required values, document every variable that exists in `config.py`, and keep `.env.example` in sync. Add Appendix A's planned settings only with the feature that uses them.
 - [ ] Review request IDs, structured logging, CORS, and the error envelope; make them consistent across `/health`, `/ready`, and `/api/v1/me`.
 - [ ] Create or confirm the Supabase project; run `backend/scripts/bootstrap_runtime_role.sql`; verify `app_runtime` is not the table owner and cannot bypass RLS.
 - [ ] Record the environment matrix: who holds which secret, where it lives, and how it rotates.

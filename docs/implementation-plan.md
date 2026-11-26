@@ -120,6 +120,7 @@ If the 16-week schedule slips, reduce in this order. Never weaken authorization,
 | Cost | Within available trial credits; hard stop and fallback defined |
 | Latency | Best effort: p50 ≤ 5 s, p95 ≤ 12 s to first accepted output on the demo machine |
 | Documentation | Plan, architecture, contracts, evaluation, runbooks, demo script, known issues |
+| Accessibility | Keyboard-only journey completes; visible focus; text contrast ≥ 4.5:1; no status conveyed by color alone. Baseline only, not a full WCAG audit |
 
 ### 2.7 Expansion path (post-`v0.1.0`)
 
@@ -326,7 +327,7 @@ backend/
 | `chunk_objectives` | Chunk ↔ objective | `chunk_id`; `objective_id`; both FKs |
 | `tutoring_sessions` | Conversation scope | `id`; `student_id`; `chapter_id`; `objective_id` (nullable current focus); `curriculum_revision_id`; `title`; `status` (`active`/`archived`/`deleted`); `turn_count` |
 | `session_turns` | One student turn | `id`; `session_id`; `turn_index`; `student_prompt`; `response_status` (`pending`/`processing`/`completed`/`failed`/`cancelled`); `educational_status`; `refusal_code`; `message_fr`; `final_payload` (`JSONB`); `model_name`; `prompt_version`; `retrieval_config`; `token_counts`; `latency_ms`; `validation_metadata` (`JSONB`); `created_at`; `processing_started_at`; `expires_at`; `locked_by` |
-| `teaching_steps` | Validated output units | `id`; `turn_id`; `step_index`; `display_text_fr`; `spoken_text_fr`; `next_action`; `validation_status` |
+| `teaching_steps` | Validated output units | `id`; `turn_id`; `step_index`; `display_text_fr`; `spoken_text_fr`; `next_actions` (`JSONB`); `validation_status` |
 | `turn_citations` | Claim ↔ source | `id`; `turn_id`; `step_id`; `teaching_claim_id` (FK); `chunk_id`; `revision_id`; `content_hash`; `page_number`; `section_reference`; `quote_excerpt`; `quote_start`; `quote_end` |
 | `exercises` | Reviewed exercise bank | `id`; `chapter_id`; `objective_id`; `code`; `source_reference`; `exercise_type` (`mcq`/`numeric_tolerance`/`algebraic_expression`/`guided_multistep`); `answer_schema` (`JSONB`); `hints_fr` (`JSONB`); `difficulty_level`; `status` |
 | `exercise_revisions` | Immutable exercise versions | `id`; `exercise_id`; `revision_number`; `problem_statement_fr`; `answer_schema`; `reviewer_id`; `review_status`; `change_summary` |
@@ -537,7 +538,10 @@ turn.failed { code, educationalStatus, messageFr, retryable }
 | Math/render gate refusal | `completed` | `validation_failed` |
 | Provider/infra failure | `failed` | `provider_unavailable` |
 | Credits exhausted | `failed` | `credit_exhausted` |
+| Source withdrawn | `completed` | `source_withdrawn` |
 | Timeout / client abort | `cancelled` | `cancelled` |
+
+`RATE_LIMITED` and `TURN_LIMIT_REACHED` are rejected before a turn row is created (`429`/`409`), so they carry no `educational_status`.
 
 ### 7.5 Idempotency
 
@@ -625,6 +629,7 @@ class AgentDraftOutput(BaseModel):
 - Every claim carries `objective_id`; connective text outside claim spans is allowed and does not require a citation.
 - `citations` is a list; one or more per claim. Each citation is resolved server-side to a `teaching_claim_id` on the same turn.
 - `math` is required for computation claims and absent for pure prose; Gate 4 uses its variables, assumptions, expected form, and check type.
+- `spoken_text_fr` is not free-form for math: when a step carries a `math` claim, the server replaces the model's spoken text with the deterministic French verbalization of the validated expression. The model's version is kept only for connective prose.
 
 ### 8.3 Gate 1 — Source validity
 
@@ -647,8 +652,9 @@ Failure → `validation_failed` or `insufficient_evidence`; never a silent citat
 - Concept tags are allowed for the active objective.
 - Prerequisite concepts are allowed only through the reviewed prerequisite graph.
 - Cross-chapter citations are allowed only for approved prerequisites.
-- A pre-retrieval classifier blocks obvious 1BAC/2BAC questions before spending credits.
-- Keyword detection (derivatives, integrals, limits, complex numbers) is a secondary signal only; the objective matrix is authoritative.
+- A pre-retrieval check blocks obvious 1BAC/2BAC questions before spending credits. It is **deterministic and fail-open**: exact matches against a reviewed French lexicon of out-of-scope markers (dérivée, intégrale, limite, nombres complexes, logarithme, exponentielle, suites) combined with the active chapter. No model call, no cost, < 5 ms.
+- A lexicon match returns `OUT_OF_SCOPE_LEVEL` only when the matched term is outside every published objective of the active chapter. Ambiguous or partial matches pass through to retrieval, where the objective matrix is authoritative.
+- Keyword detection is never the sole basis for a scope refusal after retrieval.
 
 Failure → `outside_scope` with a specific refusal code.
 
@@ -693,6 +699,7 @@ Failure → `outside_scope` with a specific refusal code.
 - Balanced delimiters and supported commands; parser/allowlist, not regex-only.
 - Max display text length and max math expression length.
 - If the validated math cannot be rendered safely, refuse rather than narrate it as visible.
+- **Speech safety.** The spoken form is generated deterministically from `MathClaim` (numbers, operators, intervals, vectors) and must cover every validated expression. A mismatch between displayed and spoken math returns `SPEECH_UNSAFE`; the model's free-form spoken text is never played for a math step.
 
 ### 8.7 Refusal and clarification
 
@@ -705,6 +712,7 @@ Failure → `outside_scope` with a specific refusal code.
 | `MATH_UNVERIFIABLE` | Cannot verify the computation | Ask for clarification or refuse |
 | `MATH_INCORRECT` | Draft contradicts CAS/rubric | Refuse; log for review |
 | `RENDERING_UNSAFE` | Invalid/unsafe math or rendering payload | Refuse; log |
+| `SPEECH_UNSAFE` | Spoken form contradicts the validated expression | Refuse; log |
 | `SOURCE_WITHDRAWN` | Pinned source revision was withdrawn | Keep history read-only; suggest a new session or a replacement revision |
 | `PROVIDER_UNAVAILABLE` | Provider failure | Explain temporary unavailability; preserve session |
 | `CREDIT_EXHAUSTED` | Trial credits exhausted | Explain demo limitation; show fallback |
@@ -910,6 +918,7 @@ If insufficient → `INSUFFICIENT_EVIDENCE` or `AMBIGUOUS_QUESTION`. Calibrate t
 - Targets: **Recall@5 ≥ 0.90** overall and ≥ 0.80 per chapter; **MRR ≥ 0.70**; false refusal rate ≤ 10%.
 - Track retrieval failures separately from answer failures, recording the query, expected chunk, retrieved chunks, and whether the miss was lexical, semantic, scoping, or chunking.
 - Run this set before publication (§9.6) and after any chunking, embedding, normalization, or reranker change.
+- Labels are built incrementally during corpus review (Weeks 5–8), not deferred to Week 13.
 
 ### 10.6 Conversational query construction
 
@@ -919,7 +928,7 @@ Retrieval never embeds the latest message alone. The query is composed determini
 2. the last validated topic of the session (the primary objective of the last `completed` turn);
 3. the normalized new message.
 
-A follow-up such as "et si x est négatif ?" is therefore embedded with its subject. The history prefix is dropped in two cases only: an explicit chapter/objective change, and a self-contained first message.
+A follow-up such as "et si x est négatif ?" is therefore embedded with its subject. An explicit objective change resets the prefix; a chapter change starts a new session (§11.5); a self-contained first message has no prefix.
 
 Model-based query rewriting (condensation, HyDE, multi-query) is out of scope for `v0.1.0`: it adds latency inside the 2 s retrieval budget and a second failure mode. Add it only if deterministic construction misses the Recall@5 target in §10.5, and then behind the same evaluation.
 
@@ -989,7 +998,7 @@ This is an academic demo with trial credits only.
 - Token budget for history; truncate or summarize old turns.
 - Never include unvalidated assistant text or raw refusals as evidence.
 - Delimit retrieved passages as untrusted data; never treat them as instructions.
-- Reset context when the session changes chapter/objective.
+- A session's chapter is fixed at creation. Changing chapter starts a new session; changing objective within the chapter resets the retrieval history prefix (§10.6).
 
 ---
 
@@ -1069,6 +1078,7 @@ Edge cases:
 ### 13.3 Classroom contracts
 
 - Validated-content-before-speech: render the validated text and KaTeX math, then call `/speech/synthesize` and play TTS.
+- Speech plays only the validated `spoken_text_fr`; the model's pre-validation text is never spoken.
 - Interruption: stop local audio < 500 ms, abort the stream, call `/interrupt`, reject stale `turnId` events.
 - Photo: request a signed upload (`POST /sessions/{id}/media`) → preview → `POST /media/{id}/interpret` → confirm ambiguous symbols (`POST /media/{id}/confirm`) → submit `mediaAssetId` + confirmed expression with the turn.
 - Speech: push-to-talk posts to `POST /speech/transcribe`; the transcript is editable before submission; raw audio is never stored.
@@ -1079,14 +1089,10 @@ Edge cases:
 
 - Add Playwright as a frontend dev dependency.
 - Amend `frontend/AGENTS.md` to allow Playwright and define the test layout.
-- E2E suites:
-  - 10 scripted journeys;
-  - 20 interruption cases;
-  - photo confirmation;
-  - practice attempt;
-  - session save/resume;
-  - refusal rendering;
-  - credit-exhausted fallback.
+- Two tiers, both required:
+  - **UI tier (every PR, no backend):** Playwright route interception stubs the API; covers layout, env gate, refusal rendering, keyboard-only navigation, and interruption of a stubbed stream.
+  - **Full-stack tier (integration job, seeded backend):** the scripted journeys, photo confirmation, practice attempt, save/resume, and credit-exhausted fallback run against a seeded Postgres and a fake provider adapter.
+- Suites: 10 scripted journeys, 20 interruption cases, photo confirmation, practice attempt, save/resume, refusal rendering, credit fallback, one keyboard-only accessibility pass.
 - Run locally and in CI; capture traces on failure.
 
 ---
@@ -1205,6 +1211,7 @@ Controls:
 | Reliability | Idempotency, concurrency, timeout, cancellation, worker recovery |
 | Contract | OpenAPI, SSE events, frontend types |
 | E2E | Playwright journeys and interruption |
+| Accessibility | Keyboard-only journey, focus visibility, contrast spot-check |
 | Human | Reviewer math/pedagogy review |
 
 ### 16.2 Evaluation design
@@ -1216,9 +1223,9 @@ Controls:
 Datasets (D-26):
 
 - 20 in-scope tasks (expand to 30 only if the reviewer confirms extra hours).
-- 20 boundary tasks: out-of-scope, missing evidence, prompt injection (expand to 30 only with reviewer confirmation).
-- Wrong-answer set: deliberately corrupted solutions to measure the math gate.
-- Retrieval set: labeled chunks for Recall@5/MRR.
+- 20 boundary tasks with fixed quotas: 8 out-of-scope, 6 missing-evidence, 6 prompt-injection. Results are reported **per category**, not only as a total.
+- Wrong-answer set: **at least 20** corrupted solutions, balanced across the five `MathClaim.check` types (`simplify`, `solve`, `interval`, `vector`, `property`), so the 90% catch-rate target has a meaningful denominator.
+- Retrieval set: 40–60 labeled pairs per §10.5, built incrementally during corpus review in Weeks 5–8 — not in Week 13.
 
 20+20 is directional evidence, not a statistical estimate; the report states the sample size and confidence limits and does not claim population-level accuracy.
 
@@ -1269,14 +1276,14 @@ Release gates:
 | 3 | Identity + app shell + RLS | Two synthetic users cannot access each other's resources |
 | 4 | Persistent classroom sessions | Text classroom saves, reloads, and runs locally |
 | 5 | Ingestion + filtered retrieval | Published sample content retrieved with correct metadata |
-| 6 | Grounded teaching + gates | Structured tutor passes initial evaluation |
-| 7 | Photos + push-to-talk | Confirmed photo interpretation enters controlled tutoring |
+| 6 | Grounded teaching + Gates 1–3 | Structured tutor passes initial evaluation |
+| 7 | Photos + push-to-talk + Gate 4 | Confirmed photo interpretation enters controlled tutoring; math and speech validated |
 | 8 | Streaming sync + interruption | Late events rejected; integrated math review |
 | 9 | Reviewed practice | Attempts and supported feedback persist |
 | 10 | Progress + planning | Editable schedule and revision indicators work |
 | 11 | Admin CLI + summaries + reconnect | Complete journey works in the demo environment |
 | 12 | Feature freeze | Three-chapter coverage and integrated features reviewed |
-| 13 | Demo evaluation | 20+20 cases run; failures triaged; reviewer capacity confirmed |
+| 13 | Demo evaluation | 20+20 and retrieval labels run; failures triaged; extra reviewer hours confirmed in writing |
 | 14 | Regression + release candidate | No known release blockers |
 | 15 | Restore, report, rehearsal | Backup restore, rollback, and demo rehearsal |
 | 16 | Submission and demo | Tagged release, report, live demo, fallback recording |
@@ -1464,6 +1471,8 @@ Add missing variables to `backend/.env.example` and `frontend/.env.example`; do 
 
 Model settings are resolved per role at startup; there is no router or per-request model selection (§8.9, ADR 0008).
 
+`JUDGE_MODEL_NAME`, `MAX_PROMPT_CHARS`, `MAX_PHOTO_BYTES`, `MAX_AUDIO_SECONDS`, `MAX_TURNS_PER_MINUTE`, and `MAX_CONCURRENT_TURNS` are **planned**. Add each to `config.py` and `.env.example` in the PR that implements its feature; never read a setting before it exists.
+
 ### B. Repository layout
 
 ```text
@@ -1499,6 +1508,7 @@ AMBIGUOUS_QUESTION
 MATH_UNVERIFIABLE
 MATH_INCORRECT
 RENDERING_UNSAFE
+SPEECH_UNSAFE
 SOURCE_WITHDRAWN
 PROVIDER_UNAVAILABLE
 CREDIT_EXHAUSTED
@@ -1567,7 +1577,7 @@ Before adding any dependency, record the answers to the dependency-policy questi
 
 ## 21. Immediate Week-1 checklist
 
-Status on 24 November 2026: the backend foundation is in place. The earlier shell-build blocker (`.gitignore` ignoring `frontend/src/lib/`, missing `env.ts`) is fixed and a CI workflow was added, but the checks have not been run here; do not mark the foundation complete until CI is green.
+Status on 26 November 2026: the backend foundation, CI, and the `master` protections are in place; CI is green on `grunt`. The remaining Week-1 items below are unchecked.
 
 - [x] Replace stale SEC content and the SEC download script.
 - [x] Update `README.md`, `Stack.md`, setup guides, and the Windows setup guide.
@@ -1602,8 +1612,8 @@ This section records the decisions taken after the plan review and is the implem
 
 - **Pilot:** academic demo only. The client-brief 5-student pilot is waived in writing by the supervisor; record the waiver in `audit_events` and the final report.
 - **Evaluation:** 20 in-scope + 20 boundary tasks. Expand only if reviewer hours are confirmed. 20+20 is directional evidence; the report states the sample size and confidence limits.
-- **Release gates:** ≥ 90% (18/20) in-scope correct and scoped; 0 unsupported releases on the 20 boundary tasks; 100% citation validity; math-gate catch rate ≥ 90% on the wrong-answer set; false refusals ≤ 10% on in-scope; 10/10 journeys; 20/20 interruptions; 100% cross-user denial; within trial credits with fallback.
-- **Reviewer time:** reserve 4–5 hours for 20+20; do not schedule 60+60 unless extra hours are confirmed.
+- **Release gates:** ≥ 90% (18/20) in-scope correct and scoped; 0 unsupported releases on the 20 boundary tasks, reported per category; 100% citation validity; math-gate catch rate ≥ 90% on at least 20 corrupted solutions; false refusals ≤ 10% on in-scope; 10/10 journeys; 20/20 interruptions; 100% cross-user denial; within trial credits with fallback.
+- **Reviewer time:** reserve 4–5 hours for 20+20, plus ~3–5 hours for the 40–60 retrieval labels and ~1–2 hours for the wrong-answer set. Labels are built during corpus review (Weeks 5–8). Week 13 alone needs 8–10 reviewer hours, so extra hours must be confirmed in writing before Week 12; do not schedule 60+60.
 - **Whiteboard:** deferred beyond `v0.1.0`; the classroom delivers text, KaTeX math notation, photos, and voice only.
 
 ### 22.2 Schema (normative additions)

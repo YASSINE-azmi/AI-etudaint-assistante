@@ -103,14 +103,15 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 - [ ] Implement publication checks: academic-use note, reviewer sign-off, objective mapping, math notation, retrieval tests, embeddings, content hash.
 - [ ] Implement withdrawal semantics: exclude future retrieval, preserve historical citations, flag dependent exercises.
 - [ ] Publish one sample chapter and run retrieval against it.
+- [ ] Label 10–15 retrieval pairs while reviewing each chapter (§10.5); store them against the revision ID. Do not defer labeling to Week 13.
 - [ ] Add ingestion and publication tests.
 
 **Week 6**
 - [ ] Build the PydanticAI tutor agent with bounded tools: `search_maxi_chapter`, `read_chunk`, `read_neighboring_chunks`; at most 3 extra reads per turn, then re-check sufficiency (§10.3).
 - [ ] Write `assistant/instructions.md` and versioned prompts.
-- [ ] Implement Gate 1 (source validity), Gate 2 (scope validity), Gate 3 (grounding), and Gate 4 (math/rendering safety).
+- [ ] Implement Gate 1 (source validity), Gate 2 (scope validity), and Gate 3 (grounding). Gate 4 lands in Week 7.
 - [ ] Implement French refusal templates and stable refusal codes.
-- [ ] Add the wrong-answer set for the math gate.
+- [ ] Add the wrong-answer set: at least 20 corrupted solutions, balanced across simplify, solve, interval, vector, and property.
 - [ ] Run an initial evaluation and fix the highest-impact failures.
 
 **Exit evidence:** published sample content, grounded draft, four gates, refusal templates, and initial evaluation report.
@@ -119,6 +120,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 
 **Week 7**
 - [ ] Define the photo symbol-confirmation contract with Imran: raw image → extracted symbols → confirmed expression.
+- [ ] Implement Gate 4: SymPy math checks, KaTeX rendering allowlist, and the deterministic speech form (`SPEECH_UNSAFE`).
 - [ ] Add math-gate checks for the confirmed expression.
 - [ ] Test ambiguous symbols, unsupported notation, and unsafe input.
 - [ ] Review the STT/TTS behavior with Mohamed; keep voice push-to-talk only.
@@ -158,7 +160,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 
 **Week 11**
 - [ ] Build the evaluation harness with development and held-out acceptance sets.
-- [ ] Prepare 20 in-scope and 20 boundary tasks (D-26); expand only if reviewer hours are confirmed.
+- [ ] Prepare 20 in-scope and 20 boundary tasks with fixed quotas: 8 out-of-scope, 6 missing-evidence, 6 prompt-injection (D-26); expand only if reviewer hours are confirmed.
 - [ ] Include out-of-scope, missing-evidence, prompt-injection, and ambiguity cases.
 - [ ] Run the reviewer grading workflow with a written rubric.
 - [ ] Record application, model, prompt, corpus, and gate versions for every run.
@@ -168,6 +170,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 - [ ] **Feature freeze for prompts, corpus, gates, and evaluation.** No changes without a regression run.
 - [ ] Review three-chapter coverage with the reviewer.
 - [ ] Freeze the evaluation dataset and rubric version.
+- [ ] Secure written confirmation of extra reviewer hours for Week 13 (8–10 hours: 20+20 grading, retrieval labels, wrong-answer set).
 - [ ] Produce the freeze note: known failures, accepted risks, and release blockers.
 - [ ] Hand the frozen contracts to Imran and Mohamed.
 
@@ -176,7 +179,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 ### Weeks 13–14 — Full evaluation and release candidate
 
 **Week 13**
-- [ ] Run the full evaluation against the release candidate.
+- [ ] Run the full evaluation against the release candidate: 20 in-scope, 20 boundary (per category), and the retrieval set.
 - [ ] Triage failures into retrieval, scope, grounding, math, rendering, provider, or UI.
 - [ ] Fix teaching/retrieval defects; rerun affected cases.
 - [ ] Record false refusals and unsupported releases separately.
