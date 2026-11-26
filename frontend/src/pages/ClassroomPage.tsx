@@ -55,7 +55,9 @@ export function ClassroomPage() {
 
         <ul className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {CHAPTERS.map((chapter) => (
-            <li key={chapter.number}>
+            // In the two-column (tablet) layout, an odd last card spans the row instead of
+            // leaving an empty cell beside it.
+            <li key={chapter.number} className="md:odd:last:col-span-2 xl:odd:last:col-span-1">
               <article className="flex h-full flex-col rounded-2xl border border-line bg-surface p-6">
                 <div className="flex items-start justify-between gap-4">
                   <span className="font-serif text-3xl text-accent/70">{chapter.number}</span>

@@ -1,5 +1,10 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { Suspense, useEffect, useRef } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 
+import { useAuth } from '@/components/auth/authContext'
+import { OfflineBanner } from '@/components/layout/OfflineBanner'
+import { PageLoading } from '@/components/layout/PageLoading'
+import type { Role } from '@/lib/api-types'
 import {
   BookOpenIcon,
   CalendarIcon,
@@ -15,6 +20,37 @@ const NAV_ITEMS = [
   { to: '/history', label: 'Historique', icon: HistoryIcon, end: false },
 ]
 
+const ROLE_LABELS_FR: Record<Role, string> = {
+  student: 'Élève',
+  reviewer: 'Relecteur',
+  admin: 'Administrateur',
+}
+
+function ProfileBadge() {
+  const { state, signOut } = useAuth()
+  if (state.status !== 'signed-in') return null
+  const { email, role } = state.me
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <p className="text-sm text-ink">
+        <span className="sr-only">Connecté en tant que </span>
+        <span data-testid="profile-email">{email ?? 'Compte sans e-mail'}</span>
+        <span className="ml-2 rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">
+          {ROLE_LABELS_FR[role]}
+        </span>
+      </p>
+      <button
+        type="button"
+        onClick={() => void signOut()}
+        className="min-h-9 rounded-xl border border-line px-3 text-sm font-semibold text-ink hover:bg-paper"
+      >
+        Se déconnecter
+      </button>
+    </div>
+  )
+}
+
 function BrandMark() {
   return (
     <span
@@ -26,7 +62,32 @@ function BrandMark() {
   )
 }
 
+const APP_TITLE = 'Tuteur de mathématiques — TCS'
+
+/**
+ * A client-side route change neither reloads the page nor moves focus, so keyboard and screen
+ * reader users would stay on the clicked link. Move focus to the new content and retitle the tab.
+ */
+function useRouteFocus() {
+  const { pathname } = useLocation()
+  const mainRef = useRef<HTMLElement>(null)
+  const lastPathname = useRef(pathname)
+
+  useEffect(() => {
+    const label = NAV_ITEMS.find((item) => item.to === pathname)?.label
+    document.title = label ? `${label} — ${APP_TITLE}` : APP_TITLE
+    // Comparing paths (not a first-render flag) keeps StrictMode's double effect from focusing.
+    if (lastPathname.current === pathname) return
+    lastPathname.current = pathname
+    mainRef.current?.focus()
+  }, [pathname])
+
+  return mainRef
+}
+
 export function AppShell() {
+  const mainRef = useRouteFocus()
+
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[18rem_minmax(0,1fr)]">
       <a className="skip-link" href="#main-content">
@@ -95,14 +156,30 @@ export function AppShell() {
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
               Tronc commun scientifique
             </p>
-            <p className="rounded-full border border-warm/25 bg-warm-soft px-3 py-1 text-xs font-semibold text-warm">
-              Version 0.1.0 · socle technique
-            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Visible at every width: the sidebar note is hidden on small screens. */}
+              <p
+                data-testid="demo-label"
+                className="rounded-full border border-warm/25 bg-warm-soft px-3 py-1 text-xs font-semibold text-warm"
+              >
+                Démo v0.1.0 · données synthétiques
+              </p>
+              <ProfileBadge />
+            </div>
           </div>
         </div>
+        <OfflineBanner />
 
-        <main id="main-content" className="flex-1 px-5 py-8 lg:px-10 lg:py-12">
-          <Outlet />
+        {/* tabIndex -1: the skip link and route changes can focus it; it is not a Tab stop. */}
+        <main
+          id="main-content"
+          ref={mainRef}
+          tabIndex={-1}
+          className="flex-1 px-5 py-8 focus:outline-none lg:px-10 lg:py-12"
+        >
+          <Suspense fallback={<PageLoading />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>
