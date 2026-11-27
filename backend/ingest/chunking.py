@@ -15,6 +15,20 @@ from app.retrieval.normalize import search_text
 MAX_TOKENS = 500
 _IMAGE = re.compile(r"!\[[^\]]*\]\([^)]*\)")
 
+# Every content_type a chunk can carry (docs/contracts/retrieval-schema.md, section 4).
+CONTENT_TYPES = (
+    "intro",
+    "activity",
+    "course",
+    "definition",
+    "property",
+    "example",
+    "remark",
+    "method",
+    "solved_exercise",
+    "exercise",
+)
+
 # Part of the chapter a heading switches to.
 _PARTS = [
     (re.compile(r"^#*\s*(le\s+)?contenu|objectifs|capacit|gapacit", re.I), "intro"),

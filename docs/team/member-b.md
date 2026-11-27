@@ -69,15 +69,15 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 - [x] Record the academic-use note input with the team lead and supervisor. Input recorded: [academic-use-input](../academic-use-input.md) (3 chapters now, academic use only). The team lead's note and the supervisor's acknowledgment are tracked in that file's sign-off table.
 - [x] Freeze the draft output contract, citation contract, refusal codes, and status mapping. Frozen: [teaching-contracts-v0.1](../contracts/teaching-contracts.md) (`draft-output-v0.1`, `refusal-fr-v0.1`); accepted by Imran and Mohamed.
 - [x] Build the first reviewer-labeled retrieval set: 40–60 query → chunk pairs, graded 0/1/2, ≥ 10 per chapter, every published objective represented; 70/30 tune/holdout split. Done: 56 queries (19 / 17 / 20), 301 graded pairs, all 22 objectives, 40 tune / 16 holdout; RRF Recall@5 0.89 (holdout 0.81). Graded by Claude at the reviewer's request; reviewer spot-check pending ([spike](../spikes/retrieval-rrf-ch01.md)).
-- [ ] Produce the Week-2 go/no-go evidence: benchmark, coverage, contracts, and risks.
+- [x] Produce the Week-2 go/no-go evidence: benchmark, coverage, contracts, and risks. Done: [go/no-go](../go-no-go-week2.md), conditional GO with 4 open conditions (owners and deadlines inside); reviewer hours confirmed.
 
 **Exit evidence:** benchmark report, sample RRF result, reviewer-confirmed coverage matrix, and signed-off contracts.
 
 ### Weeks 3–4 — Retrieval and sufficiency
 
 **Week 3**
-- [ ] Specify the retrieval schema: `document_chunks` with `unit_id`, `chunk_objectives`, `search_text`, embeddings, and indexes.
-- [ ] Create the seed corpus with synthetic/open-licensed content; never commit textbook text.
+- [x] Specify the retrieval schema: `document_chunks` with `unit_id`, `chunk_objectives`, `search_text`, embeddings, and indexes. Done: [retrieval-schema-v0.1](../contracts/retrieval-schema.md); Mohamed accepts it for his Week-5 migration.
+- [x] Create the seed corpus with synthetic/open-licensed content; never commit textbook text. Done: `data/seed/` (seed-v0.1, CC0): 3 chapters, 68 chunks, all 22 objectives mapped; a test blocks any 8-word prose run shared with the textbook.
 - [x] Benchmark embedding models on math queries, not prose only; keep `text-embedding-3-small` at 1536 only if it wins or ties on Recall@5. Done in the Week-1 spike: local `intfloat/multilingual-e5-large` at 1024 (D-44).
 - [ ] Implement query normalization: accents, case, LaTeX delimiters, math symbols, spoken math ("x au carré", "racine de"), French synonyms.
 - [ ] Implement chunking with math-block atomicity and `unit_id` grouping.

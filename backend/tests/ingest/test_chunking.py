@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from ingest import chunking
 from ingest.chunking import chunk_chapter
 
@@ -90,3 +92,21 @@ def test_a_long_unit_without_blank_lines_is_still_split(monkeypatch) -> None:
     source = "## Le COURS\n\n**DÉFINITION**\n" + "une ligne de texte\n" * 40
     chunks = chunk_chapter(source, "t", "T")
     assert len(chunks) > 1 and all(c.token_count <= 25 for c in chunks)
+
+
+def test_content_types_are_the_ones_the_retrieval_schema_lists() -> None:
+    assert {c.content_type for c in _chunks()} <= set(chunking.CONTENT_TYPES)
+    spec = Path(__file__).resolve().parents[3] / "docs" / "contracts" / "retrieval-schema.md"
+    section = spec.read_text(encoding="utf-8").split("## 4.")[1].split("## 5.")[0]
+    listed = [line.split("`")[1] for line in section.splitlines() if line.startswith("| `")]
+    assert listed == list(chunking.CONTENT_TYPES)
+
+
+def test_schema_embedding_matches_the_pinned_settings() -> None:
+    from app.config import Settings
+
+    spec = Path(__file__).resolve().parents[3] / "docs" / "contracts" / "retrieval-schema.md"
+    text = spec.read_text(encoding="utf-8")
+    fields = Settings.model_fields
+    assert f"vector({fields['embedding_dimensions'].default})" in text
+    assert f"`{fields['embedding_model_name'].default}`" in text

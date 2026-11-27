@@ -1,0 +1,22 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "frontend",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "frontend", "dev", "--host", "127.0.0.1"],
+      "port": 5173,
+      "env": {
+        "VITE_API_BASE_URL": "http://127.0.0.1:8000",
+        "VITE_SUPABASE_URL": "https://example.supabase.co",
+        "VITE_SUPABASE_ANON_KEY": "test-anon-key"
+      }
+    },
+    {
+      "name": "playwright-report",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "frontend", "exec", "playwright", "show-report", "--host", "127.0.0.1", "--port", "9323"],
+      "port": 9323
+    }
+  ]
+}
