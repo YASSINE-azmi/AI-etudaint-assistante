@@ -76,7 +76,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 ### Weeks 3–4 — Retrieval and sufficiency
 
 **Week 3**
-- [ ] Specify the retrieval schema: `document_chunks` with `unit_id`, `chunk_objectives`, `search_text`, embeddings, and indexes.
+- [x] Specify the retrieval schema: `document_chunks` with `unit_id`, `chunk_objectives`, `search_text`, embeddings, and indexes. Done: [retrieval-schema-v0.1](../contracts/retrieval-schema.md); Mohamed accepts it for his Week-5 migration.
 - [ ] Create the seed corpus with synthetic/open-licensed content; never commit textbook text.
 - [x] Benchmark embedding models on math queries, not prose only; keep `text-embedding-3-small` at 1536 only if it wins or ties on Recall@5. Done in the Week-1 spike: local `intfloat/multilingual-e5-large` at 1024 (D-44).
 - [ ] Implement query normalization: accents, case, LaTeX delimiters, math symbols, spoken math ("x au carré", "racine de"), French synonyms.
