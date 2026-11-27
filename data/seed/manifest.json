@@ -1,0 +1,69 @@
+{
+  "version": "seed-v0.1",
+  "license": "CC0-1.0",
+  "provenance": "Written for this project on 2026-11-27 (Claude, for Yassine). Standard TCS facts in original wording and original examples; no textbook text.",
+  "note": "Maps each course section and exercise to coverage-matrix objectives (docs/curriculum/coverage-matrix.json) so the seed can be ingested like a reviewed chapter. intro units map to nothing, as in the retrieval schema.",
+  "chapters": [
+    {
+      "chapter_id": "tcs_ch01",
+      "file": "tcs_ch01_seed.md",
+      "title": "Seed - Ensemble N et arithmétique",
+      "sections": {
+        "1 L'ensemble des entiers naturels": ["tcs_ch01_o01"],
+        "2 Diviseurs et multiples": ["tcs_ch01_o02"],
+        "3 Parité": ["tcs_ch01_o03"],
+        "4 Critères de divisibilité": ["tcs_ch01_o04"],
+        "5 Nombres premiers": ["tcs_ch01_o05"],
+        "6 Décomposition en facteurs premiers": ["tcs_ch01_o06"],
+        "7 PGCD et PPCM": ["tcs_ch01_o07"],
+        "8 Divisions successives": ["tcs_ch01_o08"]
+      },
+      "exercises": {
+        "1": ["tcs_ch01_o02"],
+        "2": ["tcs_ch01_o04"],
+        "3": ["tcs_ch01_o06"],
+        "4": ["tcs_ch01_o08"]
+      }
+    },
+    {
+      "chapter_id": "tcs_ch02",
+      "file": "tcs_ch02_seed.md",
+      "title": "Seed - Ensembles de nombres",
+      "sections": {
+        "1 Les ensembles de nombres": ["tcs_ch02_o01"],
+        "2 Nombres irrationnels et droite numérique": ["tcs_ch02_o02"],
+        "3 Opérations dans ℝ": ["tcs_ch02_o03"],
+        "4 Racines carrées": ["tcs_ch02_o04"],
+        "5 Puissances": ["tcs_ch02_o05"],
+        "6 Écriture scientifique": ["tcs_ch02_o06"],
+        "7 Identités remarquables": ["tcs_ch02_o07"],
+        "8 Identités du troisième degré": ["tcs_ch02_o08"]
+      },
+      "exercises": {
+        "1": ["tcs_ch02_o01", "tcs_ch02_o02"],
+        "2": ["tcs_ch02_o04"],
+        "3": ["tcs_ch02_o06"],
+        "4": ["tcs_ch02_o08"]
+      }
+    },
+    {
+      "chapter_id": "tcs_ch03",
+      "file": "tcs_ch03_seed.md",
+      "title": "Seed - Ordre dans R",
+      "sections": {
+        "1 Ordre et opérations": ["tcs_ch03_o01"],
+        "2 Intervalles": ["tcs_ch03_o02"],
+        "3 Encadrement": ["tcs_ch03_o03"],
+        "4 Valeur absolue": ["tcs_ch03_o04"],
+        "5 Distance, centre et rayon": ["tcs_ch03_o05"],
+        "6 Valeurs approchées": ["tcs_ch03_o06"]
+      },
+      "exercises": {
+        "1": ["tcs_ch03_o01"],
+        "2": ["tcs_ch03_o05"],
+        "3": ["tcs_ch03_o01", "tcs_ch03_o03"],
+        "4": ["tcs_ch03_o06"]
+      }
+    }
+  ]
+}
