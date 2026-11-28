@@ -80,8 +80,8 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 - [x] Create the seed corpus with synthetic/open-licensed content; never commit textbook text. Done: `data/seed/` (seed-v0.1, CC0): 3 chapters, 68 chunks, all 22 objectives mapped; a test blocks any 8-word prose run shared with the textbook.
 - [x] Benchmark embedding models on math queries, not prose only; keep `text-embedding-3-small` at 1536 only if it wins or ties on Recall@5. Done in the Week-1 spike: local `intfloat/multilingual-e5-large` at 1024 (D-44).
 - [x] Implement query normalization: accents, case, LaTeX delimiters, math symbols, spoken math ("x au carré", "racine de"), French synonyms. Done: `app/retrieval/normalize.py` adds `\( \)`/`\[ \]` delimiters, French intervals, ∪ ∩ ≠ ∞ ∅ and synonyms; RRF Recall@5 0.90 (holdout 0.83).
-- [ ] Implement chunking with math-block atomicity and `unit_id` grouping.
-- [ ] Add unit tests for normalization and scope filters.
+- [x] Implement chunking with math-block atomicity and `unit_id` grouping. Done: `ingest/chunking.py` never cuts inside `$$`, `\[ \]`, `\begin…\end` or a table; each unit's chunks are contiguous and share `unit_id`, type and path.
+- [x] Add unit tests for normalization and scope filters. Done: `tests/retrieval/test_normalize.py`; `app/retrieval/scope.py` (twin of the schema SQL filter) with `tests/retrieval/test_scope.py` and a seed-corpus scope test.
 
 **Week 4**
 - [ ] Implement scoped hybrid retrieval: pgvector cosine + French full-text search.

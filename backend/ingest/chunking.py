@@ -1,8 +1,10 @@
-"""Split a reviewed chapter (Markdown) into retrieval chunks by pedagogical unit (plan §9.4).
+r"""Split a reviewed chapter (Markdown) into retrieval chunks by pedagogical unit (plan §9.4).
 
 A unit starts at a recognised marker (activity, definition, property, example, remark,
 worked method, solved exercise, exercise) and runs until the next marker. Units longer
-than the token cap are split at blank lines, never inside a math block. Offsets point
+than the token cap are split at blank lines, never inside a display-math block
+($$...$$, \[...\], \begin...\end) or a table. Chunks of one unit share its unit_id,
+content_type and section_path, with contiguous chunk_index. Offsets point
 into the original file so citations can be traced back.
 """
 
@@ -88,6 +90,20 @@ def estimate_tokens(text: str) -> int:
     return max(1, len(text) // 4)
 
 
+def _math_after(line: str, state: tuple[bool, int]) -> tuple[bool, int]:
+    """Display-math state after this line: (inside $$, count of open \\[ or \\begin)."""
+    dollars, depth = state
+    if line.count("$$") % 2:
+        dollars = not dollars
+    opened = line.count(r"\[") + line.count(r"\begin{")
+    closed = line.count(r"\]") + line.count(r"\end{")
+    return dollars, max(0, depth + opened - closed)
+
+
+def _is_row(line: str) -> bool:
+    return line.lstrip().startswith("|")
+
+
 def _bare(line: str) -> str:
     # OCR wraps headings in any mix of "#" and "**", e.g. "**## EXERCICE RESOLU 4**".
     return _DECORATION.sub("", line)
@@ -102,7 +118,7 @@ def _units(source: str, chapter_title: str) -> list[_Unit]:
     units: list[_Unit] = []
     part, section = "intro", ""
     current = _Unit("intro", [chapter_title, "intro"], 0)
-    in_math = False
+    math = (False, 0)
     offset = 0
 
     def start(content_type: str, at: int) -> None:
@@ -118,7 +134,7 @@ def _units(source: str, chapter_title: str) -> list[_Unit]:
 
     for line in source.splitlines(keepends=True):
         bare = _bare(line)
-        if not in_math and bare:
+        if not any(math) and bare:
             new_part = next((p for rx, p in _PARTS if rx.search(bare)), None)
             marker = next((t for rx, t in _MARKERS if rx.search(bare)), None)
             if part in ("exercises", "solved_exercises") and marker not in (
@@ -138,8 +154,7 @@ def _units(source: str, chapter_title: str) -> list[_Unit]:
             elif titled and part in ("course", "worked_methods"):
                 section = titled.group(1).strip()
                 start("method" if part == "worked_methods" else "course", offset)
-        if line.count("$$") % 2 == 1:
-            in_math = not in_math
+        math = _math_after(line, math)
         current.lines.append((offset, line))
         offset += len(line)
     start("end", offset)
@@ -147,22 +162,22 @@ def _units(source: str, chapter_title: str) -> list[_Unit]:
 
 
 def _split(unit: _Unit) -> list[list[tuple[int, str]]]:
-    """Split an over-long unit outside math blocks, at blank lines when possible."""
+    """Split an over-long unit outside math blocks and tables, at blank lines when possible."""
     pieces: list[list[tuple[int, str]]] = [[]]
-    in_math = False
+    math = (False, 0)
 
     def size(lines: list[tuple[int, str]]) -> int:
         return estimate_tokens(_IMAGE.sub("[figure]", "".join(t for _, t in lines)))
 
     for item in unit.lines:
         _, text = item
-        if not in_math and pieces[-1] and size([*pieces[-1], item]) > MAX_TOKENS:
+        atomic = any(math) or (bool(pieces[-1]) and _is_row(text) and _is_row(pieces[-1][-1][1]))
+        if not atomic and pieces[-1] and size([*pieces[-1], item]) > MAX_TOKENS:
             # No blank line came in time: cut at this line end rather than overflow.
             pieces.append([])
-        if text.count("$$") % 2 == 1:
-            in_math = not in_math
+        math = _math_after(text, math)
         pieces[-1].append(item)
-        if not in_math and not text.strip() and size(pieces[-1]) >= MAX_TOKENS * 0.8:
+        if not any(math) and not text.strip() and size(pieces[-1]) >= MAX_TOKENS * 0.8:
             pieces.append([])
     return [p for p in pieces if any(t.strip() for _, t in p)]
 
