@@ -84,7 +84,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 - [x] Add unit tests for normalization and scope filters. Done: `tests/retrieval/test_normalize.py`; `app/retrieval/scope.py` (twin of the schema SQL filter) with `tests/retrieval/test_scope.py` and a seed-corpus scope test.
 
 **Week 4**
-- [ ] Implement scoped hybrid retrieval: pgvector cosine + French full-text search.
+- [x] Implement scoped hybrid retrieval: pgvector cosine + French full-text search. Done: `app/retrieval/search.py` (`hybrid_search`: scoped semantic + lexical with OR fallback, fused by RRF); unit tests plus a pgvector integration test on contract-shaped temp tables until the Week-5 migration.
 - [ ] Implement RRF with `k = 60`, deterministic tie-break, deduplication, and top-k selection.
 - [ ] Implement the deterministic reranker (§10.7) before the top-5–8 cut.
 - [ ] Build the retrieval query from chapter/objective titles plus the last validated topic (§10.6); no model rewrite.
