@@ -10,6 +10,9 @@ import unicodedata
 # Spoken or written math -> one canonical word. Data, not branches: the reviewer extends it.
 MATH_WORDS: dict[str, str] = {
     r"<br\s*/?>": " ",  # OCR line breaks, before "<" becomes a word
+    r"\\[()\[\]]": " ",  # \( \) \[ \] delimiters, before brackets are read as intervals
+    # French intervals "[a ; b[", "]-\infty ; 2]": tag them, keep the bounds.
+    r"[\[\]][^\[\];$]*;[^\[\];$]*[\[\]]": r" intervalle \g<0> ",
     r"\\mathbb\{r\}\s*[_^]\s*\{?\+\}?|\br\s?\+": " reels positifs ",
     r"\\mathbb\{r\}\s*[_^]\s*\{?-\}?|\br\s?-(?=\s|$)": " reels negatifs ",
     r"\\mathbb\{n\}\^?\{?\*\}?": " entiers naturels ",
@@ -33,6 +36,13 @@ MATH_WORDS: dict[str, str] = {
     r">|superieur a": " superieur ",
     r"\\left\s*\||\\right\s*\||\\mid|\|": " valeur absolue ",
     r"\\in\b|∈|appartient a": " appartient ",
+    r"\\neq|≠|different de": " different ",
+    r"\\cup|\u222a|\bunion\b": " union ",
+    r"\\cap|∩|\binter(section)?\b": " intersection ",
+    r"\\infty|∞|l'infini|\binfini\b": " infini ",
+    r"\\emptyset|\\varnothing|∅|ensemble vide": " ensemble vide ",
+    # Synonyms students use for the book's term.
+    r"\bapproximation\b|\bapproche\b": " valeur approchee ",
     r"\^\{?2\}?|²|au carre": " carre ",
     r"\^\{?3\}?|³|au cube": " cube ",
     r"\bp\s*g\s*c\s*d\b|plus grand commun diviseur|plus grand diviseur commun": " pgcd ",

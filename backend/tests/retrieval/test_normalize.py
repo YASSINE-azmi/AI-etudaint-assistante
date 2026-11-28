@@ -50,3 +50,30 @@ def test_order_symbols_absolute_value_and_signed_reals_become_words() -> None:
 
 def test_ocr_line_breaks_are_not_read_as_inequalities() -> None:
     assert search_text("EXERCICES <br> RÉSOLUS") == "exercices resolus"
+
+
+def test_latex_paren_and_bracket_delimiters_match_dollars() -> None:
+    assert search_text(r"\(x^2\)") == search_text(r"\[x^2\]") == search_text("$x^2$") == "x carre"
+
+
+def test_french_intervals_are_tagged_and_keep_their_bounds() -> None:
+    assert search_text("$[a ; b[$") == "intervalle a b"
+    assert search_text(r"$]-\infty ; 2]$") == "intervalle infini 2"
+    assert search_text(r"\[x \in[1 ; 9]\]") == "x appartient intervalle 1 9"
+    assert "intervalle" not in search_text(r"$\operatorname{PGCD}(a ; b)$")
+
+
+@pytest.mark.parametrize(
+    ("written", "spoken"),
+    [
+        (r"$A \cup B$", "a union b"),
+        (r"$A \cap B$", "a inter b"),
+        ("A ∪ B", "a union b"),  # noqa: RUF001
+        (r"$x \neq 0$", "x différent de 0"),
+        (r"$+\infty$", "plus l'infini"),
+        (r"$\emptyset$", "l'ensemble vide"),
+        ("valeur approchée", "une approximation"),
+    ],
+)
+def test_set_symbols_and_synonyms_meet_spoken_forms(written: str, spoken: str) -> None:
+    assert set(tokens(written)) <= set(tokens(spoken))
