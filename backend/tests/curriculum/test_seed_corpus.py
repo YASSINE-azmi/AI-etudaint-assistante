@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from app.retrieval.normalize import strip_accents
+from app.retrieval.scope import chapter_scope, in_scope
 from ingest.chunking import MAX_TOKENS, Chunk, chunk_chapter
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -69,3 +70,17 @@ def test_seed_shares_no_long_run_of_words_with_the_textbook() -> None:
     for path in SEED.glob("*.md"):
         copied = _shingles(path.read_text(encoding="utf-8")) & book
         assert not copied, f"{path.name} repeats textbook text: {' '.join(sorted(copied)[0])}"
+
+
+def test_seed_chunks_are_in_scope_only_for_their_own_chapter() -> None:
+    matrix = json.loads(MATRIX.read_text(encoding="utf-8"))
+    scopes = [chapter_scope(matrix, c["id"]) for c in matrix["chapters"]]
+    for chapter, chunks in _seed():
+        for chunk in chunks:
+            objectives = _objectives(chapter, chunk)
+            hits = [
+                s.chapter_id
+                for s in scopes
+                if s and in_scope(s, chapter["chapter_id"], "published", objectives)
+            ]
+            assert hits == ([chapter["chapter_id"]] if objectives else []), chunk.chunk_id

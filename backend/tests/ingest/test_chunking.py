@@ -110,3 +110,41 @@ def test_schema_embedding_matches_the_pinned_settings() -> None:
     fields = Settings.model_fields
     assert f"vector({fields['embedding_dimensions'].default})" in text
     assert f"`{fields['embedding_model_name'].default}`" in text
+
+
+def test_bracket_and_environment_math_blocks_are_never_split(monkeypatch) -> None:
+    monkeypatch.setattr(chunking, "MAX_TOKENS", 20)
+    lines = "\n".join([r"a+b=c \\"] * 20)
+    bracket = "\\[\n" + lines + "\n\\]\n"
+    environment = "$\\begin{array}{l}\n" + lines + "\n\\end{array}$\n"
+    for block in (bracket, environment):
+        source = "## Le COURS\n\n**DÉFINITION**\n" + "mot " * 60 + "\n\n" + block
+        chunks = chunk_chapter(source, "t", "T")
+        assert len(chunks) > 1
+        assert any(block.strip() in c.text for c in chunks)
+
+
+def test_a_marker_inside_a_math_block_does_not_start_a_unit() -> None:
+    source = "## Le COURS\n\n**DÉFINITION**\n\\[\nExemple\n\\]\n"
+    assert [c.content_type for c in chunk_chapter(source, "t", "T")] == ["definition"]
+
+
+def test_tables_are_never_split(monkeypatch) -> None:
+    monkeypatch.setattr(chunking, "MAX_TOKENS", 20)
+    table = "| n | carré |\n| --- | --- |\n" + "".join(f"| {n} | {n * n} |\n" for n in range(30))
+    source = "## Le COURS\n\n**DÉFINITION**\n" + "mot " * 60 + "\n\n" + table
+    assert any(table.strip() in c.text for c in chunk_chapter(source, "t", "T"))
+
+
+def test_chunks_of_a_unit_are_contiguous_and_share_type_and_path(monkeypatch) -> None:
+    monkeypatch.setattr(chunking, "MAX_TOKENS", 20)
+    source = SOURCE.replace("Le carré de $n$", "mot " * 80 + "\n\nLe carré de $n$")
+    chunks = chunk_chapter(source, "t", "T")
+    seen: list[str] = []
+    for c in chunks:
+        if not seen or seen[-1] != c.unit_id:
+            assert c.unit_id not in seen, "a unit's chunks must be contiguous"
+            seen.append(c.unit_id)
+    by_unit = {c.unit_id: (c.content_type, c.section_path) for c in chunks}
+    assert all(by_unit[c.unit_id] == (c.content_type, c.section_path) for c in chunks)
+    assert len(chunks) > len(by_unit)
