@@ -56,7 +56,8 @@ async def test_hybrid_search_returns_only_scoped_published_chunks() -> None:
         for chunk_id, (chapter, status, objective, body, axis) in zip(ids, ROWS, strict=True):
             await conn.execute(
                 text(
-                    "insert into document_chunks values"
+                    "insert into document_chunks (id, chapter_id, status, search_text, embedding)"
+                    " values"
                     " (:id, :chapter, :status, :search_text, cast(:embedding as vector))"
                 ),
                 {
