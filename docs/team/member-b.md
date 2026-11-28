@@ -79,7 +79,7 @@ If a contract is missing, fail closed and mark the gap. Do not let the UI or pro
 - [x] Specify the retrieval schema: `document_chunks` with `unit_id`, `chunk_objectives`, `search_text`, embeddings, and indexes. Done: [retrieval-schema-v0.1](../contracts/retrieval-schema.md); Mohamed accepts it for his Week-5 migration.
 - [x] Create the seed corpus with synthetic/open-licensed content; never commit textbook text. Done: `data/seed/` (seed-v0.1, CC0): 3 chapters, 68 chunks, all 22 objectives mapped; a test blocks any 8-word prose run shared with the textbook.
 - [x] Benchmark embedding models on math queries, not prose only; keep `text-embedding-3-small` at 1536 only if it wins or ties on Recall@5. Done in the Week-1 spike: local `intfloat/multilingual-e5-large` at 1024 (D-44).
-- [ ] Implement query normalization: accents, case, LaTeX delimiters, math symbols, spoken math ("x au carré", "racine de"), French synonyms.
+- [x] Implement query normalization: accents, case, LaTeX delimiters, math symbols, spoken math ("x au carré", "racine de"), French synonyms. Done: `app/retrieval/normalize.py` adds `\( \)`/`\[ \]` delimiters, French intervals, ∪ ∩ ≠ ∞ ∅ and synonyms; RRF Recall@5 0.90 (holdout 0.83).
 - [ ] Implement chunking with math-block atomicity and `unit_id` grouping.
 - [ ] Add unit tests for normalization and scope filters.
 
